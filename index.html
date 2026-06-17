@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Search Tracker — Markus Mosleitner</title>
+<style>
+  :root {
+    --navy:   #1F4E79;
+    --blue:   #2E75B6;
+    --sky:    #D6E4F0;
+    --mint:   #E8F5E9;
+    --amber:  #FFF8E1;
+    --red:    #FFEBEE;
+    --white:  #FFFFFF;
+    --off:    #F7F9FC;
+    --border: #DDE3EC;
+    --muted:  #6B7A90;
+    --dark:   #1A202C;
+    --green:  #27AE60;
+    --orange: #E67E22;
+    --crimson:#C0392B;
+    --purple: #6C3483;
+    --purpll: #F3E5F5;
+    --teal:   #117A65;
+    --teall:  #D5F5E3;
+    --rose:   #922B21;
+    --rosel:  #FADBD8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Inter, sans-serif; background: var(--off); color: var(--dark); min-height: 100vh; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%); color: #fff; padding: 20px 28px 0; }
+  .header h1 { font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
+  .header p  { font-size: 12px; opacity: .75; margin-top: 3px; margin-bottom: 14px; }
+  .tabs { display: flex; gap: 4px; margin-top: 8px; }
+  .tab-btn { padding: 8px 16px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); }
+  .tab-btn.active { background: var(--white); color: var(--navy); }
+  .save-flash { font-size: 12px; background: rgba(255,255,255,.2); border-radius: 8px; padding: 4px 12px; color: #fff; font-weight: 600; opacity: 0; transition: opacity .3s; }
+  .save-flash.show { opacity: 1; }
+
+  /* Body */
+  .body { padding: 24px 20px; max-width: 1100px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .card-teal { background: linear-gradient(135deg, rgba(17,122,101,.08), var(--teall)); border: 1px solid rgba(17,122,101,.25); }
+  .card-purple { background: linear-gradient(135deg, rgba(108,52,131,.08), var(--purpll)); border: 1px solid rgba(108,52,131,.25); }
+  .card-dashed { background: var(--off); border: 1px dashed var(--border); }
+
+  /* Grid */
+  .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+
+  /* Stat */
+  .stat { text-align: center; padding: 16px 8px; }
+  .stat-val { font-size: 30px; font-weight: 800; line-height: 1; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+  /* Section label */
+  .sec-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+  .badge.clickable { cursor: pointer; }
+  .badge.clickable:hover { opacity: .8; }
+
+  /* Buttons */
+  .btn { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
+  .btn:hover { opacity: .88; }
+  .btn-primary  { background: var(--blue);   color: #fff; }
+  .btn-teal     { background: var(--teal);   color: #fff; }
+  .btn-purple   { background: var(--purple); color: #fff; }
+  .btn-ghost    { background: var(--white);  color: var(--muted); border: 1px solid var(--border) !important; }
+  .btn-sky      { background: var(--sky);    color: var(--navy); }
+  .btn-danger   { background: #FEE2E2;       color: var(--crimson); }
+  .btn-sm       { padding: 5px 11px; font-size: 12px; }
+  .btn-xs       { padding: 3px 8px;  font-size: 11px; }
+
+  /* Filter bar */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .filter-btn { padding: 5px 11px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--muted); transition: all .12s; }
+  .filter-btn.active-blue   { background: var(--navy);   color: #fff; border-color: var(--navy); }
+  .filter-btn.active-teal   { background: var(--teal);   color: #fff; border-color: var(--teal); }
+  .filter-btn.active-purple { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .filter-btn.active-dark   { background: var(--navy);   color: #fff; border-color: var(--navy); }
+
+  /* Search input */
+  .search-input { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; width: 200px; }
+
+  /* Progress bar */
+  .prog-wrap { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .prog-bar  { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+  /* Cards list items */
+  .item-card { border-radius: 12px; border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 12px; background: var(--white); box-shadow: 0 1px 3px rgba(0,0,0,.03); border-left-width: 4px; }
+  .item-card.high-pri { background: rgba(146,43,33,.03); }
+  .item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .item-meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .item-notes { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; border-left: 3px solid var(--border); padding-left: 8px; }
+  .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .item-name { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .item-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  /* Milestones */
+  .milestone { display: flex; gap: 10px; margin-bottom: 10px; cursor: pointer; align-items: flex-start; }
+  .ms-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all .15s; }
+  .ms-dot.done-green  { background: var(--green);  border-color: var(--green); }
+  .ms-dot.done-purple { background: var(--purple); border-color: var(--purple); }
+  .ms-dot .check { color: #fff; font-size: 10px; font-weight: 800; display: none; }
+  .ms-dot.done-green .check, .ms-dot.done-purple .check { display: block; }
+  .ms-week { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .ms-label { font-size: 12px; }
+
+  /* Form inputs */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: .5px; }
+  .form-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: inherit; outline: none; }
+  .form-input:focus { border-color: var(--blue); }
+  .form-textarea { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: inherit; outline: none; resize: vertical; }
+  .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; }
+  .modal { background: var(--white); border-radius: 16px; padding: 28px 32px; width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* KPI counter buttons */
+  .kpi-btns { display: flex; gap: 4px; margin-top: 6px; }
+  .kpi-btn { flex: 1; padding: 3px 0; border-radius: 4px; border: 1px solid var(--border); background: var(--off); cursor: pointer; font-size: 10px; color: var(--muted); }
+
+  /* Recommended course row */
+  .rec-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; background: var(--off); margin-bottom: 6px; border: 1px solid var(--border); }
+  .rec-title { font-size: 13px; font-weight: 600; }
+  .rec-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Strategy items */
+  .strategy-item { display: flex; gap: 10px; margin-bottom: 8px; }
+  .strategy-dot  { width: 5px; height: 5px; border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+  .strategy-num  { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+
+  /* Tips grid */
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .tip-row   { display: flex; gap: 8px; margin-bottom: 6px; }
+
+  /* Daily routine */
+  .routine-row { display: flex; gap: 12px; margin-bottom: 6px; }
+  .routine-day { font-size: 12px; font-weight: 700; color: var(--purple); width: 85px; flex-shrink: 0; }
+
+  /* Header flex */
+  .hdr-row  { display: flex; align-items: baseline; justify-content: space-between; }
+  .card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-ttl { font-size: 13px; font-weight: 700; }
+
+  /* Network pipeline row */
+  .pip-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .pip-name { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .pip-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pip-right { display: flex; align-items: center; gap: 10px; }
+  .pip-bar-wrap { width: 70px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+
+  a { color: var(--blue); }
+  @media (max-width: 700px) {
+    .grid4 { grid-template-columns: repeat(2,1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+    .grid3 { grid-template-columns: 1fr; }
+    .tips-grid { grid-template-columns: 1fr; }
+    .form-grid2 { grid-template-columns: 1fr; }
+    .modal { width: 95vw; padding: 20px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hdr-row">
+    <div>
+      <h1>Job Search, Network &amp; Training Tracker</h1>
+      <p>Markus Mosleitner · June – November 2026 · Target: New role before notice period ends</p>
+    </div>
+    <span class="save-flash" id="saveFlash">✓ Saved</span>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="showTab('applications')">Applications</button>
+    <button class="tab-btn" onclick="showTab('network')">Network</button>
+    <button class="tab-btn" onclick="showTab('training')">Training</button>
+    <button class="tab-btn" onclick="showTab('strategy')">Strategy</button>
+  </div>
+</div>
+
+<div class="body">
+
+<!-- ═══════════════════════════════ DASHBOARD ═══════════════════════════════ -->
+<div id="tab-dashboard" class="section active">
+
+  <div class="sec-label">Job Search</div>
+  <div class="grid4" id="dash-job-stats"></div>
+
+  <div class="sec-label">Network</div>
+  <div class="grid4" id="dash-net-stats"></div>
+
+  <div class="sec-label">Training</div>
+  <div class="grid4" id="dash-train-stats"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hdr"><span class="card-ttl" style="color:var(--navy)">Application Pipeline</span></div>
+      <div id="dash-app-pipeline"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-ttl" style="color:var(--teal)">Network Pipeline</span></div>
+      <div id="dash-net-pipeline"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl" style="color:var(--navy);margin-bottom:14px">Weekly Activity KPIs</div>
+    <div class="grid4" id="dash-kpis"></div>
+    <div class="form-group" style="margin-top:12px;margin-bottom:0">
+      <label class="form-label">Weekly reflection</label>
+      <textarea class="form-textarea" id="weeklyNote" rows="2" placeholder="What worked? What to adjust next week?" oninput="debounce(saveNote,800)()"></textarea>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-ttl" style="color:var(--navy);margin-bottom:12px">Job Search Milestones</div>
+      <div id="dash-ms"></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl" style="color:var(--purple);margin-bottom:12px">Training Milestones</div>
+      <div id="dash-tms"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ APPLICATIONS ════════════════════════════════ -->
+<div id="tab-applications" class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="filters" id="app-status-filters"></div>
+    <button class="btn btn-primary" onclick="openAppModal()">+ Add Application</button>
+  </div>
+  <div class="filters" id="app-track-filters"></div>
+  <div id="app-list"></div>
+</div>
+
+<!-- ══════════════════════════════ NETWORK ═══════════════════════════════════ -->
+<div id="tab-network" class="section">
+  <div class="card card-teal" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--teal)">🤝 Network Outreach Tracker</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Target: 10 contacts/week · 2 messages/day · warm beats cold</div>
+      </div>
+      <button class="btn btn-teal" onclick="openNetModal()">+ Add Contact</button>
+    </div>
+  </div>
+
+  <div class="card card-dashed" style="margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">💡 Outreach rules that work at senior level</div>
+    <div class="tips-grid" id="net-tips"></div>
+  </div>
+
+  <div class="filters" id="net-status-filters"></div>
+  <div class="filters" id="net-priority-filters" style="margin-top:6px"></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;margin-top:6px" id="net-relation-filters"></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <input class="search-input" id="netSearch" placeholder="Search contacts…" oninput="renderNetwork()">
+  </div>
+  <div id="net-list"></div>
+</div>
+
+<!-- ════════════════════════════ TRAINING ════════════════════════════════════ -->
+<div id="tab-training" class="section">
+  <div class="card card-purple" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--purple)">🎓 Training Plan · June–November 2026</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">30–45 min daily · AI, Leadership, Certifications</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="toggleRecommended()" id="recBtn">📋 Recommended Courses</button>
+        <button class="btn btn-purple btn-sm" onclick="openTrainModal()">+ Add Course</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="recommended-panel" style="display:none"></div>
+
+  <div class="filters" id="train-cat-filters" style="margin:12px 0"></div>
+  <div id="train-list"></div>
+
+  <div class="card card-dashed" style="margin-top:8px">
+    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">📅 Daily Training Routine (30–45 min)</div>
+    <div id="train-routine"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ STRATEGY ════════════════════════════════════ -->
+<div id="tab-strategy" class="section">
+  <div id="strategy-content"></div>
+</div>
+
+</div><!-- /body -->
+
+<!-- ═══════════════════════════════ MODALS ═══════════════════════════════════ -->
+<div class="overlay" id="appModal" style="display:none" onclick="if(event.target===this)closeAppModal()">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--navy)" id="appModalTitle">Log New Application</div>
+    <div class="form-group"><label class="form-label">Company *</label><input class="form-input" id="af-company" placeholder="e.g. Volvo Cars"></div>
+    <div class="form-group"><label class="form-label">Role / Title *</label><input class="form-input" id="af-role" placeholder="e.g. Head of Delivery"></div>
+    <div class="form-group"><label class="form-label">Hiring Manager / Contact</label><input class="form-input" id="af-contact" placeholder="Name or LinkedIn"></div>
+    <div class="form-group"><label class="form-label">Date Applied</label><input class="form-input" id="af-date" type="date"></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Track</label><select class="form-input" id="af-track"></select></div>
+      <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="af-notes" rows="3" placeholder="Next steps, recruiter name…"></textarea></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+      <input type="checkbox" id="af-followup" style="width:16px;height:16px;cursor:pointer">
+      <label for="af-followup" style="font-size:13px;cursor:pointer">Flag for follow-up</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAppModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitApp()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="trainModal" style="display:none" onclick="if(event.target===this)closeTrainModal()">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--purple)" id="trainModalTitle">Add Course</div>
+    <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="tf-title" placeholder="e.g. AI for Everyone"></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Category</label><select class="form-input" id="tf-category"></select></div>
+      <div><label class="form-label">Status</label><select class="form-input" id="tf-status"></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Provider / Platform</label><input class="form-input" id="tf-provider" placeholder="e.g. Coursera"></div>
+    <div class="form-group"><label class="form-label">Duration</label><input class="form-input" id="tf-duration" placeholder="e.g. 6h"></div>
+    <div class="form-group"><label class="form-label">Target Completion</label><input class="form-input" id="tf-target" placeholder="e.g. Week 4 / July 2026"></div>
+    <div class="form-group"><label class="form-label">Course URL</label><input class="form-input" id="tf-url" placeholder="https://…"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="tf-notes" rows="2" placeholder="Progress notes…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeTrainModal()">Cancel</button>
+      <button class="btn btn-purple" onclick="submitTrain()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="netModal" style="display:none" onclick="if(event.target===this)closeNetModal()">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--teal)" id="netModalTitle">Add Network Contact</div>
+    <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="nf-name" placeholder="Full name"></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Current Company</label><input class="form-input" id="nf-company" placeholder="Where they work now"></div>
+      <div><label class="form-label">Their Role</label><input class="form-input" id="nf-role" placeholder="e.g. Head of Engineering"></div>
+    </div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Relationship</label><select class="form-input" id="nf-relation"></select></div>
+      <div><label class="form-label">Status</label><select class="form-input" id="nf-status"></select></div>
+    </div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Purpose</label><select class="form-input" id="nf-purpose"></select></div>
+      <div><label class="form-label">Priority</label>
+        <select class="form-input" id="nf-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Last Contact Date</label><input class="form-input" id="nf-contactdate" type="date"></div>
+      <div><label class="form-label">Follow-up Date</label><input class="form-input" id="nf-followupdate" type="date"></div>
+    </div>
+    <div class="form-group"><label class="form-label">LinkedIn URL</label><input class="form-input" id="nf-linkedin" placeholder="https://linkedin.com/in/…"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="nf-notes" rows="3" placeholder="How you know them, what you discussed, next follow-up…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeNetModal()">Cancel</button>
+      <button class="btn btn-teal" onclick="submitNet()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════ CONFIG ═══════════════════════════════════════════
+const APP_STATUS = {
+  "Applied":       { color:"#2E75B6", bg:"#D6E4F0", dot:"#2E75B6" },
+  "Interviewing":  { color:"#7B5800", bg:"#FFF8E1", dot:"#E67E22" },
+  "Offer":         { color:"#1A5C35", bg:"#E8F5E9", dot:"#27AE60" },
+  "Rejected":      { color:"#C0392B", bg:"#FFEBEE", dot:"#C0392B" },
+  "Withdrawn":     { color:"#6B7A90", bg:"#F0F0F0", dot:"#6B7A90" },
+  "Interim Lead":  { color:"#6C3483", bg:"#F3E5F5", dot:"#6C3483" },
+};
+const APP_TRACK = {
+  "Permanent": { color:"#1F4E79", bg:"#D6E4F0" },
+  "Interim":   { color:"#5D4037", bg:"#FBE9E7" },
+  "Network":   { color:"#117A65", bg:"#D5F5E3" },
+};
+const TRAIN_CAT = {
+  "AI & Technology":        { color:"#6C3483", bg:"#F3E5F5", icon:"🤖" },
+  "Leadership & Management":{ color:"#1F4E79", bg:"#D6E4F0", icon:"🎯" },
+  "Certification":          { color:"#117A65", bg:"#D5F5E3", icon:"📜" },
+  "Other":                  { color:"#6B7A90", bg:"#F0F0F0", icon:"📚" },
+};
+const TRAIN_STATUS = {
+  "Not started": { color:"#6B7A90", bg:"#F0F0F0" },
+  "In progress": { color:"#7B5800", bg:"#FFF8E1" },
+  "Completed":   { color:"#1A5C35", bg:"#E8F5E9" },
+  "Paused":      { color:"#C0392B", bg:"#FFEBEE" },
+};
+const NET_RELATION = {
+  "Former colleague":  { color:"#1F4E79", bg:"#D6E4F0", icon:"👔" },
+  "AZ / Evinova":      { color:"#117A65", bg:"#D5F5E3", icon:"🏢" },
+  "Recruiter/Agency":  { color:"#6C3483", bg:"#F3E5F5", icon:"🔍" },
+  "Industry contact":  { color:"#5D4037", bg:"#FBE9E7", icon:"🌐" },
+  "Friend / Personal": { color:"#27AE60", bg:"#E8F5E9", icon:"🤝" },
+  "LinkedIn":          { color:"#0A66C2", bg:"#E8F0FE", icon:"💼" },
+};
+const NET_STATUS = {
+  "To contact":    { color:"#E67E22", bg:"#FFF8E1", dot:"#E67E22" },
+  "Contacted":     { color:"#2E75B6", bg:"#D6E4F0", dot:"#2E75B6" },
+  "Replied":       { color:"#117A65", bg:"#D5F5E3", dot:"#117A65" },
+  "Meeting set":   { color:"#7B5800", bg:"#FFF3CD", dot:"#E67E22" },
+  "Met":           { color:"#27AE60", bg:"#E8F5E9", dot:"#27AE60" },
+  "Not responsive":{ color:"#6B7A90", bg:"#F0F0F0", dot:"#6B7A90" },
+};
+const NET_PURPOSE = {
+  "Coffee chat / advice": { color:"#1F4E79", bg:"#D6E4F0" },
+  "Job referral":         { color:"#27AE60", bg:"#E8F5E9" },
+  "Market intel":         { color:"#6C3483", bg:"#F3E5F5" },
+  "Recruiter briefing":   { color:"#117A65", bg:"#D5F5E3" },
+  "Introduction ask":     { color:"#7B5800", bg:"#FFF8E1" },
+  "General reconnect":    { color:"#6B7A90", bg:"#F0F0F0" },
+};
+const RECOMMENDED = [
+  { category:"AI & Technology",         title:"Prompt Engineering for Leaders",     provider:"LinkedIn Learning", duration:"3h",  url:"https://www.linkedin.com/learning/", milestone:"Week 1" },
+  { category:"AI & Technology",         title:"AI for Everyone – Andrew Ng",        provider:"Coursera",          duration:"6h",  url:"https://www.coursera.org/learn/ai-for-everyone", milestone:"Week 2" },
+  { category:"AI & Technology",         title:"ChatGPT & Claude for Productivity",  provider:"Udemy",             duration:"4h",  url:"https://www.udemy.com",              milestone:"Week 3" },
+  { category:"AI & Technology",         title:"AI Strategy for Executives",         provider:"MIT Sloan",         duration:"8h",  url:"https://executive.mit.edu",          milestone:"Week 6" },
+  { category:"Leadership & Management", title:"Executive Presence & Communication", provider:"LinkedIn Learning", duration:"4h",  url:"https://www.linkedin.com/learning/", milestone:"Week 2" },
+  { category:"Leadership & Management", title:"Coaching Skills for Leaders",        provider:"Coursera",          duration:"10h", url:"https://www.coursera.org/learn/coaching-skills", milestone:"Week 4" },
+  { category:"Leadership & Management", title:"Leading Change & Transformation",    provider:"edX",               duration:"8h",  url:"https://www.edx.org",               milestone:"Week 5" },
+  { category:"Leadership & Management", title:"Negotiation & Influence",            provider:"LinkedIn Learning", duration:"3h",  url:"https://www.linkedin.com/learning/", milestone:"Week 8" },
+  { category:"Certification",           title:"SAFe 6.0 SPC Recertification",       provider:"Scaled Agile",      duration:"16h", url:"https://scaledagile.com",           milestone:"Week 10"},
+  { category:"Certification",           title:"PMP Exam Prep",                      provider:"PMI",               duration:"35h", url:"https://www.pmi.org",               milestone:"Week 12"},
+];
+const JOB_MS = [
+  { week:1,  date:"Mid-June",  label:"LinkedIn + CV polished, tracker live" },
+  { week:2,  date:"Late June", label:"8–10 recruiters briefed, 10 contacts, 3+ apps" },
+  { week:4,  date:"Mid-July",  label:"20+ applications, 15+ warm contacts" },
+  { week:6,  date:"Late July", label:"First interviews, interim pipeline active" },
+  { week:8,  date:"Mid-Aug",   label:"2–4 interview processes, 1+ 2nd rounds" },
+  { week:10, date:"Late Aug",  label:"At least 1 offer or advanced process" },
+  { week:12, date:"Mid-Sept",  label:"Offer(s) received or in negotiation" },
+  { week:16, date:"Mid-Oct",   label:"Signed contract in hand" },
+  { week:20, date:"Nov 2026",  label:"New role starts / notice period ends" },
+];
+const TRAIN_MS = [
+  { week:1,  label:"Daily 30–45 min training habit established" },
+  { week:2,  label:"First AI course started" },
+  { week:4,  label:"First course completed, LinkedIn Learning active" },
+  { week:6,  label:"Executive Presence + 1 AI course completed" },
+  { week:8,  label:"Coaching Skills or Leading Change completed" },
+  { week:10, label:"SAFe recertification underway" },
+  { week:14, label:"3+ courses completed across 2+ categories" },
+  { week:20, label:"5+ courses done. On LinkedIn profile." },
+];
+
+// ═══════════════════════════ STATE ════════════════════════════════════════════
+let state = {
+  apps: [], trainings: [], contacts: [],
+  kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
+  milestones: {}, trainMilestones: {},
+  weeklyNote: "",
+};
+let editAppId = null, editTrainId = null, editNetId = null;
+let appStatusFilter = "All", appTrackFilter = "All";
+let trainCatFilter  = "All";
+let netStatusFilter = "All", netPriorityFilter = "All", netRelationFilter = "All";
+let showRec = false;
+
+// ═══════════════════════════ STORAGE ══════════════════════════════════════════
+const LS = "mm2026_";
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(LS+k)); } catch { return null; } }
+function lsSet(k,v) { try { localStorage.setItem(LS+k, JSON.stringify(v)); } catch {} }
+
+function loadState() {
+  state.apps         = lsGet("apps")     || [];
+  state.trainings    = lsGet("trainings")|| [];
+  state.contacts     = lsGet("contacts") || [];
+  state.kpis         = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(lsGet("kpis")||{}) };
+  state.milestones   = lsGet("ms")  || {};
+  state.trainMilestones = lsGet("tms")|| {};
+  state.weeklyNote   = lsGet("note")|| "";
+}
+function saveState() {
+  lsSet("apps",     state.apps);
+  lsSet("trainings",state.trainings);
+  lsSet("contacts", state.contacts);
+  lsSet("kpis",     state.kpis);
+  lsSet("ms",       state.milestones);
+  lsSet("tms",      state.trainMilestones);
+  lsSet("note",     state.weeklyNote);
+  const f = document.getElementById("saveFlash");
+  f.classList.add("show");
+  setTimeout(() => f.classList.remove("show"), 1800);
+}
+
+// ═══════════════════════════ HELPERS ══════════════════════════════════════════
+function badge(text, color, bg, clickable, onclick) {
+  return `<span class="badge${clickable?" clickable":""}" style="color:${color};background:${bg}"${onclick?` onclick="${onclick}"`:""}>${text}</span>`;
+}
+function stat(value, label, color) {
+  return `<div class="card"><div class="stat"><div class="stat-val" style="color:${color}">${value}</div><div class="stat-lbl">${label}</div></div></div>`;
+}
+function progRow(label, val, total, color) {
+  const pct = total > 0 ? Math.min((val/total)*100, 100) : 0;
+  return `<div class="pip-row"><div class="pip-name"><div class="pip-dot" style="background:${color}"></div>${label}</div>
+  <div class="pip-right"><div class="pip-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${color}"></div></div>
+  <span style="font-size:13px;font-weight:700;color:var(--muted);width:18px;text-align:right">${val}</span></div></div>`;
+}
+function today() { return new Date().toISOString().slice(0,10); }
+let debounceTimer;
+function debounce(fn, ms) { return function(...args){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>fn(...args),ms); }; }
+
+// ═══════════════════════════ TAB ══════════════════════════════════════════════
+function showTab(id) {
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+id).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b=>{ if(b.textContent.toLowerCase().includes(id.replace("applications","application"))) b.classList.add("active"); });
+  // fix: match by onclick
+  document.querySelectorAll(".tab-btn").forEach(b=>{ if(b.getAttribute("onclick")===`showTab('${id}')`) b.classList.add("active"); });
+}
+
+// ═══════════════════════════ POPULATE SELECTS ═════════════════════════════════
+function populateSelects() {
+  sel("af-track",   Object.keys(APP_TRACK));
+  sel("af-status",  Object.keys(APP_STATUS));
+  sel("tf-category",Object.keys(TRAIN_CAT));
+  sel("tf-status",  Object.keys(TRAIN_STATUS));
+  sel("nf-relation",Object.keys(NET_RELATION));
+  sel("nf-status",  Object.keys(NET_STATUS));
+  sel("nf-purpose", Object.keys(NET_PURPOSE));
+}
+function sel(id, opts, selected) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = opts.map(o=>`<option${o===selected?" selected":""}>${o}</option>`).join("");
+}
+
+// ═══════════════════════════ RENDER DASHBOARD ══════════════════════════════════
+function renderDashboard() {
+  const apps = state.apps, contacts = state.contacts, trainings = state.trainings, kpis = state.kpis;
+  const total = apps.length;
+  const interviews = apps.filter(a=>a.status==="Interviewing"||a.status==="Offer").length;
+  const offers = apps.filter(a=>a.status==="Offer").length;
+  const convRate = total>0?Math.round((interviews/total)*100):0;
+  const interimLeads = apps.filter(a=>a.status==="Interim Lead").length;
+  const rateColor = convRate>=20?"var(--green)":"var(--orange)";
+
+  document.getElementById("dash-job-stats").innerHTML =
+    stat(total, "Applications", "var(--navy)") +
+    stat(convRate+"%", "Interview Rate", rateColor) +
+    stat(offers, "Offers", "var(--green)") +
+    stat(interimLeads, "Interim Leads", "var(--purple)");
+
+  const totalC = contacts.length;
+  const highPri = contacts.filter(c=>c.priority==="High").length;
+  const activeC = contacts.filter(c=>["Contacted","Replied","Meeting set"].includes(c.status)).length;
+  const metC    = contacts.filter(c=>c.status==="Met").length;
+  document.getElementById("dash-net-stats").innerHTML =
+    stat(totalC, "Contacts Tracked", "var(--teal)") +
+    stat(highPri, "High Priority", "var(--rose)") +
+    stat(activeC, "In Progress", "var(--orange)") +
+    stat(metC, "Met / Done", "var(--green)");
+
+  const completed = trainings.filter(t=>t.status==="Completed").length;
+  const inProg    = trainings.filter(t=>t.status==="In progress").length;
+  const trainHrs  = ((kpis.trainingMins||0)/60).toFixed(1);
+  document.getElementById("dash-train-stats").innerHTML =
+    stat(trainings.length, "Courses Tracked", "var(--purple)") +
+    stat(inProg, "In Progress", "var(--orange)") +
+    stat(completed, "Completed", "var(--green)") +
+    stat(trainHrs+"h", "This Week", "var(--teal)");
+
+  // App pipeline
+  let appPip = "";
+  Object.entries(APP_STATUS).forEach(([s,cfg])=>{
+    const c = apps.filter(a=>a.status===s).length;
+    appPip += progRow(s, c, total, cfg.dot);
+  });
+  document.getElementById("dash-app-pipeline").innerHTML = appPip;
+
+  // Net pipeline
+  let netPip = "";
+  Object.entries(NET_STATUS).forEach(([s,cfg])=>{
+    const c = contacts.filter(co=>co.status===s).length;
+    netPip += progRow(s, c, totalC, cfg.dot);
+  });
+  document.getElementById("dash-net-pipeline").innerHTML = netPip;
+
+  // KPIs
+  const kpiDefs = [
+    { key:"weeklyContacts",      label:"Network contacts",  target:10,  color:"var(--teal)",   steps:["-1","+1"] },
+    { key:"recruitersContacted", label:"Recruiters briefed",target:10,  color:"var(--blue)",   steps:["-1","+1"] },
+    { key:"coffeChats",          label:"Coffee chats",      target:3,   color:"var(--orange)", steps:["-1","+1"] },
+    { key:"trainingMins",        label:"Training mins",     target:175, color:"var(--purple)", steps:["-15","+15","+30","+45"] },
+  ];
+  let kpiHtml = "";
+  kpiDefs.forEach(({key,label,target,color,steps})=>{
+    const val = kpis[key]||0;
+    const pct = Math.min((val/target)*100,100);
+    const valColor = val>=target?"var(--green)":color;
+    kpiHtml += `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:var(--muted)">${label}</span>
+        <span style="font-size:11px;font-weight:700;color:${valColor}">${val}/${target}</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="kpi-btns">${steps.map(d=>`<button class="kpi-btn" onclick="adjKpi('${key}',${parseInt(d)})">${d}</button>`).join("")}</div>
+    </div>`;
+  });
+  document.getElementById("dash-kpis").innerHTML = kpiHtml;
+
+  // Weekly note
+  document.getElementById("weeklyNote").value = state.weeklyNote;
+
+  // Job milestones
+  let msHtml = "";
+  JOB_MS.forEach((m,i)=>{
+    const done = !!state.milestones[i];
+    msHtml += `<div class="milestone" onclick="toggleMs(${i})">
+      <div class="ms-dot${done?" done-green":""}"><span class="check">✓</span></div>
+      <div><div class="ms-week">Wk ${m.week} · ${m.date}</div>
+      <div class="ms-label" style="color:${done?"var(--green)":"var(--dark)"};font-weight:${done?600:400}">${m.label}</div></div>
+    </div>`;
+  });
+  document.getElementById("dash-ms").innerHTML = msHtml;
+
+  // Train milestones
+  let tmsHtml = "";
+  TRAIN_MS.forEach((m,i)=>{
+    const done = !!state.trainMilestones[i];
+    tmsHtml += `<div class="milestone" onclick="toggleTms(${i})">
+      <div class="ms-dot${done?" done-purple":""}"><span class="check">✓</span></div>
+      <div><div class="ms-week">Wk ${m.week}</div>
+      <div class="ms-label" style="color:${done?"var(--purple)":"var(--dark)"};font-weight:${done?600:400}">${m.label}</div></div>
+    </div>`;
+  });
+  document.getElementById("dash-tms").innerHTML = tmsHtml;
+}
+
+// ═══════════════════════════ RENDER APPLICATIONS ═══════════════════════════════
+function renderApplications() {
+  // Status filter buttons
+  const statuses = ["All", ...Object.keys(APP_STATUS)];
+  document.getElementById("app-status-filters").innerHTML = statuses.map(s=>`
+    <button class="filter-btn${s===appStatusFilter?" active-blue":""}" onclick="setAppStatusFilter('${s}')">${s}</button>`).join("");
+
+  // Track filter buttons
+  const tracks = ["All","Permanent","Interim","Network"];
+  document.getElementById("app-track-filters").innerHTML = tracks.map(t=>`
+    <button class="filter-btn${t===appTrackFilter?" active-blue":""}" onclick="setAppTrackFilter('${t}')">${t}</button>`).join("");
+
+  const filtered = state.apps.filter(a=>
+    (appStatusFilter==="All"||a.status===appStatusFilter) &&
+    (appTrackFilter==="All"||a.track===appTrackFilter)
+  );
+
+  if (filtered.length===0) {
+    document.getElementById("app-list").innerHTML = `<div class="card"><div class="empty-state">No applications yet. Hit "+ Add Application" to log your first one.</div></div>`;
+    return;
+  }
+
+  document.getElementById("app-list").innerHTML = filtered.map(app=>{
+    const sc = APP_STATUS[app.status]||{};
+    const tc = APP_TRACK[app.track]||{};
+    return `<div class="item-card" style="border-left-color:${sc.dot}">
+      <div class="item-row">
+        <div style="flex:1">
+          <div class="item-badges">
+            <span class="item-name">${app.company}</span>
+            ${badge(app.status, sc.color, sc.bg)}
+            ${badge(app.track, tc.color, tc.bg)}
+            ${app.followUp?badge("Follow up","#7B5800","#FFF8E1"):""}
+          </div>
+          <div style="font-size:13px;margin-bottom:4px">${app.role}</div>
+          <div class="item-meta">
+            ${app.dateApplied?`<span>Applied: ${app.dateApplied}</span>`:""}
+            ${app.contact?`<span>Contact: ${app.contact}</span>`:""}
+          </div>
+          ${app.notes?`<div class="item-notes">${app.notes}</div>`:""}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-sky btn-sm" onclick="openAppModal('${app.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteApp('${app.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
+function setAppTrackFilter(t)  { appTrackFilter=t;  renderApplications(); }
+
+// ═══════════════════════════ RENDER NETWORK ════════════════════════════════════
+function renderNetwork() {
+  // Tips
+  const tips = [
+    "Ask for advice or a coffee chat — not a job. 'I'd love your perspective on the market' converts far better than 'do you know of any openings?'",
+    "Personalise every message — one line showing you remember something specific about them or their work",
+    "Follow up once if no reply after 10–14 days. Then move on without resentment.",
+    "High-priority contacts first — former direct managers and colleagues who know your work are your strongest advocates",
+    "Always send a thank-you note within 24h of any meeting or call",
+    "If they give you a name or introduction — follow up and report back. People refer again when they see results.",
+  ];
+  document.getElementById("net-tips").innerHTML = tips.map((t,i)=>
+    `<div class="tip-row"><span style="color:var(--teal);font-weight:700;font-size:12px;flex-shrink:0">${i+1}.</span><span style="font-size:12px;line-height:1.5">${t}</span></div>`
+  ).join("");
+
+  // Status filters
+  document.getElementById("net-status-filters").innerHTML = ["All",...Object.keys(NET_STATUS)].map(s=>
+    `<button class="filter-btn${s===netStatusFilter?" active-teal":""}" onclick="setNetStatusFilter('${s}')">${s}</button>`).join("");
+
+  // Priority filters
+  document.getElementById("net-priority-filters").innerHTML = ["All","High","Medium","Low"].map(p=>
+    `<button class="filter-btn${p===netPriorityFilter?" active-dark":""}" onclick="setNetPriFilter('${p}')">${p==="All"?p:p+" priority"}</button>`).join("");
+
+  // Relation filters
+  document.getElementById("net-relation-filters").innerHTML = ["All",...Object.keys(NET_RELATION)].map(r=>
+    `<button class="filter-btn${r===netRelationFilter?" active-dark":""}" onclick="setNetRelFilter('${r}')">${r==="All"?r:NET_RELATION[r].icon+" "+r}</button>`).join("");
+
+  const search = (document.getElementById("netSearch")||{}).value||"";
+  const statusOrder = Object.keys(NET_STATUS);
+  let filtered = state.contacts.filter(c=>{
+    const ms = netStatusFilter==="All"||c.status===netStatusFilter;
+    const mp = netPriorityFilter==="All"||c.priority===netPriorityFilter;
+    const mr = netRelationFilter==="All"||c.relation===netRelationFilter;
+    const mq = !search||[c.name,c.company,c.role,c.notes].join(" ").toLowerCase().includes(search.toLowerCase());
+    return ms&&mp&&mr&&mq;
+  }).sort((a,b)=>{
+    if(a.priority==="High"&&b.priority!=="High") return -1;
+    if(b.priority==="High"&&a.priority!=="High") return 1;
+    return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
+  });
+
+  if (filtered.length===0) {
+    document.getElementById("net-list").innerHTML = `<div class="card"><div class="empty-state">No contacts yet. Add people you want to reach out to — former colleagues, recruiters, industry connections.</div></div>`;
+    return;
+  }
+
+  document.getElementById("net-list").innerHTML = filtered.map(c=>{
+    const rc = NET_RELATION[c.relation]||NET_RELATION["LinkedIn"];
+    const sc = NET_STATUS[c.status]||NET_STATUS["To contact"];
+    const pc = NET_PURPOSE[c.purpose]||NET_PURPOSE["General reconnect"];
+    const hi = c.priority==="High";
+    return `<div class="item-card${hi?" high-pri":""}" style="border-left-color:${sc.dot}">
+      <div class="item-row">
+        <div style="flex:1">
+          <div class="item-badges">
+            ${hi?`<span style="font-size:14px">⭐</span>`:""}
+            <span class="item-name">${c.name}</span>
+            ${badge(c.status+" →", sc.color, sc.bg, true, `cycleNetStatus('${c.id}')`)}
+            ${badge(rc.icon+" "+c.relation, rc.color, rc.bg)}
+            ${badge(c.purpose, pc.color, pc.bg)}
+            ${hi?badge("High priority","#922B21","#FADBD8"):""}
+          </div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${[c.role,c.company].filter(Boolean).join(" @ ")}</div>
+          <div class="item-meta">
+            ${c.contactDate?`<span>📅 Last contact: ${c.contactDate}</span>`:""}
+            ${c.followUpDate?`<span>🔔 Follow up: ${c.followUpDate}</span>`:""}
+            ${c.linkedIn?`<a href="${c.linkedIn}" target="_blank" rel="noopener">🔗 LinkedIn</a>`:""}
+          </div>
+          ${c.notes?`<div class="item-notes">${c.notes}</div>`:""}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-sky btn-sm" onclick="openNetModal('${c.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNet('${c.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function setNetStatusFilter(s)   { netStatusFilter=s;   renderNetwork(); }
+function setNetPriFilter(p)      { netPriorityFilter=p; renderNetwork(); }
+function setNetRelFilter(r)      { netRelationFilter=r; renderNetwork(); }
+
+// ═══════════════════════════ RENDER TRAINING ═══════════════════════════════════
+function renderTraining() {
+  // Cat filters
+  document.getElementById("train-cat-filters").innerHTML = ["All",...Object.keys(TRAIN_CAT)].map(c=>
+    `<button class="filter-btn${c===trainCatFilter?" active-purple":""}" onclick="setTrainCatFilter('${c}')">${c}</button>`).join("");
+
+  // Recommended panel
+  if (showRec) {
+    let recHtml = `<div class="card" style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:12px">Recommended Courses for Your Profile</div>`;
+    Object.keys(TRAIN_CAT).filter(c=>c!=="Other").forEach(cat=>{
+      const cfg = TRAIN_CAT[cat];
+      recHtml += `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${cfg.icon} ${cat}</div>`;
+      RECOMMENDED.filter(r=>r.category===cat).forEach(rec=>{
+        const added = state.trainings.some(t=>t.title===rec.title);
+        recHtml += `<div class="rec-row">
+          <div><div class="rec-title">${rec.title}</div><div class="rec-sub">${rec.provider} · ${rec.duration} · ${rec.milestone}</div></div>
+          <button class="btn btn-sm${added?" btn-ghost":""}" style="${added?"color:var(--green)":"background:var(--purple);color:#fff"}" onclick="addRecommended('${rec.title}')" ${added?"disabled":""}>
+            ${added?"✓ Added":"Add"}
+          </button>
+        </div>`;
+      });
+      recHtml += `</div>`;
+    });
+    recHtml += `</div>`;
+    document.getElementById("recommended-panel").innerHTML = recHtml;
+    document.getElementById("recommended-panel").style.display = "block";
+  } else {
+    document.getElementById("recommended-panel").style.display = "none";
+  }
+
+  // Course list
+  const filtered = state.trainings.filter(t=>trainCatFilter==="All"||t.category===trainCatFilter);
+  if (filtered.length===0) {
+    document.getElementById("train-list").innerHTML = `<div class="card"><div class="empty-state">No courses yet. Browse recommended above or add your own.</div></div>`;
+  } else {
+    document.getElementById("train-list").innerHTML = filtered.map(t=>{
+      const cc = TRAIN_CAT[t.category]||TRAIN_CAT["Other"];
+      const sc = TRAIN_STATUS[t.status]||TRAIN_STATUS["Not started"];
+      return `<div class="item-card" style="border-left-color:${cc.color}">
+        <div class="item-row">
+          <div style="flex:1">
+            <div class="item-badges">
+              <span style="font-size:15px">${cc.icon}</span>
+              <span class="item-name">${t.title}</span>
+              ${badge(t.category, cc.color, cc.bg)}
+              ${badge(t.status+" →", sc.color, sc.bg, true, `cycleTrainStatus('${t.id}')`)}
+            </div>
+            <div class="item-meta">
+              ${t.provider?`<span>📍 ${t.provider}</span>`:""}
+              ${t.duration?`<span>⏱ ${t.duration}</span>`:""}
+              ${t.targetDate?`<span>🎯 ${t.targetDate}</span>`:""}
+            </div>
+            ${t.notes?`<div class="item-notes">${t.notes}</div>`:""}
+            ${t.url?`<div style="margin-top:4px"><a href="${t.url}" target="_blank" rel="noopener" style="font-size:12px">🔗 Open course →</a></div>`:""}
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-sky btn-sm" onclick="openTrainModal('${t.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTrain('${t.id}')">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  // Routine
+  const routine = [["Mon/Wed","AI & Technology — focused 30-min block on current course"],["Tue/Thu","Leadership & Management — articles, videos, or course modules"],["Friday","Certification prep or weekly review. Update tracker."],["Weekend","Optional: longer session if course deadline approaching"]];
+  document.getElementById("train-routine").innerHTML = routine.map(([d,t])=>
+    `<div class="routine-row"><span class="routine-day">${d}</span><span style="font-size:12px">${t}</span></div>`).join("");
+}
+
+function setTrainCatFilter(c) { trainCatFilter=c; renderTraining(); }
+function toggleRecommended() {
+  showRec=!showRec;
+  document.getElementById("recBtn").textContent = showRec?"Hide":"📋 Recommended Courses";
+  renderTraining();
+}
+
+// ═══════════════════════════ RENDER STRATEGY ═══════════════════════════════════
+function renderStrategy() {
+  const sections = [
+    { title:"The 3 Parallel Job Search Tracks", color:"var(--navy)", items:[
+      "Track A — Permanent: 3–5 tailored applications/week. Mirror exact job ad keywords. Contact hiring manager directly alongside every application.",
+      "Track B — Interim: Brief all major agencies by end of Week 2. 1-page interim profile with day rate (SEK 1,100–1,600/day). Available immediately.",
+      "Track C — Network: 2 warm outreach contacts per day. Request coffee chats not job asks. Reconnect with everyone from the last 10 years.",
+    ]},
+    { title:"Daily Routine (4–5h job search + 30–45 min training)", color:"var(--blue)", items:[
+      "8–9am: Scan new postings — LinkedIn, Karriär, Academic Work, Jurek, Poolia",
+      "9–10am: Tailor CV + cover letter to one specific role, mirror exact ad keywords",
+      "10am: Send application. Log in tracker immediately.",
+      "Mid-morning: 1–2 personalised network outreach messages",
+      "Afternoon: Follow up on 7–10 day old applications. Research target companies.",
+      "End of day: 30–45 min training (AI Mon/Wed, Leadership Tue/Thu, Cert Fri)",
+    ]},
+    { title:"Network Outreach Strategy", color:"var(--teal)", items:[
+      "Goal: 10 new contacts per week, 2 per day minimum",
+      "Prioritise: 1) Former direct managers, 2) Close ex-colleagues, 3) AZ/Evinova network, 4) Industry contacts, 5) LinkedIn cold outreach",
+      "Message formula: personalised opener + 1 specific thing about their work + ask for coffee chat + no job ask",
+      "Always follow up once at 10–14 days if no reply. Then move on.",
+      "Track every contact in the Network tab — status, last contact date, next follow-up",
+      "End every call with: 'Is there anyone else you think I should speak to?'",
+    ]},
+    { title:"Training Strategy", color:"var(--purple)", items:[
+      "AI & Technology (Mon/Wed): Prompt Engineering → AI for Everyone → AI Strategy for Executives",
+      "Leadership (Tue/Thu): Executive Presence → Coaching Skills → Leading Change → Negotiation",
+      "Certifications (Fri): SAFe recertification is highest value — start Week 10",
+      "Add completed courses to LinkedIn immediately — recruiters notice recent learning",
+      "Mention AI training in interviews — signals proactivity and relevance to modern delivery organisations",
+    ]},
+    { title:"Application Quality Rules", color:"var(--orange)", items:[
+      "Mirror job ad language exactly — ATS won't match 'stakeholder alignment' to 'stakeholder management'",
+      "Use the right CV version per role type — Senior PM CV ≠ COO CV",
+      "One specific sentence about WHY this company in every cover letter",
+      "Connect with the hiring manager on LinkedIn alongside every application",
+      "Follow up once after 7–10 days of silence",
+    ]},
+    { title:"Key Recruiters to Brief (Week 1–2)", color:"var(--navy)", items:[
+      "Jurek Rekrytering — senior GBG tech/PM (perm + interim)",
+      "Poolia IT — active Gothenburg IT Managers and PM",
+      "Academic Work — fast-moving interim placements",
+      "Experis (ManpowerGroup) — Director-level roles",
+      "Dfind IT — Sweden-wide, good GBG presence",
+      "TNG Group — competency-based hiring",
+      "Randstad Technologies — large network, interim-friendly",
+    ]},
+  ];
+  document.getElementById("strategy-content").innerHTML = sections.map((sec,i)=>`
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;color:${sec.color};margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div class="strategy-num" style="background:${sec.color}18;color:${sec.color}">${i+1}</div>
+        ${sec.title}
+      </div>
+      ${sec.items.map(item=>`
+        <div class="strategy-item">
+          <div class="strategy-dot" style="background:${sec.color}"></div>
+          <span style="font-size:13px;line-height:1.5">${item}</span>
+        </div>`).join("")}
+    </div>`).join("");
+}
+
+// ═══════════════════════════ APP MODAL ════════════════════════════════════════
+function openAppModal(id) {
+  editAppId = id||null;
+  const app = id ? state.apps.find(a=>a.id===id) : null;
+  document.getElementById("appModalTitle").textContent = id?"Edit Application":"Log New Application";
+  document.getElementById("af-company").value  = app?.company||"";
+  document.getElementById("af-role").value     = app?.role||"";
+  document.getElementById("af-contact").value  = app?.contact||"";
+  document.getElementById("af-date").value     = app?.dateApplied||today();
+  sel("af-track",  Object.keys(APP_TRACK),  app?.track||"Permanent");
+  sel("af-status", Object.keys(APP_STATUS), app?.status||"Applied");
+  document.getElementById("af-notes").value    = app?.notes||"";
+  document.getElementById("af-followup").checked = app?.followUp||false;
+  document.getElementById("appModal").style.display="flex";
+}
+function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; }
+function submitApp() {
+  const company = document.getElementById("af-company").value.trim();
+  const role    = document.getElementById("af-role").value.trim();
+  if (!company||!role) return;
+  const entry = {
+    id: editAppId||String(Date.now()),
+    company, role,
+    contact:    document.getElementById("af-contact").value.trim(),
+    dateApplied:document.getElementById("af-date").value,
+    track:      document.getElementById("af-track").value,
+    status:     document.getElementById("af-status").value,
+    notes:      document.getElementById("af-notes").value.trim(),
+    followUp:   document.getElementById("af-followup").checked,
+  };
+  if (editAppId) state.apps = state.apps.map(a=>a.id===editAppId?entry:a);
+  else state.apps.push(entry);
+  saveState(); closeAppModal(); renderApplications(); renderDashboard();
+}
+function deleteApp(id) {
+  if (!confirm("Delete this application?")) return;
+  state.apps = state.apps.filter(a=>a.id!==id);
+  saveState(); renderApplications(); renderDashboard();
+}
+
+// ═══════════════════════════ TRAIN MODAL ══════════════════════════════════════
+function openTrainModal(id) {
+  editTrainId = id||null;
+  const t = id ? state.trainings.find(x=>x.id===id) : null;
+  document.getElementById("trainModalTitle").textContent = id?"Edit Course":"Add Course";
+  document.getElementById("tf-title").value    = t?.title||"";
+  sel("tf-category", Object.keys(TRAIN_CAT),    t?.category||"AI & Technology");
+  sel("tf-status",   Object.keys(TRAIN_STATUS), t?.status||"Not started");
+  document.getElementById("tf-provider").value = t?.provider||"";
+  document.getElementById("tf-duration").value = t?.duration||"";
+  document.getElementById("tf-target").value   = t?.targetDate||"";
+  document.getElementById("tf-url").value      = t?.url||"";
+  document.getElementById("tf-notes").value    = t?.notes||"";
+  document.getElementById("trainModal").style.display="flex";
+}
+function closeTrainModal() { document.getElementById("trainModal").style.display="none"; editTrainId=null; }
+function submitTrain() {
+  const title = document.getElementById("tf-title").value.trim();
+  if (!title) return;
+  const entry = {
+    id: editTrainId||String(Date.now()),
+    title,
+    category:   document.getElementById("tf-category").value,
+    status:     document.getElementById("tf-status").value,
+    provider:   document.getElementById("tf-provider").value.trim(),
+    duration:   document.getElementById("tf-duration").value.trim(),
+    targetDate: document.getElementById("tf-target").value.trim(),
+    url:        document.getElementById("tf-url").value.trim(),
+    notes:      document.getElementById("tf-notes").value.trim(),
+  };
+  if (editTrainId) state.trainings = state.trainings.map(t=>t.id===editTrainId?entry:t);
+  else state.trainings.push(entry);
+  saveState(); closeTrainModal(); renderTraining(); renderDashboard();
+}
+function deleteTrain(id) {
+  if (!confirm("Remove this course?")) return;
+  state.trainings = state.trainings.filter(t=>t.id!==id);
+  saveState(); renderTraining(); renderDashboard();
+}
+function cycleTrainStatus(id) {
+  const order = Object.keys(TRAIN_STATUS);
+  state.trainings = state.trainings.map(t=>{
+    if(t.id!==id) return t;
+    return {...t, status: order[(order.indexOf(t.status)+1)%order.length]};
+  });
+  saveState(); renderTraining(); renderDashboard();
+}
+function addRecommended(title) {
+  const rec = RECOMMENDED.find(r=>r.title===title);
+  if (!rec||state.trainings.some(t=>t.title===title)) return;
+  state.trainings.push({ id:String(Date.now()), title:rec.title, category:rec.category, provider:rec.provider, duration:rec.duration, targetDate:rec.milestone, url:rec.url, status:"Not started", notes:"" });
+  saveState(); renderTraining(); renderDashboard();
+}
+
+// ═══════════════════════════ NET MODAL ════════════════════════════════════════
+function openNetModal(id) {
+  editNetId = id||null;
+  const c = id ? state.contacts.find(x=>x.id===id) : null;
+  document.getElementById("netModalTitle").textContent = id?"Edit Contact":"Add Network Contact";
+  document.getElementById("nf-name").value        = c?.name||"";
+  document.getElementById("nf-company").value     = c?.company||"";
+  document.getElementById("nf-role").value        = c?.role||"";
+  sel("nf-relation", Object.keys(NET_RELATION), c?.relation||"Former colleague");
+  sel("nf-status",   Object.keys(NET_STATUS),   c?.status||"To contact");
+  sel("nf-purpose",  Object.keys(NET_PURPOSE),  c?.purpose||"Coffee chat / advice");
+  sel("nf-priority", ["High","Medium","Low"],    c?.priority||"Medium");
+  document.getElementById("nf-contactdate").value  = c?.contactDate||"";
+  document.getElementById("nf-followupdate").value = c?.followUpDate||"";
+  document.getElementById("nf-linkedin").value    = c?.linkedIn||"";
+  document.getElementById("nf-notes").value       = c?.notes||"";
+  document.getElementById("netModal").style.display="flex";
+}
+function closeNetModal() { document.getElementById("netModal").style.display="none"; editNetId=null; }
+function submitNet() {
+  const name = document.getElementById("nf-name").value.trim();
+  if (!name) return;
+  const entry = {
+    id: editNetId||String(Date.now()),
+    name,
+    company:     document.getElementById("nf-company").value.trim(),
+    role:        document.getElementById("nf-role").value.trim(),
+    relation:    document.getElementById("nf-relation").value,
+    status:      document.getElementById("nf-status").value,
+    purpose:     document.getElementById("nf-purpose").value,
+    priority:    document.getElementById("nf-priority").value,
+    contactDate: document.getElementById("nf-contactdate").value,
+    followUpDate:document.getElementById("nf-followupdate").value,
+    linkedIn:    document.getElementById("nf-linkedin").value.trim(),
+    notes:       document.getElementById("nf-notes").value.trim(),
+  };
+  if (editNetId) state.contacts = state.contacts.map(c=>c.id===editNetId?entry:c);
+  else state.contacts.push(entry);
+  saveState(); closeNetModal(); renderNetwork(); renderDashboard();
+}
+function deleteNet(id) {
+  if (!confirm("Remove this contact?")) return;
+  state.contacts = state.contacts.filter(c=>c.id!==id);
+  saveState(); renderNetwork(); renderDashboard();
+}
+function cycleNetStatus(id) {
+  const order = Object.keys(NET_STATUS);
+  state.contacts = state.contacts.map(c=>{
+    if(c.id!==id) return c;
+    return {...c, status: order[(order.indexOf(c.status)+1)%order.length]};
+  });
+  saveState(); renderNetwork(); renderDashboard();
+}
+
+// ═══════════════════════════ KPI / MILESTONE ═══════════════════════════════════
+function adjKpi(key, delta) {
+  state.kpis[key] = Math.max(0, (state.kpis[key]||0)+delta);
+  saveState(); renderDashboard();
+}
+function toggleMs(i) {
+  state.milestones[i] = !state.milestones[i];
+  saveState(); renderDashboard();
+}
+function toggleTms(i) {
+  state.trainMilestones[i] = !state.trainMilestones[i];
+  saveState(); renderDashboard();
+}
+function saveNote() {
+  state.weeklyNote = document.getElementById("weeklyNote").value;
+  saveState();
+}
+
+// ═══════════════════════════ INIT ═════════════════════════════════════════════
+loadState();
+populateSelects();
+renderDashboard();
+renderApplications();
+renderNetwork();
+renderTraining();
+renderStrategy();
+</script>
+</body>
+</html>
