@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Optimization Dashboard – Markus Mosleitner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#3B0030; --navy2:#6B1052; --parch:#F9F8F6; --parch2:#E9DEE5;
+    --ink:#2B0A23; --inkmute:#7C6470; --line:#E9DEE5;
+    --amber:#F16D07; --amber-d:#A8293A; --amber-l:#FFF6CF;
+    --green:#1F9C6E; --green-l:#E1FAF0; --green-d:#16734F;
+    --red:#A8293A; --red-l:#FFE9EE; --red-d:#7C1C29;
+    --gold:#FFCD00;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--parch);font-family:'Inter',sans-serif;color:var(--ink);}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 32px 96px;}
+  .eyebrow{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber-d);margin:0 0 8px;}
+  h1{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-weight:600;font-size:40px;margin:0 0 6px;color:var(--navy);letter-spacing:-0.01em;}
+  .sub{color:var(--inkmute);font-size:15px;margin:0 0 40px;max-width:640px;line-height:1.6;}
+
+  /* Hero score */
+  .hero{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center;background:var(--navy);border-radius:18px;padding:36px 40px;margin-bottom:44px;color:#fff;}
+  .ring-wrap{position:relative;width:160px;height:160px;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-num .n{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:40px;font-weight:600;}
+  .ring-num .l{font-family:'Inter',sans-serif;font-size:11px;letter-spacing:0.08em;color:#C9D3D8;text-transform:uppercase;}
+  .hero h2{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:22px;font-weight:500;margin:0 0 12px;}
+  .hero p{color:#CBD6DB;font-size:14.5px;line-height:1.7;margin:0;max-width:560px;}
+  .hero-tags{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+  .htag{font-family:'Inter',sans-serif;font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);padding:5px 10px;border-radius:20px;color:#E8EDEE;}
+
+  section{margin-bottom:48px;}
+  .stitle{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:24px;font-weight:600;color:var(--navy);margin:0 0 4px;}
+  .sdesc{color:var(--inkmute);font-size:14px;margin:0 0 22px;}
+
+  /* Section score cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s;}
+  .card:hover{border-color:var(--amber);}
+  .card.active{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber-l);}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+  .card-name{font-weight:600;font-size:15px;color:var(--navy);}
+  .card-tag{font-family:'Inter',sans-serif;font-size:10.5px;color:var(--inkmute);margin-top:2px;}
+  .score-pill{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:20px;font-weight:600;padding:2px 0;}
+  .bar-track{height:6px;background:var(--parch2);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+
+  /* Detail panel */
+  .detail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px 30px;margin-top:18px;}
+  .detail-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
+  .detail-head h3{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:19px;margin:0;color:var(--navy);}
+  .detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  .gap-list,.fix-list{list-style:none;margin:0;padding:0;}
+  .gap-list li,.fix-list li{font-size:13.5px;line-height:1.6;padding:9px 0 9px 24px;position:relative;border-bottom:1px solid var(--parch2);color:#3A464D;}
+  .gap-list li:last-child,.fix-list li:last-child{border-bottom:none;}
+  .gap-list li::before{content:"";position:absolute;left:2px;top:14px;width:7px;height:7px;border-radius:50%;background:var(--red);}
+  .fix-list li::before{content:"";position:absolute;left:2px;top:14px;width:7px;height:7px;border-radius:50%;background:var(--green);}
+  .col-label{font-family:'Inter',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--inkmute);margin-bottom:6px;display:block;}
+
+  /* Role match */
+  .role-row{display:grid;grid-template-columns:200px 1fr 50px;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--parch2);}
+  .role-row:last-child{border-bottom:none;}
+  .role-name{font-size:13.5px;font-weight:500;color:var(--navy);}
+  .role-track{height:10px;background:var(--parch2);border-radius:6px;overflow:hidden;}
+  .role-fill{height:100%;border-radius:6px;}
+  .role-pct{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--inkmute);text-align:right;}
+
+  .prog-row{display:grid;grid-template-columns:150px 60px 24px 60px 1fr 70px;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--parch2);}
+  .prog-row:last-child{border-bottom:none;}
+  .prog-name{font-size:14px;font-weight:500;color:var(--navy);}
+  .prog-old{font-family:'Inter',sans-serif;font-size:13px;color:var(--inkmute);text-align:center;}
+  .prog-arrow{color:var(--inkmute);text-align:center;}
+  .prog-new{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;text-align:center;}
+  .prog-track{height:8px;background:var(--parch2);border-radius:5px;overflow:hidden;position:relative;}
+  .prog-fill-old{position:absolute;height:100%;background:var(--inkmute);opacity:0.35;border-radius:5px;}
+  .prog-fill-new{position:absolute;height:100%;border-radius:5px;}
+  .prog-delta{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-align:right;padding:3px 8px;border-radius:10px;background:var(--green-l);color:var(--green-d);}
+  .prog-delta.flat{background:var(--parch2);color:var(--inkmute);}
+
+  /* Rewrite blocks */
+  .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{font-family:'Inter',sans-serif;font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--inkmute);cursor:pointer;}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .rewrite-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;}
+  .rw-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .rw-block{padding:16px 18px;border-radius:10px;font-size:13.5px;line-height:1.65;position:relative;}
+  .rw-before{background:var(--red-l);color:var(--red-d);}
+  .rw-after{background:var(--green-l);color:var(--green-d);}
+  .rw-label{font-family:'Inter',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;display:block;font-weight:600;}
+  .copy-btn{position:absolute;top:14px;right:14px;font-family:'Inter',sans-serif;font-size:10px;background:rgba(255,255,255,0.7);border:1px solid currentColor;border-radius:6px;padding:4px 8px;cursor:pointer;opacity:0.75;}
+  .copy-btn:hover{opacity:1;}
+  .skills-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .skill-chip{font-family:'Inter',sans-serif;font-size:12px;background:var(--amber-l);color:var(--amber-d);padding:6px 11px;border-radius:20px;}
+  .skill-chip.existing{background:var(--green-l);color:var(--green-d);}
+  .skill-chip.trim{background:var(--red-l);color:var(--red-d);}
+  .group-h{font-weight:600;font-size:13px;color:var(--navy);margin:18px 0 8px;}
+  .group-h:first-child{margin-top:0;}
+
+  .checklist{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 28px;}
+  .chk{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--parch2);}
+  .chk:last-child{border-bottom:none;}
+  .chk input{width:18px;height:18px;accent-color:var(--amber);flex-shrink:0;}
+  .chk label{font-size:14px;line-height:1.5;cursor:pointer;}
+  .chk .impact{font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;background:var(--amber-l);color:var(--amber-d);padding:3px 8px;border-radius:10px;margin-left:auto;flex-shrink:0;}
+  .chk.done label{text-decoration:line-through;color:var(--inkmute);}
+
+  @media(max-width:680px){
+    .hero{grid-template-columns:1fr;text-align:center;}
+    .ring-wrap{margin:0 auto;}
+    .detail-cols,.rw-pair{grid-template-columns:1fr;}
+    .role-row{grid-template-columns:110px 1fr 40px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">LinkedIn profile · optimization dashboard</p>
+  <h1>Markus Mosleitner</h1>
+  <p class="sub">Scored against 9 target role clusters in the Gothenburg senior market: Senior Project Manager, Software Delivery, Delivery Manager, Head of Delivery, Head of Operations, Operations Manager, Transformation Lead, Digitalisation Lead, Programme Manager.</p>
+
+  <div class="hero">
+    <div class="ring-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="68" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="14"/>
+        <circle id="heroRing" cx="80" cy="80" r="68" fill="none" stroke="#C97D3C" stroke-width="14" stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="427"/>
+      </svg>
+      <div class="ring-num"><span class="n">88</span><span class="l">/ 100</span></div>
+    </div>
+    <div>
+      <h2>Overall recruiter-search readiness: strong</h2>
+      <p>This is a genuine rewrite, not a touch-up — headline, About, Skills and Experience all moved. Every quick-win from the last checklist landed: typo fixed, Skills expanded with the right keywords, About now references your certifications and stakeholder/vendor/risk language, and the Evinova AB Board role is now its own Experience entry. One trade-off worth a look: the new headline dropped the word "Operations," which softens your Head of Operations / Operations Manager search match slightly even though Skills and About still carry it.</p>
+      <div class="hero-tags">
+        <span class="htag">+22 points vs last review</span>
+        <span class="htag">Typo: fixed</span>
+        <span class="htag">Board role: added</span>
+        <span class="htag">"Operations" dropped from headline</span>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <p class="stitle">Progress since last review</p>
+    <p class="sdesc">Score out of 10 per section, then vs. the previous version of your profile.</p>
+    <div class="detail" id="progressList"></div>
+  </section>
+
+  <section>
+    <p class="stitle">Section scores</p>
+    <p class="sdesc">Click a card to see the specific gaps and fixes behind the score.</p>
+    <div class="cards" id="cardGrid"></div>
+    <div class="detail" id="detailPanel"></div>
+  </section>
+
+  <section>
+    <p class="stitle">Match by target role</p>
+    <p class="sdesc">Estimated keyword/positioning match — how findable you are if a recruiter searches that exact title today.</p>
+    <div class="detail" id="roleList"></div>
+  </section>
+
+  <section>
+    <p class="stitle">Rewrite: before → after</p>
+    <p class="sdesc">Drop-in replacements. Pick a tab to see the comparison.</p>
+    <div class="tabs" id="rwTabs"></div>
+    <div class="rewrite-box" id="rwContent"></div>
+  </section>
+
+  <section>
+    <p class="stitle">Quick-win checklist</p>
+    <p class="sdesc">Ordered by impact on search visibility. Tick as you action them in LinkedIn — your progress stays in this file while open.</p>
+    <div class="checklist" id="checklist"></div>
+  </section>
+
+</div>
+
+<script>
+const sections = [
+  {
+    id:'headline', name:'Headline', tag:'1 line · top of profile', score:9, prevScore:6, color:'green',
+    gaps:[
+      'The word "Operations" no longer appears — softens match for Head of Operations / Operations Manager searches specifically, even though Skills and About still carry it',
+      'Minor: doesn\'t name "Stakeholder" or "Risk Management," but 220-char headlines can\'t hold everything — those now live correctly in Skills and About instead'
+    ],
+    fixes:[
+      'Optional: if Operations roles become a higher priority, swap "Delivery Leader" for "Delivery & Operations Leader" — currently 170/220 characters, so there\'s room',
+      'Otherwise, no action needed — this now covers Project, Programme, Delivery, Digital Transformation, Digitalisation, AI/Agile/SAFe, and your $50M/130-team proof points'
+    ]
+  },
+  {
+    id:'about', name:'About', tag:'summary paragraph', score:9, prevScore:6, color:'green',
+    gaps:[
+      'Essentially resolved — Project & Programme Management, PMO, stakeholder/vendor/risk management, IPMA-B and Scrum Master certifications, operations leadership and digitalisation are all now explicitly named'
+    ],
+    fixes:[
+      'No action needed. If anything, this paragraph is now keyword-complete enough that future edits should focus on readability rather than adding more terms'
+    ]
+  },
+  {
+    id:'skills', name:'Skills', tag:'sidebar · ~40 of 50 slots used', score:9, prevScore:8, color:'green',
+    gaps:[
+      'Typo fixed, and all 5 previously-missing terms added (Programme Management, Stakeholder Management, Risk Management, Digitalisation, GxP) — well done',
+      'Still a slightly dense Project-Management cluster (Project Management, Programme Management, Project Portfolio Management, Software Project Management, Project Planning, Project Delivery, Product Delivery — 7 variants), though this is now less of a concern given Operations and Transformation terms have caught up'
+    ],
+    fixes:[
+      'Optional only: if you want to free up slots for something new later, this PM cluster is the first place to trim',
+      'No urgent action needed'
+    ]
+  },
+  {
+    id:'experience', name:'Experience', tag:'role-by-role bullets', score:8, prevScore:6, color:'green',
+    gaps:[
+      'Evinova AB Board Member is now its own Experience entry — resolved',
+      'Bullet vocabulary in the Head of Product Deployment and Senior Director roles is only lightly revised — still leans on "delivery governance and operating models" rather than explicitly naming stakeholder, vendor or risk management within the bullets themselves'
+    ],
+    fixes:[
+      'Low priority now that About and Skills carry that vocabulary, but if you want Experience to fully match: add "stakeholder," "vendor," or "risk" explicitly into 1-2 bullets on your two most recent roles'
+    ]
+  },
+  {
+    id:'certs', name:'Certifications', tag:'sidebar', score:9, prevScore:7, color:'green',
+    gaps:[
+      'Resolved — IPMA-B Senior Project Manager and Certified Scrum Master are now both referenced directly in About, closing the disconnect between credentials and narrative'
+    ],
+    fixes:[
+      'No action needed'
+    ]
+  }
+];
+
+const colorMap = {amber:'#C97D3C', red:'#B14438', green:'#3F7A3A'};
+
+const cardGrid = document.getElementById('cardGrid');
+const detailPanel = document.getElementById('detailPanel');
+
+function renderCards(activeId){
+  cardGrid.innerHTML = sections.map(s => `
+    <div class="card ${s.id===activeId?'active':''}" data-id="${s.id}">
+      <div class="card-top">
+        <div><div class="card-name">${s.name}</div><div class="card-tag">${s.tag}</div></div>
+        <div class="score-pill" style="color:${colorMap[s.color]}">${s.score}<span style="font-size:13px;color:var(--inkmute)">/10</span></div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${s.score*10}%;background:${colorMap[s.color]}"></div></div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.card').forEach(c=>{
+    c.addEventListener('click', ()=>{ renderCards(c.dataset.id); renderDetail(c.dataset.id); });
+  });
+}
+
+function renderDetail(id){
+  const s = sections.find(x=>x.id===id);
+  detailPanel.innerHTML = `
+    <div class="detail-head"><h3>${s.name}</h3><span class="score-pill" style="color:${colorMap[s.color]}">${s.score}/10</span></div>
+    <div class="detail-cols">
+      <div><span class="col-label"><i></i>Gaps found</span><ul class="gap-list">${s.gaps.map(g=>`<li>${g}</li>`).join('')}</ul></div>
+      <div><span class="col-label">Fix it</span><ul class="fix-list">${s.fixes.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+    </div>
+  `;
+}
+
+renderCards('skills');
+renderDetail('skills');
+
+function renderProgress(){
+  document.getElementById('progressList').innerHTML = sections.map(s=>{
+    const delta = s.score - s.prevScore;
+    const deltaLabel = delta > 0 ? `+${delta}` : delta === 0 ? '—' : `${delta}`;
+    return `
+    <div class="prog-row">
+      <div class="prog-name">${s.name}</div>
+      <div class="prog-old">${s.prevScore}/10</div>
+      <div class="prog-arrow">&#8594;</div>
+      <div class="prog-new" style="color:${colorMap[s.color]}">${s.score}/10</div>
+      <div class="prog-track">
+        <div class="prog-fill-old" style="width:${s.prevScore*10}%"></div>
+        <div class="prog-fill-new" style="width:${s.score*10}%;background:${colorMap[s.color]};opacity:0.55;"></div>
+      </div>
+      <div class="prog-delta ${delta===0?'flat':''}">${deltaLabel}</div>
+    </div>
+  `;}).join('');
+}
+renderProgress();
+
+// Hero ring animation
+const heroScore = 88;
+const circumference = 427;
+const offset = circumference - (heroScore/100)*circumference;
+document.getElementById('heroRing').style.strokeDashoffset = offset;
+
+// Role match
+const roles = [
+  {name:'Delivery Manager', pct:92},
+  {name:'Programme Manager', pct:92},
+  {name:'Software Delivery', pct:88},
+  {name:'Senior Project Manager', pct:88},
+  {name:'Head of Delivery', pct:85},
+  {name:'Transformation Lead', pct:85},
+  {name:'Digitalisation Lead', pct:82},
+  {name:'Head of Operations', pct:70},
+  {name:'Operations Manager', pct:65}
+];
+roles.sort((a,b)=>b.pct-a.pct);
+function roleColor(p){ return p>=70?colorMap.green : p>=50?colorMap.amber : colorMap.red; }
+document.getElementById('roleList').innerHTML = roles.map(r=>`
+  <div class="role-row">
+    <div class="role-name">${r.name}</div>
+    <div class="role-track"><div class="role-fill" style="width:${r.pct}%;background:${roleColor(r.pct)}"></div></div>
+    <div class="role-pct">${r.pct}%</div>
+  </div>
+`).join('');
+
+// Rewrites
+const rewrites = {
+  headline: {
+    label:'Headline',
+    custom: true
+  },
+  about: {
+    label:'About',
+    before: `Senior technology delivery, transformation and operations leader with over 20 years of experience of leading complex, cross-functional technoligy programmes and software delivery organisation in regulated international environments. I specialise in end-to-end (agile) delivery — building and scaling delivery teams, establishing governance and operating models, and driving predictable, high-quality outcomes across multiple concurrent projects and workstreams. (original — no PM/PMO/stakeholder/vendor/risk language, no certifications named)`,
+    after: `Senior Project, Programme & Delivery Manager with over 20 years experience of leading complex, cross-functional digitalisation and transformations programmes as well as software delivery organisations in regulated international environments (financial services, digital health). As IPMA-B certified Senior Project Manager and Certified Scrum Master, I specialise in end-to-end programme and delivery management — building and scaling teams globally, establishing PMO governance, stakeholder, vendor and risk management frameworks, and driving predictable, high-quality outcomes across multiple concurrent workstreams. I bring equal strength in operations leadership and digital transformation: owning $50M+ annual budgets, building global delivery and operating organisations of up to 130 specialists, and leading AI-enabled digitalisation initiatives that generated multi-million-dollar efficiency gains. (live now — fully closes the gap)`
+  },
+  skills: { label:'Skills', custom:true },
+  experience: { label:'Experience bullets', custom:true }
+};
+
+const headlineOptions = [
+  {
+    label:'Live now — implemented',
+    text:'Senior Project, Programme & Delivery Leader | Driving Digital Transformation & Digitalisation at Scale | AI and Agile (SAFe) enabled Delivery | $50M+ Budgets & 130+ Teams'
+  },
+  {
+    label:'Optional variant — if Operations roles become a priority',
+    text:'Senior Project, Programme & Delivery Leader | Operations & Digital Transformation at Scale | AI and Agile (SAFe) enabled Delivery | $50M+ Budgets & 130+ Teams'
+  }
+];
+
+const skillsList = {
+  'Added since last review':['Programme Management','Stakeholder Management','Risk Management','Digitalisation','GxP'],
+  'Removed since last review (good trim)':['Value Propositions','Process Efficiency','Offshore Management'],
+  'Project/Programme cluster (still dense — optional trim)':['Project Management','Project Portfolio Management','Software Project Management','Project Planning','Project Delivery','Product Delivery'],
+  'Operations & Transformation':['Operations Management','Operational Excellence','Organizational Leadership','Digital Transformation','Business Process Improvement','Change Management','Planning Budgeting & Forecasting'],
+  'Delivery & Agile':['Scaled Agile Framework','Agile','Agile Methodologies','Scrum','SDLC','Team Leadership'],
+  'Typo fix confirmed':['Platform operatons → Platform Operations — done']
+};
+
+const expBullets = [
+  {
+    role:'Evinova AB — Board Member',
+    before:'(was missing from LinkedIn entirely)',
+    after:'Now live as its own Experience entry: "Board Member, Evinova AB — Jan 2025–present. Supported establishing \'Evinova AB\' (Swedish subsidiary of AstraZeneca Group) as board member and accountable for the company\'s financial obligations including SHE."'
+  },
+  {
+    role:'Head of Product Deployment (still optional to refine)',
+    before:'Established operational governance and support models ensuring reliable global platform operations and predictable service delivery',
+    after:'Established delivery governance and operating models to ensure predictable service platform delivery and operations (current — could go further: add "vendor and stakeholder governance" to explicitly mirror the language now in About)'
+  }
+];
+
+const rwTabs = document.getElementById('rwTabs');
+const rwContent = document.getElementById('rwContent');
+const tabOrder = ['headline','about','skills','experience'];
+
+function copyText(btn, text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = 'copied';
+    setTimeout(()=>btn.textContent = orig, 1400);
+  });
+}
+
+function renderRewrite(id){
+  if(id==='headline'){
+    rwContent.innerHTML = headlineOptions.map(o=>`
+      <div style="margin-bottom:18px;">
+        <span class="col-label">${o.label}</span>
+        <div class="rw-block rw-after" style="position:relative;">
+          <button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(o.text)}'))">copy</button>
+          ${o.text}
+        </div>
+      </div>
+    `).join('') + `<p style="font-size:12.5px;color:var(--inkmute);margin:14px 0 0;">Your live headline is 170/220 characters — there's room left if you want to add "Operations" back in later. No action needed otherwise.</p>`;
+  } else if(id==='about'){
+    const r = rewrites.about;
+    rwContent.innerHTML = `
+      <div class="rw-pair">
+        <div class="rw-block rw-before"><span class="rw-label">Previous version</span>${r.before}</div>
+        <div class="rw-block rw-after" style="position:relative;"><span class="rw-label">Live now</span><button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(r.after)}'))">copy</button>${r.after}</div>
+      </div>`;
+  } else if(id==='skills'){
+    const styleFor = (group) => group.startsWith('Project/Programme') ? '' : 'existing';
+    rwContent.innerHTML = Object.entries(skillsList).map(([group, items])=>`
+      <div class="group-h">${group}</div>
+      <div class="skills-grid">${items.map(i=>`<span class="skill-chip ${styleFor(group)}">${i}</span>`).join('')}</div>
+    `).join('') + `<p style="font-size:12.5px;color:var(--inkmute);margin:18px 0 0;">All 5 previously-recommended additions are now live (green), the typo is fixed, and 3 low-value entries were trimmed. The amber Project/Programme cluster still has 6 near-overlapping terms — optional to thin out, not urgent.</p>`;
+  } else if(id==='experience'){
+    rwContent.innerHTML = expBullets.map(b=>`
+      <div style="margin-bottom:20px;">
+        <span class="col-label">${b.role}</span>
+        <div class="rw-pair">
+          <div class="rw-block rw-before"><span class="rw-label">Current</span>${b.before}</div>
+          <div class="rw-block rw-after" style="position:relative;"><span class="rw-label">Rewrite</span><button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(b.after)}'))">copy</button>${b.after}</div>
+        </div>
+      </div>
+    `).join('') + `<p style="font-size:12.5px;color:var(--inkmute);margin:4px 0 0;">The Board entry is the big win here. Remaining bullet wording is low priority since About and Skills already carry the stakeholder/vendor/risk vocabulary.</p>`;
+  }
+}
+
+function renderTabs(activeId){
+  rwTabs.innerHTML = tabOrder.map(id=>`<div class="tab ${id===activeId?'active':''}" data-id="${id}">${rewrites[id].label}</div>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{ renderTabs(t.dataset.id); renderRewrite(t.dataset.id); });
+  });
+}
+renderTabs('headline');
+renderRewrite('headline');
+
+// Checklist
+const checklistItems = [
+  {label:'Fix "Platform operatons" typo in Skills', impact:'done', done:true},
+  {label:'Add Stakeholder Management, Risk Management, Programme Management, Digitalisation, GxP to Skills', impact:'done', done:true},
+  {label:'Add "Project Manager / Programme Manager" language to headline', impact:'done', done:true},
+  {label:'Add Evinova AB Board Member as its own Experience entry', impact:'done', done:true},
+  {label:'Rewrite About to reference IPMA-B, PMO, stakeholder/vendor/risk and digitalisation', impact:'done', done:true},
+  {label:'Consider re-adding "Operations" to headline if Operations Manager / Head of Operations roles are a high priority', impact:'optional', done:false},
+  {label:'Trim 2-3 redundant project-management skill variants to reduce dilution', impact:'optional', done:false},
+  {label:'Add "stakeholder," "vendor," or "risk" language directly into 1-2 Experience bullets', impact:'low impact', done:false}
+];
+document.getElementById('checklist').innerHTML = checklistItems.map((c,i)=>`
+  <div class="chk ${c.done?'done':''}" id="chk-${i}">
+    <input type="checkbox" id="chk-input-${i}" ${c.done?'checked':''}>
+    <label for="chk-input-${i}">${c.label}</label>
+    <span class="impact" style="${c.impact==='done'?'background:var(--green-l);color:var(--green-d);':''}">${c.impact}</span>
+  </div>
+`).join('');
+checklistItems.forEach((c,i)=>{
+  document.getElementById(`chk-input-${i}`).addEventListener('change', e=>{
+    document.getElementById(`chk-${i}`).classList.toggle('done', e.target.checked);
+  });
+});
+</script>
+</body>
+</html>

@@ -4,31 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Job Search &amp; Training Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy:   #1F4E79;
-    --blue:   #2E75B6;
-    --sky:    #D6E4F0;
-    --mint:   #E8F5E9;
-    --amber:  #FFF8E1;
-    --red:    #FFEBEE;
+    /* Evinova-inspired palette: Rich Purple + Chalk primary, warm secondary accents */
+    --navy:   #3B0030;  /* Rich Purple — primary */
+    --blue:   #6B1052;  /* lighter plum, for gradients/links */
+    --sky:    #F5E7EF;  /* light purple-pink tint */
+    --mint:   #E1FAF0;  /* light green tint */
+    --amber:  #FFF6CF;  /* light saffron tint */
+    --red:    #FFE9EE;  /* light pink-red tint */
     --white:  #FFFFFF;
-    --off:    #F7F9FC;
-    --border: #DDE3EC;
-    --muted:  #6B7A90;
-    --dark:   #1A202C;
-    --green:  #27AE60;
-    --orange: #E67E22;
-    --crimson:#C0392B;
-    --purple: #6C3483;
-    --purpll: #F3E5F5;
-    --teal:   #117A65;
-    --teall:  #D5F5E3;
-    --rose:   #922B21;
-    --rosel:  #FADBD8;
+    --off:    #F9F8F6;  /* Chalk */
+    --border: #E9DEE5;
+    --muted:  #7C6470;
+    --dark:   #2B0A23;
+    --green:  #1F9C6E;  /* darkened Active Green, AA on white */
+    --orange: #D9600A;  /* darkened brand orange, AA on white */
+    --crimson:#A8293A;
+    --purple: #8A2F55;  /* deep pink/plum — Training accent */
+    --purpll: #FDEAF0;
+    --teal:   #2F7A86;  /* darkened teal — Network accent */
+    --teall:  #E3F7F3;
+    --rose:   #8A2F55;
+    --rosel:  #FDEAF0;
+    /* Raw brand colours, for high-impact fills (pair with dark text per brand guide) */
+    --pinkB:    #FA7AAB;
+    --greenB:   #36E09E;
+    --saffronB: #FFCD00;
+    --orangeB:  #F16D07;
+    --tealB:    #4F9EB0;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Inter, sans-serif; background: var(--off); color: var(--dark); min-height: 100vh; }
+  body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--off); color: var(--dark); min-height: 100vh; }
+  .header h1, .card-ttl, .modal-title, .sec-label, .item-name, .stat-val, .login-logo, .rec-title {
+    font-family: 'Century Gothic', 'Poppins', 'Inter', sans-serif;
+  }
 
   /* Header */
   .header { background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%); color: #fff; padding: 20px 28px 0; }
@@ -70,27 +83,27 @@
   .badge.clickable:hover { opacity: .8; }
 
   /* Buttons */
-  .btn { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
+  .btn { padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
   .btn:hover { opacity: .88; }
-  .btn-primary  { background: var(--blue);   color: #fff; }
-  .btn-teal     { background: var(--teal);   color: #fff; }
-  .btn-purple   { background: var(--purple); color: #fff; }
+  .btn-primary  { background: var(--greenB);  color: var(--dark); }
+  .btn-teal     { background: var(--tealB);   color: var(--dark); }
+  .btn-purple   { background: var(--pinkB);   color: var(--dark); }
   .btn-ghost    { background: var(--white);  color: var(--muted); border: 1px solid var(--border) !important; }
   .btn-sky      { background: var(--sky);    color: var(--navy); }
-  .btn-danger   { background: #FEE2E2;       color: var(--crimson); }
+  .btn-danger   { background: var(--red);     color: var(--crimson); }
   .btn-sm       { padding: 5px 11px; font-size: 12px; }
   .btn-xs       { padding: 3px 8px;  font-size: 11px; }
 
   /* Filter bar */
   .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .filter-btn { padding: 5px 11px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--muted); transition: all .12s; }
+  .filter-btn { padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--muted); transition: all .12s; }
   .filter-btn.active-blue   { background: var(--navy);   color: #fff; border-color: var(--navy); }
   .filter-btn.active-teal   { background: var(--teal);   color: #fff; border-color: var(--teal); }
   .filter-btn.active-purple { background: var(--purple); color: #fff; border-color: var(--purple); }
   .filter-btn.active-dark   { background: var(--navy);   color: #fff; border-color: var(--navy); }
 
   /* Search input */
-  .search-input { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; width: 200px; }
+  .search-input { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; width: 200px; }
 
   /* Progress bar */
   .prog-wrap { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
@@ -176,16 +189,16 @@
   }
 
   /* Login screen */
-  .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%); z-index: 999; display: flex; align-items: center; justify-content: center; }
+  .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #3B0030 0%, #6B1052 100%); z-index: 999; display: flex; align-items: center; justify-content: center; }
   .login-box { background: #fff; border-radius: 20px; padding: 40px 40px 36px; width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
-  .login-logo { font-size: 22px; font-weight: 800; color: #1F4E79; margin-bottom: 4px; letter-spacing: -.4px; }
-  .login-sub  { font-size: 12px; color: #6B7A90; margin-bottom: 28px; }
-  .login-label { font-size: 12px; font-weight: 600; color: #6B7A90; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
-  .login-input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid #DDE3EC; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 14px; box-sizing: border-box; transition: border-color .15s; }
-  .login-input:focus { border-color: #2E75B6; }
-  .login-btn { width: 100%; padding: 12px; border-radius: 10px; background: linear-gradient(135deg, #1F4E79, #2E75B6); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
+  .login-logo { font-size: 22px; font-weight: 800; color: #3B0030; margin-bottom: 4px; letter-spacing: -.4px; }
+  .login-sub  { font-size: 12px; color: #7C6470; margin-bottom: 28px; }
+  .login-label { font-size: 12px; font-weight: 600; color: #7C6470; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
+  .login-input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid #E9DEE5; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 14px; box-sizing: border-box; transition: border-color .15s; }
+  .login-input:focus { border-color: #8A2F55; }
+  .login-btn { width: 100%; padding: 12px; border-radius: 999px; background: linear-gradient(135deg, #3B0030, #6B1052); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
   .login-btn:hover { opacity: .92; }
-  .login-error { color: #C0392B; font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
+  .login-error { color: #A8293A; font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
   .login-error.show { display: block; }
   .logout-btn { font-size: 12px; background: rgba(255,255,255,.15); border: none; color: #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; font-weight: 600; }
   .logout-btn:hover { background: rgba(255,255,255,.25); }
@@ -224,6 +237,7 @@
     <button class="tab-btn" onclick="showTab('network')">Network</button>
     <button class="tab-btn" onclick="showTab('training')">Training</button>
     <button class="tab-btn" onclick="showTab('strategy')">Strategy</button>
+    <button class="tab-btn" onclick="showTab('linkedin')">LinkedIn</button>
   </div>
 </div>
 
@@ -250,6 +264,11 @@
       <div class="card-hdr"><span class="card-ttl" style="color:var(--teal)">Network Pipeline</span></div>
       <div id="dash-net-pipeline"></div>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl" style="color:var(--orange);margin-bottom:12px">🔔 Follow-ups & To-Dos</div>
+    <div id="dash-followups"></div>
   </div>
 
   <div class="card">
@@ -340,6 +359,22 @@
   <div id="strategy-content"></div>
 </div>
 
+<!-- ════════════════════════════ LINKEDIN ════════════════════════════════════ -->
+<div id="tab-linkedin" class="section">
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="card-ttl" style="font-size:14px">🔗 LinkedIn Optimization Dashboard</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Headline, About, Skills &amp; Experience scoring vs. target roles · updated after each profile revision</div>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="linkedin-dashboard.html" target="_blank" rel="noopener">↗ Open full screen</a>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <iframe id="liDashFrame" src="linkedin-dashboard.html" title="LinkedIn Optimization Dashboard" loading="lazy" style="width:100%;border:0;display:block;min-height:600px" onload="resizeLiFrame(this)"></iframe>
+  </div>
+</div>
+
 </div><!-- /body -->
 
 <!-- ═══════════════════════════════ MODALS ═══════════════════════════════════ -->
@@ -349,15 +384,21 @@
     <div class="form-group"><label class="form-label">Company *</label><input class="form-input" id="af-company" placeholder="e.g. Volvo Cars"></div>
     <div class="form-group"><label class="form-label">Role / Title *</label><input class="form-input" id="af-role" placeholder="e.g. Head of Delivery"></div>
     <div class="form-group"><label class="form-label">Hiring Manager / Contact</label><input class="form-input" id="af-contact" placeholder="Name or LinkedIn"></div>
-    <div class="form-group"><label class="form-label">Date Applied</label><input class="form-input" id="af-date" type="date"></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Date Applied</label><input class="form-input" id="af-date" type="date"></div>
+      <div><label class="form-label">Date Responded</label><input class="form-input" id="af-dateresponded" type="date"></div>
+    </div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Track</label><select class="form-input" id="af-track"></select></div>
       <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
     </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="af-notes" rows="3" placeholder="Next steps, recruiter name…"></textarea></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
-      <input type="checkbox" id="af-followup" style="width:16px;height:16px;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="af-followup" style="width:16px;height:16px;cursor:pointer" onchange="toggleAppFollowupDate()">
       <label for="af-followup" style="font-size:13px;cursor:pointer">Flag for follow-up</label>
+    </div>
+    <div class="form-group" id="af-followupdate-wrap" style="display:none;margin-bottom:20px">
+      <label class="form-label">Follow-up Date</label><input class="form-input" id="af-followupdate" type="date">
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAppModal()">Cancel</button>
@@ -420,53 +461,53 @@
 <script>
 // ═══════════════════════════ CONFIG ═══════════════════════════════════════════
 const APP_STATUS = {
-  "Applied":       { color:"#2E75B6", bg:"#D6E4F0", dot:"#2E75B6" },
-  "Interviewing":  { color:"#7B5800", bg:"#FFF8E1", dot:"#E67E22" },
-  "Offer":         { color:"#1A5C35", bg:"#E8F5E9", dot:"#27AE60" },
-  "Rejected":      { color:"#C0392B", bg:"#FFEBEE", dot:"#C0392B" },
-  "Withdrawn":     { color:"#6B7A90", bg:"#F0F0F0", dot:"#6B7A90" },
-  "Interim Lead":  { color:"#6C3483", bg:"#F3E5F5", dot:"#6C3483" },
+  "Applied":       { color:"#2F7A86", bg:"#E3F7F3", dot:"#4F9EB0" },
+  "Interviewing":  { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
+  "Offer":         { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
+  "Rejected":      { color:"#A8293A", bg:"#FFE9EE", dot:"#A8293A" },
+  "Withdrawn":     { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
+  "Interim Lead":  { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
 };
 const APP_TRACK = {
-  "Permanent": { color:"#1F4E79", bg:"#D6E4F0" },
-  "Interim":   { color:"#5D4037", bg:"#FBE9E7" },
-  "Network":   { color:"#117A65", bg:"#D5F5E3" },
+  "Permanent": { color:"#3B0030", bg:"#F3E6EF" },
+  "Interim":   { color:"#9A4A06", bg:"#FDE7D2" },
+  "Network":   { color:"#2F7A86", bg:"#E3F7F3" },
 };
 const TRAIN_CAT = {
-  "AI & Technology":        { color:"#6C3483", bg:"#F3E5F5", icon:"🤖" },
-  "Leadership & Management":{ color:"#1F4E79", bg:"#D6E4F0", icon:"🎯" },
-  "Certification":          { color:"#117A65", bg:"#D5F5E3", icon:"📜" },
-  "Other":                  { color:"#6B7A90", bg:"#F0F0F0", icon:"📚" },
+  "AI & Technology":        { color:"#8A2F55", bg:"#FDEAF0", icon:"🤖" },
+  "Leadership & Management":{ color:"#3B0030", bg:"#F3E6EF", icon:"🎯" },
+  "Certification":          { color:"#15694A", bg:"#E1FAF0", icon:"📜" },
+  "Other":                  { color:"#7C6470", bg:"#F1ECEF", icon:"📚" },
 };
 const TRAIN_STATUS = {
-  "Not started": { color:"#6B7A90", bg:"#F0F0F0" },
-  "In progress": { color:"#7B5800", bg:"#FFF8E1" },
-  "Completed":   { color:"#1A5C35", bg:"#E8F5E9" },
-  "Paused":      { color:"#C0392B", bg:"#FFEBEE" },
+  "Not started": { color:"#7C6470", bg:"#F1ECEF" },
+  "In progress": { color:"#8A6500", bg:"#FFF6CF" },
+  "Completed":   { color:"#15694A", bg:"#E1FAF0" },
+  "Paused":      { color:"#A8293A", bg:"#FFE9EE" },
 };
 const NET_RELATION = {
-  "Former colleague":  { color:"#1F4E79", bg:"#D6E4F0", icon:"👔" },
-  "AZ / Evinova":      { color:"#117A65", bg:"#D5F5E3", icon:"🏢" },
-  "Recruiter/Agency":  { color:"#6C3483", bg:"#F3E5F5", icon:"🔍" },
-  "Industry contact":  { color:"#5D4037", bg:"#FBE9E7", icon:"🌐" },
-  "Friend / Personal": { color:"#27AE60", bg:"#E8F5E9", icon:"🤝" },
+  "Former colleague":  { color:"#3B0030", bg:"#F3E6EF", icon:"👔" },
+  "AZ / Evinova":      { color:"#15694A", bg:"#E1FAF0", icon:"🏢" },
+  "Recruiter/Agency":  { color:"#8A2F55", bg:"#FDEAF0", icon:"🔍" },
+  "Industry contact":  { color:"#9A4A06", bg:"#FDE7D2", icon:"🌐" },
+  "Friend / Personal": { color:"#2F7A86", bg:"#E3F7F3", icon:"🤝" },
   "LinkedIn":          { color:"#0A66C2", bg:"#E8F0FE", icon:"💼" },
 };
 const NET_STATUS = {
-  "To contact":    { color:"#E67E22", bg:"#FFF8E1", dot:"#E67E22" },
-  "Contacted":     { color:"#2E75B6", bg:"#D6E4F0", dot:"#2E75B6" },
-  "Replied":       { color:"#117A65", bg:"#D5F5E3", dot:"#117A65" },
-  "Meeting set":   { color:"#7B5800", bg:"#FFF3CD", dot:"#E67E22" },
-  "Met":           { color:"#27AE60", bg:"#E8F5E9", dot:"#27AE60" },
-  "Not responsive":{ color:"#6B7A90", bg:"#F0F0F0", dot:"#6B7A90" },
+  "To contact":    { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
+  "Contacted":     { color:"#2F7A86", bg:"#E3F7F3", dot:"#4F9EB0" },
+  "Replied":       { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
+  "Meeting set":   { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
+  "Met":           { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
+  "Not responsive":{ color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
 };
 const NET_PURPOSE = {
-  "Coffee chat / advice": { color:"#1F4E79", bg:"#D6E4F0" },
-  "Job referral":         { color:"#27AE60", bg:"#E8F5E9" },
-  "Market intel":         { color:"#6C3483", bg:"#F3E5F5" },
-  "Recruiter briefing":   { color:"#117A65", bg:"#D5F5E3" },
-  "Introduction ask":     { color:"#7B5800", bg:"#FFF8E1" },
-  "General reconnect":    { color:"#6B7A90", bg:"#F0F0F0" },
+  "Coffee chat / advice": { color:"#3B0030", bg:"#F3E6EF" },
+  "Job referral":         { color:"#15694A", bg:"#E1FAF0" },
+  "Market intel":         { color:"#8A2F55", bg:"#FDEAF0" },
+  "Recruiter briefing":   { color:"#2F7A86", bg:"#E3F7F3" },
+  "Introduction ask":     { color:"#8A6500", bg:"#FFF6CF" },
+  "General reconnect":    { color:"#7C6470", bg:"#F1ECEF" },
 };
 const RECOMMENDED = [
   { category:"AI & Technology",         title:"Prompt Engineering for Leaders",     provider:"LinkedIn Learning", duration:"3h",  url:"https://www.linkedin.com/learning/", milestone:"Week 1" },
@@ -569,6 +610,13 @@ function showTab(id) {
   document.querySelectorAll(".tab-btn").forEach(b=>{ if(b.getAttribute("onclick")===`showTab('${id}')`) b.classList.add("active"); });
 }
 
+function resizeLiFrame(frame) {
+  try {
+    const h = frame.contentWindow.document.body.scrollHeight;
+    if (h) frame.style.height = (h + 24) + "px";
+  } catch (e) { frame.style.height = "1400px"; }
+}
+
 // ═══════════════════════════ POPULATE SELECTS ═════════════════════════════════
 function populateSelects() {
   sel("af-track",   Object.keys(APP_TRACK));
@@ -635,6 +683,33 @@ function renderDashboard() {
     netPip += progRow(s, c, totalC, cfg.dot);
   });
   document.getElementById("dash-net-pipeline").innerHTML = netPip;
+
+  // Follow-ups & to-dos (chronological)
+  const followUps = [
+    ...apps.filter(a=>a.followUp&&a.followUpDate).map(a=>({
+      date:a.followUpDate, label:`${a.company} — ${a.role}`, type:"Application", color:"var(--navy)",
+      action:`openAppModal('${a.id}')`
+    })),
+    ...contacts.filter(c=>c.followUpDate).map(c=>({
+      date:c.followUpDate, label:[c.name,c.company].filter(Boolean).join(" @ "), type:"Network", color:"var(--teal)",
+      action:`openNetModal('${c.id}')`
+    })),
+  ].sort((a,b)=>a.date.localeCompare(b.date));
+
+  document.getElementById("dash-followups").innerHTML = followUps.length===0
+    ? `<div class="empty-state">No follow-ups scheduled.</div>`
+    : followUps.map(f=>{
+        const overdue = f.date < today();
+        return `<div class="item-row" style="cursor:pointer;padding:8px 0;border-bottom:1px solid var(--border)" onclick="${f.action}">
+          <div style="flex:1">
+            <div class="item-badges">
+              ${badge(f.type, f.color, "#F1F5F9")}
+              <span class="item-name" style="font-size:13px">${f.label}</span>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:${overdue?"var(--rose)":"var(--orange)"}">${overdue?"⚠ ":""}${f.date}</div>
+        </div>`;
+      }).join("");
 
   // KPIs
   const kpiDefs = [
@@ -724,6 +799,8 @@ function renderApplications() {
           <div style="font-size:13px;margin-bottom:4px">${app.role}</div>
           <div class="item-meta">
             ${app.dateApplied?`<span>Applied: ${app.dateApplied}</span>`:""}
+            ${app.dateResponded?`<span>Responded: ${app.dateResponded}</span>`:""}
+            ${app.followUpDate?`<span>🔔 Follow up: ${app.followUpDate}</span>`:""}
             ${app.contact?`<span>Contact: ${app.contact}</span>`:""}
           </div>
           ${app.notes?`<div class="item-notes">${app.notes}</div>`:""}
@@ -971,11 +1048,18 @@ function openAppModal(id) {
   document.getElementById("af-role").value     = app?.role||"";
   document.getElementById("af-contact").value  = app?.contact||"";
   document.getElementById("af-date").value     = app?.dateApplied||today();
+  document.getElementById("af-dateresponded").value = app?.dateResponded||"";
   sel("af-track",  Object.keys(APP_TRACK),  app?.track||"Permanent");
   sel("af-status", Object.keys(APP_STATUS), app?.status||"Applied");
   document.getElementById("af-notes").value    = app?.notes||"";
   document.getElementById("af-followup").checked = app?.followUp||false;
+  document.getElementById("af-followupdate").value = app?.followUpDate||"";
+  toggleAppFollowupDate();
   document.getElementById("appModal").style.display="flex";
+}
+function toggleAppFollowupDate() {
+  document.getElementById("af-followupdate-wrap").style.display =
+    document.getElementById("af-followup").checked ? "block" : "none";
 }
 function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; }
 function submitApp() {
@@ -987,10 +1071,12 @@ function submitApp() {
     company, role,
     contact:    document.getElementById("af-contact").value.trim(),
     dateApplied:document.getElementById("af-date").value,
+    dateResponded:document.getElementById("af-dateresponded").value,
     track:      document.getElementById("af-track").value,
     status:     document.getElementById("af-status").value,
     notes:      document.getElementById("af-notes").value.trim(),
     followUp:   document.getElementById("af-followup").checked,
+    followUpDate:document.getElementById("af-followupdate").value,
   };
   if (editAppId) state.apps = state.apps.map(a=>a.id===editAppId?entry:a);
   else state.apps.push(entry);
