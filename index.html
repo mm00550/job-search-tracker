@@ -332,7 +332,10 @@
     <button class="btn btn-primary" onclick="openAppModal()">+ Add Application</button>
   </div>
   <div class="filters" id="app-track-filters"></div>
-  <div id="app-list"></div>
+  <div class="net-section-hdr reach" style="background:var(--sky);color:var(--navy)">📋 Active applications <span class="net-section-count" id="app-active-count" style="background:rgba(0,0,0,.1)">0</span></div>
+  <div id="app-active-list"></div>
+  <div class="net-section-hdr contacted" style="background:#F1ECEF;color:var(--muted)">🏁 Closed / Withdrawn <span class="net-section-count" id="app-closed-count" style="background:rgba(0,0,0,.1)">0</span></div>
+  <div id="app-closed-list"></div>
 </div>
 
 <!-- ══════════════════════════════ NETWORK ═══════════════════════════════════ -->
@@ -382,7 +385,10 @@
   <div id="recommended-panel" style="display:none"></div>
 
   <div class="filters" id="train-cat-filters" style="margin:12px 0"></div>
-  <div id="train-list"></div>
+  <div class="net-section-hdr reach" style="background:var(--purpll);color:var(--purple)">📚 In progress / Not started <span class="net-section-count" id="train-active-count" style="background:rgba(0,0,0,.1)">0</span></div>
+  <div id="train-active-list"></div>
+  <div class="net-section-hdr contacted" style="background:var(--mint);color:var(--green)">✅ Completed <span class="net-section-count" id="train-completed-count" style="background:rgba(0,0,0,.1)">0</span></div>
+  <div id="train-completed-list"></div>
 
   <div class="card card-dashed" style="margin-top:8px">
     <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">📅 Daily Training Routine (30–45 min)</div>
@@ -428,7 +434,16 @@
       <div><label class="form-label">Track</label><select class="form-input" id="af-track"></select></div>
       <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
     </div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="af-notes" rows="3" placeholder="Next steps, recruiter name…"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Notes / History</label>
+      <div class="history-log">
+        <div class="history-add">
+          <textarea id="af-note-input" rows="2" placeholder="Next steps, interview feedback, recruiter name…"></textarea>
+          <button onclick="addAppHistoryEntry()">Add</button>
+        </div>
+        <div class="history-entries" id="af-history-entries"></div>
+      </div>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <input type="checkbox" id="af-followup" style="width:16px;height:16px;cursor:pointer" onchange="toggleAppFollowupDate()">
       <label for="af-followup" style="font-size:13px;cursor:pointer">Flag for follow-up</label>
@@ -455,7 +470,16 @@
     <div class="form-group"><label class="form-label">Duration</label><input class="form-input" id="tf-duration" placeholder="e.g. 6h"></div>
     <div class="form-group"><label class="form-label">Target Completion</label><input class="form-input" id="tf-target" placeholder="e.g. Week 4 / July 2026"></div>
     <div class="form-group"><label class="form-label">Course URL</label><input class="form-input" id="tf-url" placeholder="https://…"></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="tf-notes" rows="2" placeholder="Progress notes…"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Notes / History</label>
+      <div class="history-log">
+        <div class="history-add">
+          <textarea id="tf-note-input" rows="2" placeholder="Progress notes, what you learned, next module…"></textarea>
+          <button onclick="addTrainHistoryEntry()">Add</button>
+        </div>
+        <div class="history-entries" id="tf-history-entries"></div>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeTrainModal()">Cancel</button>
       <button class="btn btn-purple" onclick="submitTrain()">Save</button>
@@ -876,13 +900,13 @@ function renderDashboard() {
 }
 
 // ═══════════════════════════ RENDER APPLICATIONS ═══════════════════════════════
+const APP_CLOSED_STATUSES = new Set(["Rejected","Withdrawn"]);
+
 function renderApplications() {
-  // Status filter buttons
   const statuses = ["All", ...Object.keys(APP_STATUS)];
   document.getElementById("app-status-filters").innerHTML = statuses.map(s=>`
     <button class="filter-btn${s===appStatusFilter?" active-blue":""}" onclick="setAppStatusFilter('${s}')">${s}</button>`).join("");
 
-  // Track filter buttons
   const tracks = ["All","Permanent","Interim","Network"];
   document.getElementById("app-track-filters").innerHTML = tracks.map(t=>`
     <button class="filter-btn${t===appTrackFilter?" active-blue":""}" onclick="setAppTrackFilter('${t}')">${t}</button>`).join("");
@@ -892,14 +916,10 @@ function renderApplications() {
     (appTrackFilter==="All"||a.track===appTrackFilter)
   );
 
-  if (filtered.length===0) {
-    document.getElementById("app-list").innerHTML = `<div class="card"><div class="empty-state">No applications yet. Hit "+ Add Application" to log your first one.</div></div>`;
-    return;
-  }
-
-  document.getElementById("app-list").innerHTML = filtered.map(app=>{
+  function renderAppCard(app) {
     const sc = APP_STATUS[app.status]||{};
     const tc = APP_TRACK[app.track]||{};
+    const latestNote = (app.history||[]).length > 0 ? app.history[app.history.length-1].text : (app.notes||"");
     return `<div class="item-card" style="border-left-color:${sc.dot}">
       <div class="item-row">
         <div style="flex:1">
@@ -916,7 +936,7 @@ function renderApplications() {
             ${app.followUpDate?`<span>🔔 Follow up: ${app.followUpDate}</span>`:""}
             ${app.contact?`<span>Contact: ${app.contact}</span>`:""}
           </div>
-          ${app.notes?`<div class="item-notes">${app.notes}</div>`:""}
+          ${latestNote?`<div class="item-notes">${escHtml(latestNote)}</div>`:""}
         </div>
         <div class="item-actions">
           <button class="btn btn-sky btn-sm" onclick="openAppModal('${app.id}')">Edit</button>
@@ -924,7 +944,21 @@ function renderApplications() {
         </div>
       </div>
     </div>`;
-  }).join("");
+  }
+
+  const active = filtered.filter(a=>!APP_CLOSED_STATUSES.has(a.status));
+  const closed = filtered.filter(a=>APP_CLOSED_STATUSES.has(a.status));
+
+  document.getElementById("app-active-count").textContent  = active.length;
+  document.getElementById("app-closed-count").textContent  = closed.length;
+
+  document.getElementById("app-active-list").innerHTML = active.length === 0
+    ? `<div class="card"><div class="empty-state">No active applications. Hit "+ Add Application" to log your first one.</div></div>`
+    : active.map(renderAppCard).join("");
+
+  document.getElementById("app-closed-list").innerHTML = closed.length === 0
+    ? `<div class="card"><div class="empty-state">No closed applications yet.</div></div>`
+    : closed.map(renderAppCard).join("");
 }
 
 function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
@@ -1056,37 +1090,49 @@ function renderTraining() {
 
   // Course list
   const filtered = state.trainings.filter(t=>trainCatFilter==="All"||t.category===trainCatFilter);
-  if (filtered.length===0) {
-    document.getElementById("train-list").innerHTML = `<div class="card"><div class="empty-state">No courses yet. Browse recommended above or add your own.</div></div>`;
-  } else {
-    document.getElementById("train-list").innerHTML = filtered.map(t=>{
-      const cc = TRAIN_CAT[t.category]||TRAIN_CAT["Other"];
-      const sc = TRAIN_STATUS[t.status]||TRAIN_STATUS["Not started"];
-      return `<div class="item-card" style="border-left-color:${cc.color}">
-        <div class="item-row">
-          <div style="flex:1">
-            <div class="item-badges">
-              <span style="font-size:15px">${cc.icon}</span>
-              <span class="item-name">${t.title}</span>
-              ${badge(t.category, cc.color, cc.bg)}
-              ${badge(t.status+" →", sc.color, sc.bg, true, `cycleTrainStatus('${t.id}')`)}
-            </div>
-            <div class="item-meta">
-              ${t.provider?`<span>📍 ${t.provider}</span>`:""}
-              ${t.duration?`<span>⏱ ${t.duration}</span>`:""}
-              ${t.targetDate?`<span>🎯 ${t.targetDate}</span>`:""}
-            </div>
-            ${t.notes?`<div class="item-notes">${t.notes}</div>`:""}
-            ${t.url?`<div style="margin-top:4px"><a href="${t.url}" target="_blank" rel="noopener" style="font-size:12px">🔗 Open course →</a></div>`:""}
+
+  function renderTrainCard(t) {
+    const cc = TRAIN_CAT[t.category]||TRAIN_CAT["Other"];
+    const sc = TRAIN_STATUS[t.status]||TRAIN_STATUS["Not started"];
+    const latestNote = (t.history||[]).length > 0 ? t.history[t.history.length-1].text : (t.notes||"");
+    return `<div class="item-card" style="border-left-color:${cc.color}">
+      <div class="item-row">
+        <div style="flex:1">
+          <div class="item-badges">
+            <span style="font-size:15px">${cc.icon}</span>
+            <span class="item-name">${t.title}</span>
+            ${badge(t.category, cc.color, cc.bg)}
+            ${badge(t.status+" →", sc.color, sc.bg, true, `cycleTrainStatus('${t.id}')`)}
           </div>
-          <div class="item-actions">
-            <button class="btn btn-sky btn-sm" onclick="openTrainModal('${t.id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTrain('${t.id}')">✕</button>
+          <div class="item-meta">
+            ${t.provider?`<span>📍 ${t.provider}</span>`:""}
+            ${t.duration?`<span>⏱ ${t.duration}</span>`:""}
+            ${t.targetDate?`<span>🎯 ${t.targetDate}</span>`:""}
           </div>
+          ${latestNote?`<div class="item-notes">${escHtml(latestNote)}</div>`:""}
+          ${t.url?`<div style="margin-top:4px"><a href="${t.url}" target="_blank" rel="noopener" style="font-size:12px">🔗 Open course →</a></div>`:""}
         </div>
-      </div>`;
-    }).join("");
+        <div class="item-actions">
+          <button class="btn btn-sky btn-sm" onclick="openTrainModal('${t.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTrain('${t.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
   }
+
+  const active    = filtered.filter(t=>t.status!=="Completed");
+  const completed = filtered.filter(t=>t.status==="Completed");
+
+  document.getElementById("train-active-count").textContent    = active.length;
+  document.getElementById("train-completed-count").textContent = completed.length;
+
+  document.getElementById("train-active-list").innerHTML = active.length === 0
+    ? `<div class="card"><div class="empty-state">No active courses. Browse recommended above or add your own.</div></div>`
+    : active.map(renderTrainCard).join("");
+
+  document.getElementById("train-completed-list").innerHTML = completed.length === 0
+    ? `<div class="card"><div class="empty-state">No completed courses yet.</div></div>`
+    : completed.map(renderTrainCard).join("");
 
   // Routine
   const routine = [["Mon/Wed","AI & Technology — focused 30-min block on current course"],["Tue/Thu","Leadership & Management — articles, videos, or course modules"],["Friday","Certification prep or weekly review. Update tracker."],["Weekend","Optional: longer session if course deadline approaching"]];
@@ -1164,9 +1210,12 @@ function renderStrategy() {
 }
 
 // ═══════════════════════════ APP MODAL ════════════════════════════════════════
+let _appModalHistory = [];
+
 function openAppModal(id) {
   editAppId = id||null;
   const app = id ? state.apps.find(a=>a.id===id) : null;
+  _appModalHistory = app?.history ? JSON.parse(JSON.stringify(app.history)) : [];
   document.getElementById("appModalTitle").textContent = id?"Edit Application":"Log New Application";
   document.getElementById("af-company").value  = app?.company||"";
   document.getElementById("af-role").value     = app?.role||"";
@@ -1175,21 +1224,65 @@ function openAppModal(id) {
   document.getElementById("af-dateresponded").value = app?.dateResponded||"";
   sel("af-track",  Object.keys(APP_TRACK),  app?.track||"Permanent");
   sel("af-status", Object.keys(APP_STATUS), app?.status||"Applied");
-  document.getElementById("af-notes").value    = app?.notes||"";
+  document.getElementById("af-note-input").value = "";
   document.getElementById("af-followup").checked = app?.followUp||false;
   document.getElementById("af-followupdate").value = app?.followUpDate||"";
   toggleAppFollowupDate();
+  renderAppHistoryEntries();
   document.getElementById("appModal").style.display="flex";
 }
+function renderAppHistoryEntries() {
+  const el = document.getElementById("af-history-entries");
+  if (!_appModalHistory.length) { el.innerHTML = `<div class="history-empty">No notes yet.</div>`; return; }
+  el.innerHTML = [..._appModalHistory].reverse().map((h,ri)=>{
+    const i = _appModalHistory.length - 1 - ri;
+    return `<div class="history-entry">
+      <div class="history-avatar">MM</div>
+      <div class="history-body">
+        <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
+        <div class="history-text" id="aht-${i}">${escHtml(h.text)}</div>
+        <textarea class="history-edit-area" id="ahea-${i}" rows="2">${escHtml(h.text)}</textarea>
+        <div class="history-actions">
+          <button class="history-link" id="ahedit-${i}" onclick="startEditAppHistory(${i})">Edit</button>
+          <button class="history-link" id="ahsave-${i}" style="display:none;color:var(--green)" onclick="saveEditAppHistory(${i})">Save</button>
+          <button class="history-link" id="ahcancel-${i}" style="display:none" onclick="renderAppHistoryEntries()">Cancel</button>
+          <button class="history-link" style="color:var(--crimson)" onclick="deleteAppHistoryEntry(${i})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function addAppHistoryEntry() {
+  const input = document.getElementById("af-note-input");
+  const text = input.value.trim(); if (!text) return;
+  _appModalHistory.push({ id:String(Date.now()), ts:new Date().toISOString(), text });
+  input.value = ""; renderAppHistoryEntries();
+}
+function startEditAppHistory(i) {
+  document.getElementById("aht-"+i).classList.add("editing");
+  document.getElementById("ahea-"+i).classList.add("editing");
+  document.getElementById("ahedit-"+i).style.display="none";
+  document.getElementById("ahsave-"+i).style.display="";
+  document.getElementById("ahcancel-"+i).style.display="";
+}
+function saveEditAppHistory(i) {
+  const val = document.getElementById("ahea-"+i).value.trim(); if (!val) return;
+  _appModalHistory[i].text = val; renderAppHistoryEntries();
+}
+function deleteAppHistoryEntry(i) { _appModalHistory.splice(i,1); renderAppHistoryEntries(); }
+
 function toggleAppFollowupDate() {
   document.getElementById("af-followupdate-wrap").style.display =
     document.getElementById("af-followup").checked ? "block" : "none";
 }
-function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; }
+function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; _appModalHistory=[]; }
 function submitApp() {
   const company = document.getElementById("af-company").value.trim();
   const role    = document.getElementById("af-role").value.trim();
   if (!company||!role) return;
+  const pendingNote = document.getElementById("af-note-input").value.trim();
+  const history = [..._appModalHistory];
+  if (pendingNote) history.push({ id:String(Date.now()), ts:new Date().toISOString(), text:pendingNote });
   const entry = {
     id: editAppId||String(Date.now()),
     company, role,
@@ -1198,7 +1291,7 @@ function submitApp() {
     dateResponded:document.getElementById("af-dateresponded").value,
     track:      document.getElementById("af-track").value,
     status:     document.getElementById("af-status").value,
-    notes:      document.getElementById("af-notes").value.trim(),
+    history,
     followUp:   document.getElementById("af-followup").checked,
     followUpDate:document.getElementById("af-followupdate").value,
   };
@@ -1213,9 +1306,12 @@ function deleteApp(id) {
 }
 
 // ═══════════════════════════ TRAIN MODAL ══════════════════════════════════════
+let _trainModalHistory = [];
+
 function openTrainModal(id) {
   editTrainId = id||null;
   const t = id ? state.trainings.find(x=>x.id===id) : null;
+  _trainModalHistory = t?.history ? JSON.parse(JSON.stringify(t.history)) : [];
   document.getElementById("trainModalTitle").textContent = id?"Edit Course":"Add Course";
   document.getElementById("tf-title").value    = t?.title||"";
   sel("tf-category", Object.keys(TRAIN_CAT),    t?.category||"AI & Technology");
@@ -1224,13 +1320,57 @@ function openTrainModal(id) {
   document.getElementById("tf-duration").value = t?.duration||"";
   document.getElementById("tf-target").value   = t?.targetDate||"";
   document.getElementById("tf-url").value      = t?.url||"";
-  document.getElementById("tf-notes").value    = t?.notes||"";
+  document.getElementById("tf-note-input").value = "";
+  renderTrainHistoryEntries();
   document.getElementById("trainModal").style.display="flex";
 }
-function closeTrainModal() { document.getElementById("trainModal").style.display="none"; editTrainId=null; }
+function renderTrainHistoryEntries() {
+  const el = document.getElementById("tf-history-entries");
+  if (!_trainModalHistory.length) { el.innerHTML = `<div class="history-empty">No notes yet.</div>`; return; }
+  el.innerHTML = [..._trainModalHistory].reverse().map((h,ri)=>{
+    const i = _trainModalHistory.length - 1 - ri;
+    return `<div class="history-entry">
+      <div class="history-avatar">MM</div>
+      <div class="history-body">
+        <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
+        <div class="history-text" id="tht-${i}">${escHtml(h.text)}</div>
+        <textarea class="history-edit-area" id="thea-${i}" rows="2">${escHtml(h.text)}</textarea>
+        <div class="history-actions">
+          <button class="history-link" id="thedit-${i}" onclick="startEditTrainHistory(${i})">Edit</button>
+          <button class="history-link" id="thsave-${i}" style="display:none;color:var(--green)" onclick="saveEditTrainHistory(${i})">Save</button>
+          <button class="history-link" id="thcancel-${i}" style="display:none" onclick="renderTrainHistoryEntries()">Cancel</button>
+          <button class="history-link" style="color:var(--crimson)" onclick="deleteTrainHistoryEntry(${i})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function addTrainHistoryEntry() {
+  const input = document.getElementById("tf-note-input");
+  const text = input.value.trim(); if (!text) return;
+  _trainModalHistory.push({ id:String(Date.now()), ts:new Date().toISOString(), text });
+  input.value = ""; renderTrainHistoryEntries();
+}
+function startEditTrainHistory(i) {
+  document.getElementById("tht-"+i).classList.add("editing");
+  document.getElementById("thea-"+i).classList.add("editing");
+  document.getElementById("thedit-"+i).style.display="none";
+  document.getElementById("thsave-"+i).style.display="";
+  document.getElementById("thcancel-"+i).style.display="";
+}
+function saveEditTrainHistory(i) {
+  const val = document.getElementById("thea-"+i).value.trim(); if (!val) return;
+  _trainModalHistory[i].text = val; renderTrainHistoryEntries();
+}
+function deleteTrainHistoryEntry(i) { _trainModalHistory.splice(i,1); renderTrainHistoryEntries(); }
+
+function closeTrainModal() { document.getElementById("trainModal").style.display="none"; editTrainId=null; _trainModalHistory=[]; }
 function submitTrain() {
   const title = document.getElementById("tf-title").value.trim();
   if (!title) return;
+  const pendingNote = document.getElementById("tf-note-input").value.trim();
+  const history = [..._trainModalHistory];
+  if (pendingNote) history.push({ id:String(Date.now()), ts:new Date().toISOString(), text:pendingNote });
   const entry = {
     id: editTrainId||String(Date.now()),
     title,
@@ -1240,7 +1380,7 @@ function submitTrain() {
     duration:   document.getElementById("tf-duration").value.trim(),
     targetDate: document.getElementById("tf-target").value.trim(),
     url:        document.getElementById("tf-url").value.trim(),
-    notes:      document.getElementById("tf-notes").value.trim(),
+    history,
   };
   if (editTrainId) state.trainings = state.trainings.map(t=>t.id===editTrainId?entry:t);
   else state.trainings.push(entry);
