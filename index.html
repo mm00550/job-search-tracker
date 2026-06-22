@@ -203,6 +203,37 @@
   .logout-btn { font-size: 12px; background: rgba(255,255,255,.15); border: none; color: #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; font-weight: 600; }
   .logout-btn:hover { background: rgba(255,255,255,.25); }
 
+  /* Network sections */
+  .net-section-hdr { font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 8px; margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .net-section-hdr.reach  { background: var(--amber); color: #7B5800; }
+  .net-section-hdr.contacted { background: var(--mint); color: #15694A; }
+  .net-section-count { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  .net-section-hdr.reach .net-section-count { background: rgba(0,0,0,.1); }
+  .net-section-hdr.contacted .net-section-count { background: rgba(0,0,0,.1); }
+
+  /* Jira-style history log */
+  .history-log { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .history-add { display: flex; gap: 8px; padding: 10px 12px; background: var(--off); border-bottom: 1px solid var(--border); }
+  .history-add textarea { flex: 1; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; resize: none; }
+  .history-add textarea:focus { border-color: var(--blue); }
+  .history-add button { align-self: flex-end; padding: 6px 14px; border-radius: 8px; background: var(--navy); color: #fff; font-size: 12px; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
+  .history-add button:hover { opacity: .88; }
+  .history-entries { max-height: 220px; overflow-y: auto; }
+  .history-entry { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .history-entry:last-child { border-bottom: none; }
+  .history-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--blue)); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .history-body { flex: 1; min-width: 0; }
+  .history-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .history-text { font-size: 12px; line-height: 1.5; word-break: break-word; }
+  .history-text.editing { display: none; }
+  .history-edit-area { display: none; width: 100%; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; resize: none; outline: none; }
+  .history-edit-area:focus { border-color: var(--blue); }
+  .history-edit-area.editing { display: block; }
+  .history-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .history-link { font-size: 11px; color: var(--blue); cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
+  .history-link:hover { text-decoration: underline; }
+  .history-empty { padding: 16px 12px; font-size: 12px; color: var(--muted); text-align: center; }
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -327,7 +358,10 @@
   <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
     <input class="search-input" id="netSearch" placeholder="Search contacts…" oninput="renderNetwork()">
   </div>
-  <div id="net-list"></div>
+  <div class="net-section-hdr reach" id="net-reach-hdr">📋 Network contacts to reach out to <span class="net-section-count" id="net-reach-count">0</span></div>
+  <div id="net-reach-list"></div>
+  <div class="net-section-hdr contacted" id="net-contacted-hdr">✅ Network contacts already contacted <span class="net-section-count" id="net-contacted-count">0</span></div>
+  <div id="net-contacted-list"></div>
 </div>
 
 <!-- ════════════════════════════ TRAINING ════════════════════════════════════ -->
@@ -452,7 +486,16 @@
       <div><label class="form-label">Follow-up Date</label><input class="form-input" id="nf-followupdate" type="date"></div>
     </div>
     <div class="form-group"><label class="form-label">LinkedIn URL</label><input class="form-input" id="nf-linkedin" placeholder="https://linkedin.com/in/…"></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="nf-notes" rows="3" placeholder="How you know them, what you discussed, next follow-up…"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Notes / History</label>
+      <div class="history-log">
+        <div class="history-add">
+          <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up…"></textarea>
+          <button onclick="addHistoryEntry()">Add</button>
+        </div>
+        <div class="history-entries" id="nf-history-entries"></div>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeNetModal()">Cancel</button>
       <button class="btn btn-teal" onclick="submitNet()">Save</button>
@@ -920,7 +963,8 @@ function renderNetwork() {
     const ms = netStatusFilter==="All"||c.status===netStatusFilter;
     const mp = netPriorityFilter==="All"||c.priority===netPriorityFilter;
     const mr = netRelationFilter==="All"||c.relation===netRelationFilter;
-    const mq = !search||[c.name,c.company,c.role,c.notes].join(" ").toLowerCase().includes(search.toLowerCase());
+    const notes = (c.history||[]).map(h=>h.text).join(" ") + (c.notes||"");
+    const mq = !search||[c.name,c.company,c.role,notes].join(" ").toLowerCase().includes(search.toLowerCase());
     return ms&&mp&&mr&&mq;
   }).sort((a,b)=>{
     if(a.priority==="High"&&b.priority!=="High") return -1;
@@ -928,16 +972,15 @@ function renderNetwork() {
     return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
   });
 
-  if (filtered.length===0) {
-    document.getElementById("net-list").innerHTML = `<div class="card"><div class="empty-state">No contacts yet. Add people you want to reach out to — former colleagues, recruiters, industry connections.</div></div>`;
-    return;
-  }
+  const toReach    = filtered.filter(c=>!c.contactDate);
+  const contacted  = filtered.filter(c=>!!c.contactDate);
 
-  document.getElementById("net-list").innerHTML = filtered.map(c=>{
+  function renderContactCard(c) {
     const rc = NET_RELATION[c.relation]||NET_RELATION["LinkedIn"];
     const sc = NET_STATUS[c.status]||NET_STATUS["To contact"];
     const pc = NET_PURPOSE[c.purpose]||NET_PURPOSE["General reconnect"];
     const hi = c.priority==="High";
+    const latestNote = (c.history||[]).length > 0 ? c.history[c.history.length-1].text : (c.notes||"");
     return `<div class="item-card${hi?" high-pri":""}" style="border-left-color:${sc.dot}">
       <div class="item-row">
         <div style="flex:1">
@@ -955,7 +998,7 @@ function renderNetwork() {
             ${c.followUpDate?`<span>🔔 Follow up: ${c.followUpDate}</span>`:""}
             ${c.linkedIn?`<a href="${c.linkedIn}" target="_blank" rel="noopener">🔗 LinkedIn</a>`:""}
           </div>
-          ${c.notes?`<div class="item-notes">${c.notes}</div>`:""}
+          ${latestNote?`<div class="item-notes">${escHtml(latestNote)}</div>`:""}
         </div>
         <div class="item-actions">
           <button class="btn btn-sky btn-sm" onclick="openNetModal('${c.id}')">Edit</button>
@@ -963,7 +1006,18 @@ function renderNetwork() {
         </div>
       </div>
     </div>`;
-  }).join("");
+  }
+
+  document.getElementById("net-reach-count").textContent     = toReach.length;
+  document.getElementById("net-contacted-count").textContent  = contacted.length;
+
+  document.getElementById("net-reach-list").innerHTML = toReach.length === 0
+    ? `<div class="card"><div class="empty-state">No contacts pending outreach.</div></div>`
+    : toReach.map(renderContactCard).join("");
+
+  document.getElementById("net-contacted-list").innerHTML = contacted.length === 0
+    ? `<div class="card"><div class="empty-state">No contacts with a recorded contact date yet.</div></div>`
+    : contacted.map(renderContactCard).join("");
 }
 
 function setNetStatusFilter(s)   { netStatusFilter=s;   renderNetwork(); }
@@ -1212,10 +1266,22 @@ function addRecommended(title) {
   saveState(); renderTraining(); renderDashboard();
 }
 
+// ═══════════════════════════ HELPERS ══════════════════════════════════════════
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmtDatetime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) + " at " +
+    d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+}
+
 // ═══════════════════════════ NET MODAL ════════════════════════════════════════
+let _modalHistory = [];
+
 function openNetModal(id) {
   editNetId = id||null;
   const c = id ? state.contacts.find(x=>x.id===id) : null;
+  _modalHistory = c?.history ? JSON.parse(JSON.stringify(c.history)) : [];
   document.getElementById("netModalTitle").textContent = id?"Edit Contact":"Add Network Contact";
   document.getElementById("nf-name").value        = c?.name||"";
   document.getElementById("nf-company").value     = c?.company||"";
@@ -1227,13 +1293,71 @@ function openNetModal(id) {
   document.getElementById("nf-contactdate").value  = c?.contactDate||"";
   document.getElementById("nf-followupdate").value = c?.followUpDate||"";
   document.getElementById("nf-linkedin").value    = c?.linkedIn||"";
-  document.getElementById("nf-notes").value       = c?.notes||"";
+  document.getElementById("nf-note-input").value  = "";
+  renderHistoryEntries();
   document.getElementById("netModal").style.display="flex";
 }
-function closeNetModal() { document.getElementById("netModal").style.display="none"; editNetId=null; }
+
+function renderHistoryEntries() {
+  const el = document.getElementById("nf-history-entries");
+  if (!_modalHistory.length) {
+    el.innerHTML = `<div class="history-empty">No notes yet. Add your first note above.</div>`;
+    return;
+  }
+  el.innerHTML = [..._modalHistory].reverse().map((h,ri)=>{
+    const i = _modalHistory.length - 1 - ri;
+    return `<div class="history-entry" id="he-${i}">
+      <div class="history-avatar">MM</div>
+      <div class="history-body">
+        <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
+        <div class="history-text" id="ht-${i}">${escHtml(h.text)}</div>
+        <textarea class="history-edit-area" id="hea-${i}" rows="2">${escHtml(h.text)}</textarea>
+        <div class="history-actions">
+          <button class="history-link" id="hedit-${i}" onclick="startEditHistory(${i})">Edit</button>
+          <button class="history-link" id="hsave-${i}" style="display:none;color:var(--green)" onclick="saveEditHistory(${i})">Save</button>
+          <button class="history-link" id="hcancel-${i}" style="display:none" onclick="cancelEditHistory(${i})">Cancel</button>
+          <button class="history-link" style="color:var(--crimson)" onclick="deleteHistoryEntry(${i})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function addHistoryEntry() {
+  const input = document.getElementById("nf-note-input");
+  const text = input.value.trim();
+  if (!text) return;
+  _modalHistory.push({ id: String(Date.now()), ts: new Date().toISOString(), text });
+  input.value = "";
+  renderHistoryEntries();
+}
+
+function startEditHistory(i) {
+  document.getElementById("ht-"+i).classList.add("editing");
+  document.getElementById("hea-"+i).classList.add("editing");
+  document.getElementById("hedit-"+i).style.display = "none";
+  document.getElementById("hsave-"+i).style.display = "";
+  document.getElementById("hcancel-"+i).style.display = "";
+}
+function saveEditHistory(i) {
+  const val = document.getElementById("hea-"+i).value.trim();
+  if (!val) return;
+  _modalHistory[i].text = val;
+  renderHistoryEntries();
+}
+function cancelEditHistory(i) { renderHistoryEntries(); }
+function deleteHistoryEntry(i) {
+  _modalHistory.splice(i, 1);
+  renderHistoryEntries();
+}
+
+function closeNetModal() { document.getElementById("netModal").style.display="none"; editNetId=null; _modalHistory=[]; }
 function submitNet() {
   const name = document.getElementById("nf-name").value.trim();
   if (!name) return;
+  const pendingNote = document.getElementById("nf-note-input").value.trim();
+  const history = [..._modalHistory];
+  if (pendingNote) history.push({ id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote });
   const entry = {
     id: editNetId||String(Date.now()),
     name,
@@ -1246,7 +1370,7 @@ function submitNet() {
     contactDate: document.getElementById("nf-contactdate").value,
     followUpDate:document.getElementById("nf-followupdate").value,
     linkedIn:    document.getElementById("nf-linkedin").value.trim(),
-    notes:       document.getElementById("nf-notes").value.trim(),
+    history,
   };
   if (editNetId) state.contacts = state.contacts.map(c=>c.id===editNetId?entry:c);
   else state.contacts.push(entry);
