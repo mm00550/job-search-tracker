@@ -204,6 +204,8 @@
   .logout-btn:hover { background: rgba(255,255,255,.25); }
 
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -229,7 +231,7 @@
       <h1>Job Search, Network &amp; Training Tracker</h1>
       <p>June – November 2026 · Target: New role before notice period ends</p>
     </div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="save-flash" id="saveFlash">✓ Saved</span><button class="logout-btn" onclick="doLogout()">Sign out</button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span id="syncStatus" style="font-size:12px;font-weight:600;color:#fff;opacity:.85"></span><span class="save-flash" id="saveFlash">✓ Saved</span><button class="logout-btn" onclick="exportCSV()">Export CSV</button><button class="logout-btn" onclick="doLogout()">Sign out</button></div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
@@ -561,26 +563,94 @@ const LS = "mm2026_";
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(LS+k)); } catch { return null; } }
 function lsSet(k,v) { try { localStorage.setItem(LS+k, JSON.stringify(v)); } catch {} }
 
-function loadState() {
-  state.apps         = lsGet("apps")     || [];
-  state.trainings    = lsGet("trainings")|| [];
-  state.contacts     = lsGet("contacts") || [];
-  state.kpis         = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(lsGet("kpis")||{}) };
-  state.milestones   = lsGet("ms")  || {};
-  state.trainMilestones = lsGet("tms")|| {};
-  state.weeklyNote   = lsGet("note")|| "";
+const firebaseConfig = {
+  apiKey: "AIzaSyASgvNMPuL_VOXy3ABQVu3HfDGpsKmg0mo",
+  authDomain: "job-search-tracker-ddace.firebaseapp.com",
+  projectId: "job-search-tracker-ddace",
+  storageBucket: "job-search-tracker-ddace.firebasestorage.app",
+  messagingSenderId: "516931338723",
+  appId: "1:516931338723:web:f0cf295dae3fa4ee6f60d6"
+};
+
+let db = null;
+let firebaseReady = false;
+
+async function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseReady = true;
+    setSyncStatus("cloud");
+  } catch(e) {
+    console.warn("Firebase init failed, using localStorage:", e);
+    setSyncStatus("local");
+  }
 }
-function saveState() {
-  lsSet("apps",     state.apps);
-  lsSet("trainings",state.trainings);
-  lsSet("contacts", state.contacts);
-  lsSet("kpis",     state.kpis);
-  lsSet("ms",       state.milestones);
-  lsSet("tms",      state.trainMilestones);
-  lsSet("note",     state.weeklyNote);
+
+function setSyncStatus(mode) {
+  const el = document.getElementById("syncStatus");
+  if (!el) return;
+  if (mode === "cloud")  { el.textContent = "☁️ Synced";      el.style.color = "#fff"; }
+  if (mode === "local")  { el.textContent = "💾 Local only";  el.style.color = "#FFD700"; }
+  if (mode === "saving") { el.textContent = "⏳ Saving…";     el.style.color = "#fff"; }
+  if (mode === "error")  { el.textContent = "⚠️ Save error";  el.style.color = "#FFD700"; }
+}
+
+async function loadState() {
+  if (firebaseReady && db) {
+    try {
+      const doc = await db.collection("tracker").doc("state").get();
+      if (doc.exists) {
+        const d = doc.data();
+        state.apps            = d.apps            || [];
+        state.trainings       = d.trainings       || [];
+        state.contacts        = d.contacts        || [];
+        state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(d.kpis||{}) };
+        state.milestones      = d.milestones      || {};
+        state.trainMilestones = d.trainMilestones || {};
+        state.weeklyNote      = d.weeklyNote      || "";
+        setSyncStatus("cloud");
+        return;
+      }
+    } catch(e) {
+      console.warn("Firestore load failed, falling back:", e);
+      setSyncStatus("local");
+    }
+  }
+  // localStorage fallback
+  state.apps            = lsGet("apps")      || [];
+  state.trainings       = lsGet("trainings") || [];
+  state.contacts         = lsGet("contacts")  || [];
+  state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(lsGet("kpis")||{}) };
+  state.milestones      = lsGet("ms")        || {};
+  state.trainMilestones = lsGet("tms")       || {};
+  state.weeklyNote      = lsGet("note")      || "";
+}
+
+async function saveState() {
+  // Always save to localStorage first
+  lsSet("apps", state.apps); lsSet("trainings", state.trainings);
+  lsSet("contacts", state.contacts); lsSet("kpis", state.kpis);
+  lsSet("ms", state.milestones); lsSet("tms", state.trainMilestones);
+  lsSet("note", state.weeklyNote);
   const f = document.getElementById("saveFlash");
-  f.classList.add("show");
-  setTimeout(() => f.classList.remove("show"), 1800);
+  if (f) { f.classList.add("show"); setTimeout(() => f.classList.remove("show"), 1800); }
+  // Then save to Firestore
+  if (firebaseReady && db) {
+    setSyncStatus("saving");
+    try {
+      await db.collection("tracker").doc("state").set({
+        apps: state.apps, trainings: state.trainings, contacts: state.contacts,
+        kpis: state.kpis, milestones: state.milestones,
+        trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
+        lastSaved: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setSyncStatus("cloud");
+    } catch(e) {
+      console.warn("Firestore save failed:", e);
+      setSyncStatus("error");
+    }
+  }
 }
 
 // ═══════════════════════════ HELPERS ══════════════════════════════════════════
@@ -1246,15 +1316,40 @@ function checkAuth() {
   }
 }
 
+function exportCSV() {
+  const sections = [
+    { name:"Applications", data:state.apps,     fields:["company","role","track","status","dateApplied","contact","notes"] },
+    { name:"Contacts",     data:state.contacts, fields:["name","company","role","relation","status","priority","contactDate","notes"] },
+    { name:"Training",     data:state.trainings,fields:["title","category","status","provider","duration","notes"] },
+  ];
+  let csv = "";
+  sections.forEach(sec => {
+    csv += "\n=== " + sec.name + " ===\n";
+    csv += sec.fields.join(",") + "\n";
+    sec.data.forEach(row => {
+      csv += sec.fields.map(f => '"' + (row[f]||"").toString().replace(/"/g,'""') + '"').join(",") + "\n";
+    });
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "tracker-export.csv";
+  a.click();
+}
+
 // ═══════════════════════════ INIT ═════════════════════════════════════════════
-checkAuth();
-loadState();
-populateSelects();
-renderDashboard();
-renderApplications();
-renderNetwork();
-renderTraining();
-renderStrategy();
+async function init() {
+  checkAuth();
+  await initFirebase();
+  await loadState();
+  populateSelects();
+  renderDashboard();
+  renderApplications();
+  renderNetwork();
+  renderTraining();
+  renderStrategy();
+}
+init();
 </script>
 </body>
 </html>
