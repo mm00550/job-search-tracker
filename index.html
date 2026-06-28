@@ -290,7 +290,7 @@
       <h1>Job Search, Network &amp; Training Tracker</h1>
       <p>June – November 2026 · Target: New role before notice period ends</p>
     </div>
-    <div style="display:flex;align-items:center;gap:10px"><span id="syncStatus" style="font-size:12px;font-weight:600;color:#fff;opacity:.85"></span><span class="save-flash" id="saveFlash">✓ Saved</span><button class="logout-btn" onclick="exportCSV()">Export CSV</button><button class="logout-btn" onclick="doLogout()">Sign out</button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span id="headerUserName" style="font-size:12px;font-weight:600;color:#fff;opacity:.9"></span><span id="syncStatus" style="font-size:12px;font-weight:600;color:#fff;opacity:.85"></span><span class="save-flash" id="saveFlash">✓ Saved</span><button class="logout-btn" onclick="openPasswordModal()">🔑 Change Password</button><button class="logout-btn" onclick="exportCSV()">Export CSV</button><button class="logout-btn" onclick="doLogout()">Sign out</button></div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
@@ -302,6 +302,7 @@
     <button class="tab-btn" onclick="showTab('training')">Training</button>
     <button class="tab-btn" onclick="showTab('strategy')">Strategy</button>
     <button class="tab-btn" onclick="showTab('linkedin')">LinkedIn</button>
+    <button class="tab-btn" onclick="showTab('help')">❓ Help</button>
   </div>
 </div>
 
@@ -507,6 +508,15 @@
   </div>
 </div>
 
+<!-- ════════════════════════════ HELP ════════════════════════════════════════ -->
+<div id="tab-help" class="section">
+  <div class="card card-purple" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;color:var(--purple)">❓ Help &amp; Guide</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">How to use every tab, plus account &amp; sharing basics</div>
+  </div>
+  <div id="help-content"></div>
+</div>
+
 </div><!-- /body -->
 
 <!-- ═══════════════════════════════ MODALS ═══════════════════════════════════ -->
@@ -651,6 +661,21 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeCheckoutModal()">Cancel</button>
       <button class="btn btn-purple" onclick="submitCheckout()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="passwordModal" style="display:none" onclick="if(event.target===this)closePasswordModal()">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--navy)">Change Password</div>
+    <div class="form-group"><label class="form-label">Current password *</label><input class="form-input" id="pw-current" type="password" placeholder="Your current password"></div>
+    <div class="form-group"><label class="form-label">New password *</label><input class="form-input" id="pw-new" type="password" placeholder="At least 6 characters"></div>
+    <div class="form-group"><label class="form-label">Confirm new password *</label><input class="form-input" id="pw-confirm" type="password" placeholder="Repeat new password"></div>
+    <div class="login-error" id="pw-error" style="display:none;margin-top:-8px;margin-bottom:14px"></div>
+    <div class="login-error" id="pw-success" style="display:none;margin-top:-8px;margin-bottom:14px;color:var(--green)"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePasswordModal()">Cancel</button>
+      <button class="btn btn-primary" id="pw-submit-btn" onclick="submitPasswordChange()">Update Password</button>
     </div>
   </div>
 </div>
@@ -1546,6 +1571,75 @@ function renderStrategy() {
     </div>`).join("");
 }
 
+// ═══════════════════════════ HELP ══════════════════════════════════════════════
+const HELP_SECTIONS = [
+  { icon:"📊", title:"Dashboard", color:"var(--navy)", items:[
+    "See your application count, interview rate, offers, and network/training stats at a glance.",
+    "Click a Job Search or Training milestone to mark it done — these are generated from the goals you set during onboarding (or later, from the Strategy tab).",
+    "Use the weekly reflection box to jot what worked and what to adjust — it's saved automatically as you type.",
+  ]},
+  { icon:"⭐", title:"Watchlist", color:"var(--purple)", items:[
+    "Add companies you're interested in before there's an open role — click <strong>+ Add Company</strong>.",
+    "Tick <strong>Share with other job search users</strong> in the modal if you want the company name &amp; career site visible to your invited friends. Leave it unchecked to keep it private — your description/notes are never shared either way.",
+    "Items you've shared show a green 'Shared' badge on the card. The 'Shared by your network' section below shows companies others have shared with you.",
+    "Add the company's career site link here, then go to the Suggestions tab to scan it for matching roles.",
+  ]},
+  { icon:"🔎", title:"Suggestions", color:"var(--purple)", items:[
+    "Set the job titles/keywords you're targeting and an optional location — these are shared with the LinkedIn tab's match summary too.",
+    "Click <strong>Scan Watchlist</strong> to fetch each Watchlist company's career site and filter postings against your keywords.",
+    "For each match: <strong>Add to Applications</strong> pre-fills a new application for you to confirm, or <strong>Dismiss</strong> to hide it (it won't resurface on the next scan).",
+  ]},
+  { icon:"📋", title:"Applications", color:"var(--navy)", items:[
+    "Log every application with <strong>+ Add Application</strong> — company, role, contact, career site link, status and track (Permanent/Interim/Network).",
+    "Add dated notes in the history log as things progress — interview feedback, recruiter calls, next steps.",
+    "Flag for follow-up to set a reminder date. Active vs Closed/Withdrawn applications are split into separate sections automatically based on status.",
+  ]},
+  { icon:"🤝", title:"Network", color:"var(--teal)", items:[
+    "Track outreach contacts with <strong>+ Add Contact</strong> — relationship type, purpose, priority, and a status you can click to cycle (To contact → Contacted → Replied → …).",
+    "Tick <strong>Share contact name, company &amp; role</strong> if you want this contact visible to other invited users — their notes/history/LinkedIn/dates always stay private to you.",
+    "Use the search box and status/priority/relationship filters to find contacts quickly. Contacts with a logged contact date move to the 'already contacted' section.",
+  ]},
+  { icon:"📌", title:"To Check Out", color:"var(--purple)", items:[
+    "A general-purpose list for notes, tasks and reminders that don't belong in Applications or Network — <strong>+ Add Item</strong>.",
+    "Click the status badge to cycle To Do → In Progress → Done; items move between the Open and Done sections automatically.",
+    "Tick the share checkbox to make the title/status/priority visible to others — description, link, and notes/history stay private.",
+  ]},
+  { icon:"🎓", title:"Training", color:"var(--purple)", items:[
+    "Browse <strong>📋 Recommended Courses</strong> for ideas, or add your own with <strong>+ Add Course</strong>.",
+    "Track status (Not started/In progress/Completed/Paused) and log progress notes in the history log.",
+    "Training milestones on the Dashboard are generated from the training topics you set in your goals.",
+  ]},
+  { icon:"🧭", title:"Strategy", color:"var(--navy)", items:[
+    "Fully generated from your goals — target role/keywords, location, weekly application target, and training topics all feed into the tracks, daily routine, and training plan shown here.",
+    "To change any of it, update your keywords/location on the Suggestions tab, or your weekly target/training topics by re-running onboarding logic (ask if you'd like a settings shortcut for this).",
+  ]},
+  { icon:"🔗", title:"LinkedIn", color:"var(--navy)", items:[
+    "Paste your LinkedIn profile URL — it's saved automatically as you type.",
+    "The Job Match Summary is generated from your own Suggestions scan results: how many matching roles, across how many companies, and the most common locations — no AI involved, just your own data.",
+    "Run a scan from the Suggestions tab first if the summary says there's nothing to show yet.",
+  ]},
+  { icon:"👥", title:"Accounts & Sharing", color:"var(--teal)", items:[
+    "Each account's applications, contacts, watchlist, goals and notes are completely private — other users can never read them.",
+    "New accounts can only be created with an email on the invite list. Ask the account owner to add your email in Firestore's allowlist collection.",
+    "Only the fields you explicitly tick 'Share…' for (company names, contact names/roles, task titles) become visible to other invited users — never your private notes, history, or status fields.",
+    "Change your password any time with the 🔑 Change Password button in the top-right header.",
+  ]},
+];
+function renderHelp() {
+  document.getElementById("help-content").innerHTML = HELP_SECTIONS.map((sec,i)=>`
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;color:${sec.color};margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div class="strategy-num" style="background:${sec.color}18;color:${sec.color}">${sec.icon}</div>
+        ${sec.title}
+      </div>
+      ${sec.items.map(item=>`
+        <div class="strategy-item">
+          <div class="strategy-dot" style="background:${sec.color}"></div>
+          <span style="font-size:13px;line-height:1.5">${item}</span>
+        </div>`).join("")}
+    </div>`).join("");
+}
+
 // ═══════════════════════════ APP MODAL ════════════════════════════════════════
 let _appModalHistory = [];
 
@@ -2291,6 +2385,49 @@ function doLogout() {
   document.getElementById("li-pass").value = "";
 }
 
+// ═══════════════════════════ CHANGE PASSWORD ═══════════════════════════════════
+function openPasswordModal() {
+  document.getElementById("pw-current").value = "";
+  document.getElementById("pw-new").value = "";
+  document.getElementById("pw-confirm").value = "";
+  document.getElementById("pw-error").style.display = "none";
+  document.getElementById("pw-success").style.display = "none";
+  document.getElementById("passwordModal").style.display = "flex";
+}
+function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
+
+async function submitPasswordChange() {
+  const current = document.getElementById("pw-current").value;
+  const next = document.getElementById("pw-new").value;
+  const confirmPw = document.getElementById("pw-confirm").value;
+  const err = document.getElementById("pw-error");
+  const ok = document.getElementById("pw-success");
+  const btn = document.getElementById("pw-submit-btn");
+  err.style.display = "none"; ok.style.display = "none";
+
+  if (!current || !next || !confirmPw) { err.textContent = "Fill in all fields."; err.style.display = "block"; return; }
+  if (next.length < 6) { err.textContent = "New password must be at least 6 characters."; err.style.display = "block"; return; }
+  if (next !== confirmPw) { err.textContent = "New passwords don't match."; err.style.display = "block"; return; }
+
+  const user = firebase.auth().currentUser;
+  btn.disabled = true; btn.textContent = "Updating…";
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(user.email, current);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(next);
+    ok.textContent = "Password updated.";
+    ok.style.display = "block";
+    document.getElementById("pw-current").value = "";
+    document.getElementById("pw-new").value = "";
+    document.getElementById("pw-confirm").value = "";
+  } catch (e) {
+    err.textContent = e.code === "auth/wrong-password" ? "Current password is incorrect." : (e.message || "Could not update password.");
+    err.style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "Update Password";
+  }
+}
+
 // ═══════════════════════════ ONBOARDING ════════════════════════════════════════
 function openOnboarding() {
   document.getElementById("ob-keywords").value = "";
@@ -2366,6 +2503,7 @@ async function init() {
   });
 }
 async function renderAll() {
+  document.getElementById("headerUserName").textContent = "👤 " + currentDisplayName();
   populateSelects();
   loadCriteriaInputs();
   loadLinkedInInputs();
@@ -2378,6 +2516,7 @@ async function renderAll() {
   renderCheckout();
   renderStrategy();
   renderLinkedIn();
+  renderHelp();
   await loadSharedData();
   renderWatchlist();
   renderNetwork();
