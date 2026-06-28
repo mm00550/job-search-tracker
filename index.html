@@ -611,6 +611,10 @@
         <div class="history-entries" id="nf-history-entries"></div>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="nf-shared" style="width:16px;height:16px;cursor:pointer">
+      <label for="nf-shared" style="font-size:13px;cursor:pointer">📤 Share contact name, company &amp; role with other job search users</label>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeNetModal()">Cancel</button>
       <button class="btn btn-teal" onclick="submitNet()">Save</button>
@@ -640,6 +644,10 @@
         <div class="history-entries" id="cf-history-entries"></div>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="cf-shared" style="width:16px;height:16px;cursor:pointer">
+      <label for="cf-shared" style="font-size:13px;cursor:pointer">📤 Share title, status &amp; priority with other job search users</label>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeCheckoutModal()">Cancel</button>
       <button class="btn btn-purple" onclick="submitCheckout()">Save</button>
@@ -654,6 +662,10 @@
     <div class="form-group"><label class="form-label">Industry</label><input class="form-input" id="wf-industry" placeholder="e.g. Automotive, Fintech, Healthcare"></div>
     <div class="form-group"><label class="form-label">Link to Career Site</label><input class="form-input" id="wf-careersite" placeholder="https://…"></div>
     <div class="form-group"><label class="form-label">Company Description</label><textarea class="form-textarea" id="wf-description" rows="3" placeholder="What they do, why they're interesting…"></textarea></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="wf-shared" style="width:16px;height:16px;cursor:pointer">
+      <label for="wf-shared" style="font-size:13px;cursor:pointer">📤 Share company name &amp; career site with other job search users</label>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeWatchModal()">Cancel</button>
       <button class="btn btn-purple" onclick="submitWatch()">Save</button>
@@ -1232,6 +1244,7 @@ function renderNetwork() {
             ${badge(rc.icon+" "+c.relation, rc.color, rc.bg)}
             ${badge(c.purpose, pc.color, pc.bg)}
             ${hi?badge("High priority","#922B21","#FADBD8"):""}
+            ${c.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
           </div>
           <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${[c.role,c.company].filter(Boolean).join(" @ ")}</div>
           <div class="item-meta">
@@ -1359,6 +1372,7 @@ function renderCheckout() {
             <span class="item-name">${escHtml(c.title)}</span>
             ${badge(c.status+" →", sc.color, sc.bg, true, `cycleCoStatus('${c.id}')`)}
             ${hi?badge("High priority","#922B21","#FADBD8"):""}
+            ${c.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
           </div>
           ${c.description?`<div style="font-size:13px;color:var(--muted);margin-bottom:4px">${escHtml(c.description)}</div>`:""}
           <div class="item-meta">
@@ -1758,6 +1772,7 @@ function openNetModal(id) {
   document.getElementById("nf-contactdate").value  = c?.contactDate||"";
   document.getElementById("nf-followupdate").value = c?.followUpDate||"";
   document.getElementById("nf-linkedin").value    = c?.linkedIn||"";
+  document.getElementById("nf-shared").checked    = c?.shared||false;
   document.getElementById("nf-note-input").value  = "";
   renderHistoryEntries();
   document.getElementById("netModal").style.display="flex";
@@ -1835,12 +1850,14 @@ function submitNet() {
     contactDate: document.getElementById("nf-contactdate").value,
     followUpDate:document.getElementById("nf-followupdate").value,
     linkedIn:    document.getElementById("nf-linkedin").value.trim(),
+    shared:      document.getElementById("nf-shared").checked,
     history,
   };
   if (editNetId) state.contacts = state.contacts.map(c=>c.id===editNetId?entry:c);
   else state.contacts.push(entry);
   saveState(); closeNetModal(); renderNetwork(); renderDashboard();
-  mirrorShared("sharedContacts", entry.id, { name: entry.name, company: entry.company, role: entry.role, relation: entry.relation });
+  if (entry.shared) mirrorShared("sharedContacts", entry.id, { name: entry.name, company: entry.company, role: entry.role, relation: entry.relation });
+  else unmirrorShared("sharedContacts", entry.id);
 }
 function deleteNet(id) {
   if (!confirm("Remove this contact?")) return;
@@ -1870,6 +1887,7 @@ function openCheckoutModal(id) {
   sel("cf-status",   Object.keys(CO_STATUS), c?.status||"To Do");
   sel("cf-priority", ["High","Medium","Low"], c?.priority||"Medium");
   document.getElementById("cf-link").value        = c?.link||"";
+  document.getElementById("cf-shared").checked    = c?.shared||false;
   document.getElementById("cf-note-input").value  = "";
   renderCoHistoryEntries();
   document.getElementById("checkoutModal").style.display="flex";
@@ -1932,12 +1950,14 @@ function submitCheckout() {
     status:      document.getElementById("cf-status").value,
     priority:    document.getElementById("cf-priority").value,
     link:        document.getElementById("cf-link").value.trim(),
+    shared:      document.getElementById("cf-shared").checked,
     history,
   };
   if (editCheckoutId) state.checkouts = state.checkouts.map(c=>c.id===editCheckoutId?entry:c);
   else state.checkouts.push(entry);
   saveState(); closeCheckoutModal(); renderCheckout();
-  mirrorShared("sharedCheckouts", entry.id, { title: entry.title, status: entry.status, priority: entry.priority });
+  if (entry.shared) mirrorShared("sharedCheckouts", entry.id, { title: entry.title, status: entry.status, priority: entry.priority });
+  else unmirrorShared("sharedCheckouts", entry.id);
 }
 function deleteCheckout(id) {
   if (!confirm("Remove this item?")) return;
@@ -1983,6 +2003,7 @@ function renderWatchlist() {
           <div class="item-badges">
             <span class="item-name">${w.company}</span>
             ${w.industry?badge(w.industry,"#3B0030","#F3E6EF"):""}
+            ${w.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
           </div>
           <div class="item-meta">
             ${w.careerSite?`<span><a href="${w.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
@@ -2005,6 +2026,7 @@ function openWatchModal(id) {
   document.getElementById("wf-industry").value   = w?.industry||"";
   document.getElementById("wf-careersite").value = w?.careerSite||"";
   document.getElementById("wf-description").value = w?.description||"";
+  document.getElementById("wf-shared").checked = w?.shared||false;
   document.getElementById("watchModal").style.display="flex";
 }
 function closeWatchModal() { document.getElementById("watchModal").style.display="none"; editWatchId=null; }
@@ -2017,11 +2039,13 @@ function submitWatch() {
     industry:   document.getElementById("wf-industry").value.trim(),
     careerSite: document.getElementById("wf-careersite").value.trim(),
     description:document.getElementById("wf-description").value.trim(),
+    shared:     document.getElementById("wf-shared").checked,
   };
   if (editWatchId) state.watchlist = state.watchlist.map(w=>w.id===editWatchId?entry:w);
   else state.watchlist.push(entry);
   saveState(); closeWatchModal(); renderWatchlist();
-  mirrorShared("sharedWatchlist", entry.id, { company: entry.company, industry: entry.industry, careerSite: entry.careerSite });
+  if (entry.shared) mirrorShared("sharedWatchlist", entry.id, { company: entry.company, industry: entry.industry, careerSite: entry.careerSite });
+  else unmirrorShared("sharedWatchlist", entry.id);
 }
 function deleteWatch(id) {
   if (!confirm("Remove this company from the watchlist?")) return;
