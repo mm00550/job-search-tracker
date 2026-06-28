@@ -298,7 +298,7 @@
     <button class="tab-btn" onclick="showTab('suggestions')">Suggestions</button>
     <button class="tab-btn" onclick="showTab('applications')">Applications</button>
     <button class="tab-btn" onclick="showTab('network')">Network</button>
-    <button class="tab-btn" onclick="showTab('checkout')">To Check Out</button>
+    <button class="tab-btn" onclick="showTab('checkout')">Notes, Tasks &amp; Reminders</button>
     <button class="tab-btn" onclick="showTab('training')">Training</button>
     <button class="tab-btn" onclick="showTab('strategy')">Strategy</button>
     <button class="tab-btn" onclick="showTab('linkedin')">LinkedIn</button>
@@ -467,7 +467,7 @@
   <div class="card card-purple" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:14px;font-weight:700;color:var(--purple)">📌 To Check Out</div>
+        <div style="font-size:14px;font-weight:700;color:var(--purple)">📌 Notes, Tasks &amp; Reminders</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">Notes, tasks and reminders to follow up on</div>
       </div>
       <button class="btn btn-purple" onclick="openCheckoutModal()">+ Add Item</button>
@@ -1599,7 +1599,7 @@ const HELP_SECTIONS = [
     "Tick <strong>Share contact name, company &amp; role</strong> if you want this contact visible to other invited users — their notes/history/LinkedIn/dates always stay private to you.",
     "Use the search box and status/priority/relationship filters to find contacts quickly. Contacts with a logged contact date move to the 'already contacted' section.",
   ]},
-  { icon:"📌", title:"To Check Out", color:"var(--purple)", items:[
+  { icon:"📌", title:"Notes, Tasks & Reminders", color:"var(--purple)", items:[
     "A general-purpose list for notes, tasks and reminders that don't belong in Applications or Network — <strong>+ Add Item</strong>.",
     "Click the status badge to cycle To Do → In Progress → Done; items move between the Open and Done sections automatically.",
     "Tick the share checkbox to make the title/status/priority visible to others — description, link, and notes/history stay private.",
@@ -2461,7 +2461,7 @@ function exportCSV() {
     { name:"Applications", data:state.apps,     fields:["company","role","track","status","dateApplied","contact","notes"] },
     { name:"Contacts",     data:state.contacts, fields:["name","company","role","relation","status","priority","contactDate","notes"] },
     { name:"Watchlist",    data:state.watchlist,fields:["company","industry","careerSite","description"] },
-    { name:"To Check Out", data:state.checkouts,fields:["title","description","status","priority","link"] },
+    { name:"Notes, Tasks & Reminders", data:state.checkouts,fields:["title","description","status","priority","link"] },
     { name:"Training",     data:state.trainings,fields:["title","category","status","provider","duration","notes"] },
   ];
   let csv = "";
