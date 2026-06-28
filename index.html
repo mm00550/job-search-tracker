@@ -271,6 +271,7 @@
     <button class="tab-btn" onclick="showTab('suggestions')">Suggestions</button>
     <button class="tab-btn" onclick="showTab('applications')">Applications</button>
     <button class="tab-btn" onclick="showTab('network')">Network</button>
+    <button class="tab-btn" onclick="showTab('checkout')">To Check Out</button>
     <button class="tab-btn" onclick="showTab('training')">Training</button>
     <button class="tab-btn" onclick="showTab('strategy')">Strategy</button>
     <button class="tab-btn" onclick="showTab('linkedin')">LinkedIn</button>
@@ -429,6 +430,29 @@
   </div>
 </div>
 
+<!-- ════════════════════════════ TO CHECK OUT ════════════════════════════════ -->
+<div id="tab-checkout" class="section">
+  <div class="card card-purple" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--purple)">📌 To Check Out</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Notes, tasks and reminders to follow up on</div>
+      </div>
+      <button class="btn btn-purple" onclick="openCheckoutModal()">+ Add Item</button>
+    </div>
+  </div>
+
+  <div class="filters" id="co-status-filters"></div>
+  <div class="filters" id="co-priority-filters" style="margin-top:6px"></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;margin-top:6px">
+    <input class="search-input" id="coSearch" placeholder="Search…" oninput="renderCheckout()">
+  </div>
+  <div class="net-section-hdr reach" id="co-open-hdr">📋 Open <span class="net-section-count" id="co-open-count">0</span></div>
+  <div id="co-open-list"></div>
+  <div class="net-section-hdr contacted" id="co-done-hdr">✅ Done <span class="net-section-count" id="co-done-count">0</span></div>
+  <div id="co-done-list"></div>
+</div>
+
 <!-- ════════════════════════════ STRATEGY ════════════════════════════════════ -->
 <div id="tab-strategy" class="section">
   <div id="strategy-content"></div>
@@ -561,6 +585,35 @@
   </div>
 </div>
 
+<div class="overlay" id="checkoutModal" style="display:none" onclick="if(event.target===this)closeCheckoutModal()">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--purple)" id="checkoutModalTitle">Add Item</div>
+    <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="cf-title" placeholder="e.g. Follow up with recruiter"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="cf-description" rows="2" placeholder="What needs to be done / context…"></textarea></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div><label class="form-label">Status</label><select class="form-input" id="cf-status"></select></div>
+      <div><label class="form-label">Priority</label>
+        <select class="form-input" id="cf-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="cf-link" placeholder="https://…"></div>
+    <div class="form-group">
+      <label class="form-label">Notes / History</label>
+      <div class="history-log">
+        <div class="history-add">
+          <textarea id="cf-note-input" rows="2" placeholder="Add a note…"></textarea>
+          <button onclick="addCoHistoryEntry()">Add</button>
+        </div>
+        <div class="history-entries" id="cf-history-entries"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCheckoutModal()">Cancel</button>
+      <button class="btn btn-purple" onclick="submitCheckout()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="watchModal" style="display:none" onclick="if(event.target===this)closeWatchModal()">
   <div class="modal">
     <div class="modal-title" style="color:var(--purple)" id="watchModalTitle">Add Company</div>
@@ -618,6 +671,11 @@ const NET_STATUS = {
   "Met":           { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
   "Not responsive":{ color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
 };
+const CO_STATUS = {
+  "To Do":       { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
+  "In Progress": { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
+  "Done":        { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
+};
 const NET_PURPOSE = {
   "Coffee chat / advice": { color:"#3B0030", bg:"#F3E6EF" },
   "Job referral":         { color:"#15694A", bg:"#E1FAF0" },
@@ -662,7 +720,7 @@ const TRAIN_MS = [
 
 // ═══════════════════════════ STATE ════════════════════════════════════════════
 let state = {
-  apps: [], trainings: [], contacts: [], watchlist: [],
+  apps: [], trainings: [], contacts: [], watchlist: [], checkouts: [],
   kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
@@ -670,10 +728,11 @@ let state = {
   suggestions: [],
   dismissedSuggestions: [],
 };
-let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null;
+let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null, editCheckoutId = null;
 let appStatusFilter = "All", appTrackFilter = "All";
 let trainCatFilter  = "All";
 let netStatusFilter = "All", netPriorityFilter = "All", netRelationFilter = "All";
+let coStatusFilter = "All", coPriorityFilter = "All";
 let showRec = false;
 
 // ═══════════════════════════ STORAGE ══════════════════════════════════════════
@@ -724,6 +783,7 @@ async function loadState() {
         state.trainings       = d.trainings       || [];
         state.contacts        = d.contacts        || [];
         state.watchlist        = d.watchlist       || [];
+        state.checkouts        = d.checkouts       || [];
         state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(d.kpis||{}) };
         state.milestones      = d.milestones      || {};
         state.trainMilestones = d.trainMilestones || {};
@@ -744,6 +804,7 @@ async function loadState() {
   state.trainings       = lsGet("trainings") || [];
   state.contacts         = lsGet("contacts")  || [];
   state.watchlist        = lsGet("watchlist") || [];
+  state.checkouts        = lsGet("checkouts") || [];
   state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(lsGet("kpis")||{}) };
   state.milestones      = lsGet("ms")        || {};
   state.trainMilestones = lsGet("tms")       || {};
@@ -756,7 +817,7 @@ async function loadState() {
 async function saveState() {
   // Always save to localStorage first
   lsSet("apps", state.apps); lsSet("trainings", state.trainings);
-  lsSet("contacts", state.contacts); lsSet("watchlist", state.watchlist); lsSet("kpis", state.kpis);
+  lsSet("contacts", state.contacts); lsSet("watchlist", state.watchlist); lsSet("checkouts", state.checkouts); lsSet("kpis", state.kpis);
   lsSet("ms", state.milestones); lsSet("tms", state.trainMilestones);
   lsSet("note", state.weeklyNote);
   lsSet("criteria", state.searchCriteria); lsSet("suggestions", state.suggestions);
@@ -769,6 +830,7 @@ async function saveState() {
     try {
       await db.collection("tracker").doc("state").set({
         apps: state.apps, trainings: state.trainings, contacts: state.contacts, watchlist: state.watchlist,
+        checkouts: state.checkouts,
         kpis: state.kpis, milestones: state.milestones,
         trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
         searchCriteria: state.searchCriteria, suggestions: state.suggestions,
@@ -826,6 +888,7 @@ function populateSelects() {
   sel("nf-relation",Object.keys(NET_RELATION));
   sel("nf-status",  Object.keys(NET_STATUS));
   sel("nf-purpose", Object.keys(NET_PURPOSE));
+  sel("cf-status",  Object.keys(CO_STATUS));
 }
 function sel(id, opts, selected) {
   const el = document.getElementById(id);
@@ -1121,6 +1184,72 @@ function renderNetwork() {
 function setNetStatusFilter(s)   { netStatusFilter=s;   renderNetwork(); }
 function setNetPriFilter(p)      { netPriorityFilter=p; renderNetwork(); }
 function setNetRelFilter(r)      { netRelationFilter=r; renderNetwork(); }
+
+// ═══════════════════════════ RENDER TO CHECK OUT ═══════════════════════════════
+function renderCheckout() {
+  document.getElementById("co-status-filters").innerHTML = ["All",...Object.keys(CO_STATUS)].map(s=>
+    `<button class="filter-btn${s===coStatusFilter?" active-purple":""}" onclick="setCoStatusFilter('${s}')">${s}</button>`).join("");
+
+  document.getElementById("co-priority-filters").innerHTML = ["All","High","Medium","Low"].map(p=>
+    `<button class="filter-btn${p===coPriorityFilter?" active-dark":""}" onclick="setCoPriFilter('${p}')">${p==="All"?p:p+" priority"}</button>`).join("");
+
+  const search = (document.getElementById("coSearch")||{}).value||"";
+  const statusOrder = Object.keys(CO_STATUS);
+  let filtered = state.checkouts.filter(c=>{
+    const ms = coStatusFilter==="All"||c.status===coStatusFilter;
+    const mp = coPriorityFilter==="All"||c.priority===coPriorityFilter;
+    const notes = (c.history||[]).map(h=>h.text).join(" ") + (c.description||"");
+    const mq = !search||[c.title,notes].join(" ").toLowerCase().includes(search.toLowerCase());
+    return ms&&mp&&mq;
+  }).sort((a,b)=>{
+    if(a.priority==="High"&&b.priority!=="High") return -1;
+    if(b.priority==="High"&&a.priority!=="High") return 1;
+    return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
+  });
+
+  const open = filtered.filter(c=>c.status!=="Done");
+  const done = filtered.filter(c=>c.status==="Done");
+
+  function renderCoCard(c) {
+    const sc = CO_STATUS[c.status]||CO_STATUS["To Do"];
+    const hi = c.priority==="High";
+    const latestNote = (c.history||[]).length > 0 ? c.history[c.history.length-1].text : "";
+    return `<div class="item-card${hi?" high-pri":""}" style="border-left-color:${sc.dot}">
+      <div class="item-row">
+        <div style="flex:1">
+          <div class="item-badges">
+            ${hi?`<span style="font-size:14px">⭐</span>`:""}
+            <span class="item-name">${escHtml(c.title)}</span>
+            ${badge(c.status+" →", sc.color, sc.bg, true, `cycleCoStatus('${c.id}')`)}
+            ${hi?badge("High priority","#922B21","#FADBD8"):""}
+          </div>
+          ${c.description?`<div style="font-size:13px;color:var(--muted);margin-bottom:4px">${escHtml(c.description)}</div>`:""}
+          <div class="item-meta">
+            ${c.link?`<a href="${escHtml(c.link)}" target="_blank" rel="noopener">🔗 Link</a>`:""}
+          </div>
+          ${latestNote?`<div class="item-notes">${escHtml(latestNote)}</div>`:""}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-sky btn-sm" onclick="openCheckoutModal('${c.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCheckout('${c.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById("co-open-count").textContent = open.length;
+  document.getElementById("co-done-count").textContent = done.length;
+
+  document.getElementById("co-open-list").innerHTML = open.length === 0
+    ? `<div class="card"><div class="empty-state">Nothing open right now.</div></div>`
+    : open.map(renderCoCard).join("");
+
+  document.getElementById("co-done-list").innerHTML = done.length === 0
+    ? `<div class="card"><div class="empty-state">No completed items yet.</div></div>`
+    : done.map(renderCoCard).join("");
+}
+function setCoStatusFilter(s) { coStatusFilter=s;   renderCheckout(); }
+function setCoPriFilter(p)    { coPriorityFilter=p; renderCheckout(); }
 
 // ═══════════════════════════ RENDER TRAINING ═══════════════════════════════════
 function renderTraining() {
@@ -1596,6 +1725,101 @@ function cycleNetStatus(id) {
   saveState(); renderNetwork(); renderDashboard();
 }
 
+// ═══════════════════════════ TO CHECK OUT MODAL ════════════════════════════════
+let _coModalHistory = [];
+
+function openCheckoutModal(id) {
+  editCheckoutId = id||null;
+  const c = id ? state.checkouts.find(x=>x.id===id) : null;
+  _coModalHistory = c?.history ? JSON.parse(JSON.stringify(c.history)) : [];
+  document.getElementById("checkoutModalTitle").textContent = id?"Edit Item":"Add Item";
+  document.getElementById("cf-title").value       = c?.title||"";
+  document.getElementById("cf-description").value = c?.description||"";
+  sel("cf-status",   Object.keys(CO_STATUS), c?.status||"To Do");
+  sel("cf-priority", ["High","Medium","Low"], c?.priority||"Medium");
+  document.getElementById("cf-link").value        = c?.link||"";
+  document.getElementById("cf-note-input").value  = "";
+  renderCoHistoryEntries();
+  document.getElementById("checkoutModal").style.display="flex";
+}
+function renderCoHistoryEntries() {
+  const el = document.getElementById("cf-history-entries");
+  if (!_coModalHistory.length) { el.innerHTML = `<div class="history-empty">No notes yet.</div>`; return; }
+  el.innerHTML = [..._coModalHistory].reverse().map((h,ri)=>{
+    const i = _coModalHistory.length - 1 - ri;
+    return `<div class="history-entry">
+      <div class="history-avatar">MM</div>
+      <div class="history-body">
+        <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
+        <div class="history-text" id="coht-${i}">${escHtml(h.text)}</div>
+        <textarea class="history-edit-area" id="cohea-${i}" rows="2">${escHtml(h.text)}</textarea>
+        <div class="history-actions">
+          <button class="history-link" id="coedit-${i}" onclick="startEditCoHistory(${i})">Edit</button>
+          <button class="history-link" id="cosave-${i}" style="display:none;color:var(--green)" onclick="saveEditCoHistory(${i})">Save</button>
+          <button class="history-link" id="cocancel-${i}" style="display:none" onclick="renderCoHistoryEntries()">Cancel</button>
+          <button class="history-link" style="color:var(--crimson)" onclick="deleteCoHistoryEntry(${i})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function addCoHistoryEntry() {
+  const input = document.getElementById("cf-note-input");
+  const text = input.value.trim();
+  if (!text) return;
+  _coModalHistory.push({ id: String(Date.now()), ts: new Date().toISOString(), text });
+  input.value = "";
+  renderCoHistoryEntries();
+}
+function startEditCoHistory(i) {
+  document.getElementById("coht-"+i).classList.add("editing");
+  document.getElementById("cohea-"+i).classList.add("editing");
+  document.getElementById("coedit-"+i).style.display = "none";
+  document.getElementById("cosave-"+i).style.display = "";
+  document.getElementById("cocancel-"+i).style.display = "";
+}
+function saveEditCoHistory(i) {
+  const val = document.getElementById("cohea-"+i).value.trim();
+  if (!val) return;
+  _coModalHistory[i].text = val;
+  renderCoHistoryEntries();
+}
+function deleteCoHistoryEntry(i) { _coModalHistory.splice(i,1); renderCoHistoryEntries(); }
+
+function closeCheckoutModal() { document.getElementById("checkoutModal").style.display="none"; editCheckoutId=null; _coModalHistory=[]; }
+function submitCheckout() {
+  const title = document.getElementById("cf-title").value.trim();
+  if (!title) return;
+  const pendingNote = document.getElementById("cf-note-input").value.trim();
+  const history = [..._coModalHistory];
+  if (pendingNote) history.push({ id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote });
+  const entry = {
+    id: editCheckoutId||String(Date.now()),
+    title,
+    description: document.getElementById("cf-description").value.trim(),
+    status:      document.getElementById("cf-status").value,
+    priority:    document.getElementById("cf-priority").value,
+    link:        document.getElementById("cf-link").value.trim(),
+    history,
+  };
+  if (editCheckoutId) state.checkouts = state.checkouts.map(c=>c.id===editCheckoutId?entry:c);
+  else state.checkouts.push(entry);
+  saveState(); closeCheckoutModal(); renderCheckout();
+}
+function deleteCheckout(id) {
+  if (!confirm("Remove this item?")) return;
+  state.checkouts = state.checkouts.filter(c=>c.id!==id);
+  saveState(); renderCheckout();
+}
+function cycleCoStatus(id) {
+  const order = Object.keys(CO_STATUS);
+  state.checkouts = state.checkouts.map(c=>{
+    if(c.id!==id) return c;
+    return {...c, status: order[(order.indexOf(c.status)+1)%order.length]};
+  });
+  saveState(); renderCheckout();
+}
+
 // ═══════════════════════════ WATCHLIST ═════════════════════════════════════════
 function renderWatchlist() {
   const list = document.getElementById("watch-list");
@@ -1797,6 +2021,7 @@ function exportCSV() {
     { name:"Applications", data:state.apps,     fields:["company","role","track","status","dateApplied","contact","notes"] },
     { name:"Contacts",     data:state.contacts, fields:["name","company","role","relation","status","priority","contactDate","notes"] },
     { name:"Watchlist",    data:state.watchlist,fields:["company","industry","careerSite","description"] },
+    { name:"To Check Out", data:state.checkouts,fields:["title","description","status","priority","link"] },
     { name:"Training",     data:state.trainings,fields:["title","category","status","provider","duration","notes"] },
   ];
   let csv = "";
@@ -1833,6 +2058,7 @@ async function init() {
     renderApplications();
     renderNetwork();
     renderTraining();
+    renderCheckout();
     renderStrategy();
   });
 }
