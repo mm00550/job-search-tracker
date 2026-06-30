@@ -238,6 +238,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -539,9 +540,12 @@
       <label class="form-label">Notes / History</label>
       <div class="history-log">
         <div class="history-add">
-          <textarea id="af-note-input" rows="2" placeholder="Next steps, interview feedback, recruiter name…"></textarea>
+          <textarea id="af-note-input" rows="2" placeholder="Next steps, interview feedback, recruiter name… (you can paste a screenshot here, Ctrl+V)"></textarea>
+          <input type="file" accept="image/*" id="af-note-image" style="display:none" onchange="handleNoteImageSelect('af', this.files[0])">
+          <button type="button" title="Attach screenshot" onclick="document.getElementById('af-note-image').click()">📷</button>
           <button onclick="addAppHistoryEntry()">Add</button>
         </div>
+        <div id="af-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
         <div class="history-entries" id="af-history-entries"></div>
       </div>
     </div>
@@ -615,9 +619,12 @@
       <label class="form-label">Notes / History</label>
       <div class="history-log">
         <div class="history-add">
-          <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up…"></textarea>
+          <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up… (you can paste a screenshot here, Ctrl+V)"></textarea>
+          <input type="file" accept="image/*" id="nf-note-image" style="display:none" onchange="handleNoteImageSelect('nf', this.files[0])">
+          <button type="button" title="Attach screenshot" onclick="document.getElementById('nf-note-image').click()">📷</button>
           <button onclick="addHistoryEntry()">Add</button>
         </div>
+        <div id="nf-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
         <div class="history-entries" id="nf-history-entries"></div>
       </div>
     </div>
@@ -648,9 +655,12 @@
       <label class="form-label">Notes / History</label>
       <div class="history-log">
         <div class="history-add">
-          <textarea id="cf-note-input" rows="2" placeholder="Add a note…"></textarea>
+          <textarea id="cf-note-input" rows="2" placeholder="Add a note… (you can paste a screenshot here, Ctrl+V)"></textarea>
+          <input type="file" accept="image/*" id="cf-note-image" style="display:none" onchange="handleNoteImageSelect('cf', this.files[0])">
+          <button type="button" title="Attach screenshot" onclick="document.getElementById('cf-note-image').click()">📷</button>
           <button onclick="addCoHistoryEntry()">Add</button>
         </div>
+        <div id="cf-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
         <div class="history-entries" id="cf-history-entries"></div>
       </div>
     </div>
@@ -1307,6 +1317,65 @@ function currentDisplayName() {
   const u = firebase.auth().currentUser;
   return (u && (u.displayName || (u.email||"").split("@")[0])) || "Someone";
 }
+
+// ═══════════════════════════ NOTE SCREENSHOTS ══════════════════════════════════
+// Optional image attachments on Applications/Network/Notes-Tasks-Reminders notes.
+// Stored in Firebase Storage under users/{uid}/notes/, never shared with other users.
+const _pendingNoteImage = {};
+
+function handleNoteImageSelect(prefix, file) {
+  if (!file) return;
+  _pendingNoteImage[prefix] = file;
+  renderNoteImagePreview(prefix);
+}
+function clearNoteImage(prefix) {
+  delete _pendingNoteImage[prefix];
+  const input = document.getElementById(prefix + "-note-image");
+  if (input) input.value = "";
+  renderNoteImagePreview(prefix);
+}
+function renderNoteImagePreview(prefix) {
+  const el = document.getElementById(prefix + "-note-image-preview");
+  if (!el) return;
+  const file = _pendingNoteImage[prefix];
+  if (!file) { el.style.display = "none"; el.innerHTML = ""; return; }
+  const url = URL.createObjectURL(file);
+  el.style.display = "block";
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+    <img src="${url}" style="height:50px;border-radius:6px">
+    <span style="font-size:11px;color:var(--muted)">${escHtml(file.name)}</span>
+    <button type="button" onclick="clearNoteImage('${prefix}')" style="margin-left:auto;background:none;border:none;color:var(--crimson);cursor:pointer;font-size:12px">✕ remove</button>
+  </div>`;
+}
+function setupNotePasteListener(textareaId, prefix) {
+  const el = document.getElementById(textareaId);
+  if (!el || el._pasteWired) return;
+  el._pasteWired = true;
+  el.addEventListener("paste", (e) => {
+    const items = (e.clipboardData || {}).items || [];
+    for (const item of items) {
+      if (item.type && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) { handleNoteImageSelect(prefix, file); e.preventDefault(); }
+        break;
+      }
+    }
+  });
+}
+async function uploadNoteImage(file) {
+  const path = `users/${currentUid}/notes/${Date.now()}-${file.name}`;
+  const ref = firebase.storage().ref(path);
+  await ref.put(file);
+  const url = await ref.getDownloadURL();
+  return { imageUrl: url, imagePath: path };
+}
+function noteImageThumb(h) {
+  if (!h.imageUrl) return "";
+  return `<img src="${h.imageUrl}" style="max-width:220px;max-height:160px;border-radius:8px;margin-top:6px;cursor:zoom-in;display:block" onclick="window.open('${h.imageUrl}','_blank')">`;
+}
+function deleteNoteImageIfAny(h) {
+  if (h && h.imagePath) firebase.storage().ref(h.imagePath).delete().catch(()=>{});
+}
 async function mirrorShared(collection, id, fields) {
   if (!firebaseReady || !db || !currentUid) return;
   try {
@@ -1657,6 +1726,8 @@ function openAppModal(id) {
   sel("af-track",  Object.keys(APP_TRACK),  app?.track||"Permanent");
   sel("af-status", Object.keys(APP_STATUS), app?.status||"Applied");
   document.getElementById("af-note-input").value = "";
+  clearNoteImage("af");
+  setupNotePasteListener("af-note-input", "af");
   document.getElementById("af-followup").checked = app?.followUp||false;
   document.getElementById("af-followupdate").value = app?.followUpDate||"";
   toggleAppFollowupDate();
@@ -1673,6 +1744,7 @@ function renderAppHistoryEntries() {
       <div class="history-body">
         <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
         <div class="history-text" id="aht-${i}">${escHtml(h.text)}</div>
+        ${noteImageThumb(h)}
         <textarea class="history-edit-area" id="ahea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="ahedit-${i}" onclick="startEditAppHistory(${i})">Edit</button>
@@ -1684,11 +1756,15 @@ function renderAppHistoryEntries() {
     </div>`;
   }).join("");
 }
-function addAppHistoryEntry() {
+async function addAppHistoryEntry() {
   const input = document.getElementById("af-note-input");
-  const text = input.value.trim(); if (!text) return;
-  _appModalHistory.push({ id:String(Date.now()), ts:new Date().toISOString(), text });
-  input.value = ""; renderAppHistoryEntries();
+  const text = input.value.trim();
+  const file = _pendingNoteImage["af"];
+  if (!text && !file) return;
+  const entry = { id:String(Date.now()), ts:new Date().toISOString(), text };
+  if (file) Object.assign(entry, await uploadNoteImage(file));
+  _appModalHistory.push(entry);
+  input.value = ""; clearNoteImage("af"); renderAppHistoryEntries();
 }
 function startEditAppHistory(i) {
   document.getElementById("aht-"+i).classList.add("editing");
@@ -1701,20 +1777,25 @@ function saveEditAppHistory(i) {
   const val = document.getElementById("ahea-"+i).value.trim(); if (!val) return;
   _appModalHistory[i].text = val; renderAppHistoryEntries();
 }
-function deleteAppHistoryEntry(i) { _appModalHistory.splice(i,1); renderAppHistoryEntries(); }
+function deleteAppHistoryEntry(i) { deleteNoteImageIfAny(_appModalHistory[i]); _appModalHistory.splice(i,1); renderAppHistoryEntries(); }
 
 function toggleAppFollowupDate() {
   document.getElementById("af-followupdate-wrap").style.display =
     document.getElementById("af-followup").checked ? "block" : "none";
 }
-function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; _appModalHistory=[]; }
-function submitApp() {
+function closeAppModal() { document.getElementById("appModal").style.display="none"; editAppId=null; _appModalHistory=[]; clearNoteImage("af"); }
+async function submitApp() {
   const company = document.getElementById("af-company").value.trim();
   const role    = document.getElementById("af-role").value.trim();
   if (!company||!role) return;
   const pendingNote = document.getElementById("af-note-input").value.trim();
+  const pendingFile = _pendingNoteImage["af"];
   const history = [..._appModalHistory];
-  if (pendingNote) history.push({ id:String(Date.now()), ts:new Date().toISOString(), text:pendingNote });
+  if (pendingNote || pendingFile) {
+    const note = { id:String(Date.now()), ts:new Date().toISOString(), text:pendingNote };
+    if (pendingFile) Object.assign(note, await uploadNoteImage(pendingFile));
+    history.push(note);
+  }
   const entry = {
     id: editAppId||String(Date.now()),
     company, role,
@@ -1868,6 +1949,8 @@ function openNetModal(id) {
   document.getElementById("nf-linkedin").value    = c?.linkedIn||"";
   document.getElementById("nf-shared").checked    = c?.shared||false;
   document.getElementById("nf-note-input").value  = "";
+  clearNoteImage("nf");
+  setupNotePasteListener("nf-note-input", "nf");
   renderHistoryEntries();
   document.getElementById("netModal").style.display="flex";
 }
@@ -1885,6 +1968,7 @@ function renderHistoryEntries() {
       <div class="history-body">
         <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
         <div class="history-text" id="ht-${i}">${escHtml(h.text)}</div>
+        ${noteImageThumb(h)}
         <textarea class="history-edit-area" id="hea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="hedit-${i}" onclick="startEditHistory(${i})">Edit</button>
@@ -1897,12 +1981,16 @@ function renderHistoryEntries() {
   }).join("");
 }
 
-function addHistoryEntry() {
+async function addHistoryEntry() {
   const input = document.getElementById("nf-note-input");
   const text = input.value.trim();
-  if (!text) return;
-  _modalHistory.push({ id: String(Date.now()), ts: new Date().toISOString(), text });
+  const file = _pendingNoteImage["nf"];
+  if (!text && !file) return;
+  const entry = { id: String(Date.now()), ts: new Date().toISOString(), text };
+  if (file) Object.assign(entry, await uploadNoteImage(file));
+  _modalHistory.push(entry);
   input.value = "";
+  clearNoteImage("nf");
   renderHistoryEntries();
 }
 
@@ -1921,17 +2009,23 @@ function saveEditHistory(i) {
 }
 function cancelEditHistory(i) { renderHistoryEntries(); }
 function deleteHistoryEntry(i) {
+  deleteNoteImageIfAny(_modalHistory[i]);
   _modalHistory.splice(i, 1);
   renderHistoryEntries();
 }
 
-function closeNetModal() { document.getElementById("netModal").style.display="none"; editNetId=null; _modalHistory=[]; }
-function submitNet() {
+function closeNetModal() { document.getElementById("netModal").style.display="none"; editNetId=null; _modalHistory=[]; clearNoteImage("nf"); }
+async function submitNet() {
   const name = document.getElementById("nf-name").value.trim();
   if (!name) return;
   const pendingNote = document.getElementById("nf-note-input").value.trim();
+  const pendingFile = _pendingNoteImage["nf"];
   const history = [..._modalHistory];
-  if (pendingNote) history.push({ id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote });
+  if (pendingNote || pendingFile) {
+    const note = { id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote };
+    if (pendingFile) Object.assign(note, await uploadNoteImage(pendingFile));
+    history.push(note);
+  }
   const entry = {
     id: editNetId||String(Date.now()),
     name,
@@ -1983,6 +2077,8 @@ function openCheckoutModal(id) {
   document.getElementById("cf-link").value        = c?.link||"";
   document.getElementById("cf-shared").checked    = c?.shared||false;
   document.getElementById("cf-note-input").value  = "";
+  clearNoteImage("cf");
+  setupNotePasteListener("cf-note-input", "cf");
   renderCoHistoryEntries();
   document.getElementById("checkoutModal").style.display="flex";
 }
@@ -1996,6 +2092,7 @@ function renderCoHistoryEntries() {
       <div class="history-body">
         <div class="history-meta">You &nbsp;·&nbsp; ${fmtDatetime(h.ts)}</div>
         <div class="history-text" id="coht-${i}">${escHtml(h.text)}</div>
+        ${noteImageThumb(h)}
         <textarea class="history-edit-area" id="cohea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="coedit-${i}" onclick="startEditCoHistory(${i})">Edit</button>
@@ -2007,12 +2104,16 @@ function renderCoHistoryEntries() {
     </div>`;
   }).join("");
 }
-function addCoHistoryEntry() {
+async function addCoHistoryEntry() {
   const input = document.getElementById("cf-note-input");
   const text = input.value.trim();
-  if (!text) return;
-  _coModalHistory.push({ id: String(Date.now()), ts: new Date().toISOString(), text });
+  const file = _pendingNoteImage["cf"];
+  if (!text && !file) return;
+  const entry = { id: String(Date.now()), ts: new Date().toISOString(), text };
+  if (file) Object.assign(entry, await uploadNoteImage(file));
+  _coModalHistory.push(entry);
   input.value = "";
+  clearNoteImage("cf");
   renderCoHistoryEntries();
 }
 function startEditCoHistory(i) {
@@ -2028,15 +2129,20 @@ function saveEditCoHistory(i) {
   _coModalHistory[i].text = val;
   renderCoHistoryEntries();
 }
-function deleteCoHistoryEntry(i) { _coModalHistory.splice(i,1); renderCoHistoryEntries(); }
+function deleteCoHistoryEntry(i) { deleteNoteImageIfAny(_coModalHistory[i]); _coModalHistory.splice(i,1); renderCoHistoryEntries(); }
 
-function closeCheckoutModal() { document.getElementById("checkoutModal").style.display="none"; editCheckoutId=null; _coModalHistory=[]; }
-function submitCheckout() {
+function closeCheckoutModal() { document.getElementById("checkoutModal").style.display="none"; editCheckoutId=null; _coModalHistory=[]; clearNoteImage("cf"); }
+async function submitCheckout() {
   const title = document.getElementById("cf-title").value.trim();
   if (!title) return;
   const pendingNote = document.getElementById("cf-note-input").value.trim();
+  const pendingFile = _pendingNoteImage["cf"];
   const history = [..._coModalHistory];
-  if (pendingNote) history.push({ id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote });
+  if (pendingNote || pendingFile) {
+    const note = { id: String(Date.now()), ts: new Date().toISOString(), text: pendingNote };
+    if (pendingFile) Object.assign(note, await uploadNoteImage(pendingFile));
+    history.push(note);
+  }
   const entry = {
     id: editCheckoutId||String(Date.now()),
     title,
