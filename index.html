@@ -519,13 +519,16 @@
     .broker-section-hdr { font-size:14px; font-weight:700; color:var(--navy); margin:24px 0 10px; padding-bottom:4px; border-bottom:3px solid var(--tealB); }
     .broker-intro { font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
     .broker-wrap { overflow-x:auto; }
+    .btn-add-watch { padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; cursor:pointer; border:none; background:var(--sky); color:var(--navy); white-space:nowrap; transition:opacity .15s; }
+    .btn-add-watch:hover { opacity:.8; }
+    .btn-add-watch.added { background:var(--mint); color:var(--green); cursor:default; }
   </style>
 
   <!-- ── 1. KONSULTMÄKLARE ─────────────────────────────────────────────────── -->
   <div class="broker-section-hdr">Konsultmäklare</div>
   <div class="broker-wrap">
   <table class="broker-table">
-    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th></tr></thead>
+    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th><th>Watchlist</th></tr></thead>
     <tbody>
       <tr><td><b>emagine Consulting</b></td><td>IT, mgmt</td><td>Frilans</td><td>Sverige</td><td><a href="https://emagine-consulting.se" target="_blank" rel="noopener">emagine-consulting.se</a></td><td>info@emagine-consulting.se</td><td>072 200 54 58</td><td><a href="https://emagine-consulting.se/consultants/freelance-jobs/" target="_blank" rel="noopener">Länk</a></td><td><a href="https://www.linkedin.com/company/emagine/" target="_blank" rel="noopener">Länk</a></td></tr>
       <tr><td><b>Developers Bay</b></td><td>IT</td><td>Frilans</td><td>Sverige, remote</td><td><a href="https://developersbay.se" target="_blank" rel="noopener">developersbay.se</a></td><td>hello@developersbay.se</td><td>073 600 30 21</td><td><a href="https://box.developersbay.se/" target="_blank" rel="noopener">Länk</a></td><td><a href="https://www.linkedin.com/company/developers-bay/" target="_blank" rel="noopener">Länk</a></td></tr>
@@ -630,7 +633,7 @@
   <div class="broker-section-hdr">Konsultmarknadsplatser / frilansmarknadsplatser</div>
   <div class="broker-wrap">
   <table class="broker-table">
-    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th></tr></thead>
+    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th><th>Watchlist</th></tr></thead>
     <tbody>
       <tr><td><b>Brainbase</b></td><td>Alla</td><td>Frilans</td><td>Norge</td><td><a href="https://www.brainbase.no/om-oss" target="_blank" rel="noopener">brainbase.no</a></td><td>kontakt@brainbase.no</td><td>—</td><td>—</td><td><a href="https://www.linkedin.com/company/brainbase/" target="_blank" rel="noopener">Länk</a></td></tr>
       <tr><td><b>Brainville</b></td><td>Alla</td><td>Frilans</td><td>Norden</td><td><a href="https://www.brainville.com/" target="_blank" rel="noopener">brainville.com</a></td><td>info@brainville.com</td><td>—</td><td><a href="https://www.brainville.com/HittaKonsultuppdrag" target="_blank" rel="noopener">Länk</a></td><td><a href="https://www.linkedin.com/company/brainville/" target="_blank" rel="noopener">Länk</a></td></tr>
@@ -664,7 +667,7 @@
   <div class="broker-section-hdr">Konsultbolag för frilanskonsulter</div>
   <div class="broker-wrap">
   <table class="broker-table">
-    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th></tr></thead>
+    <thead><tr><th>Namn</th><th>Bransch</th><th>Målgrupp</th><th>Uppdrag</th><th>Webbplats</th><th>E-mail</th><th>Telefon</th><th>Portal</th><th>LinkedIn</th><th>Watchlist</th></tr></thead>
     <tbody>
       <tr><td><b>Adwise Consulting</b></td><td>IT</td><td>Anställda, frilans</td><td>Göteborg</td><td><a href="https://www.adwise.se/" target="_blank" rel="noopener">adwise.se</a></td><td>info@adwise.se</td><td>031 703 46 00</td><td>—</td><td><a href="https://www.linkedin.com/company/aliby-consulting-ab/" target="_blank" rel="noopener">Länk</a></td></tr>
       <tr><td><b>Alphadev</b></td><td>IT</td><td>Anställda, frilans</td><td>Stockholm</td><td><a href="https://www.alphadev.se/" target="_blank" rel="noopener">alphadev.se</a></td><td>partner@alphadev.se</td><td>0707 199 491</td><td>—</td><td><a href="https://www.linkedin.com/company/alphadev/" target="_blank" rel="noopener">Länk</a></td></tr>
@@ -688,6 +691,40 @@
   </div>
 
   <!-- ── 4. NÄTVERK ────────────────────────────────────────────────────────── -->
+  <script>
+  function addBrokerToWatchlist(btn, company, industry, website) {
+    if (state.watchlist.some(w => w.company === company)) {
+      btn.textContent = '✓ Added'; btn.classList.add('added'); return;
+    }
+    state.watchlist.push({
+      id: String(Date.now()), company, industry,
+      careerSite: website,
+      description: 'Konsultmäklare — added from Konsultmäklare tab',
+      shared: false,
+    });
+    saveState();
+    btn.textContent = '✓ Added'; btn.classList.add('added');
+    renderWatchlist();
+  }
+
+  function initBrokerWatchlistButtons() {
+    document.querySelectorAll('.broker-table tbody tr').forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (!cells.length) return;
+      const company  = cells[0]?.innerText.trim();
+      const industry = cells[1]?.innerText.trim() || '';
+      const website  = cells[4]?.querySelector('a')?.href || '';
+      if (!company) return;
+      const already = state.watchlist.some(w => w.company === company);
+      const td = document.createElement('td');
+      td.innerHTML = `<button class="btn-add-watch${already?' added':''}"
+        onclick="addBrokerToWatchlist(this,${JSON.stringify(company)},${JSON.stringify(industry)},${JSON.stringify(website)})">
+        ${already ? '✓ Added' : '+ Watchlist'}
+      </button>`;
+      row.appendChild(td);
+    });
+  }
+  </script>
   <div class="broker-section-hdr">Nätverk där konsultuppdrag publiceras</div>
   <div class="card card-dashed" style="margin-bottom:12px">
     <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">Slack-grupper</div>
@@ -1214,6 +1251,11 @@ function showTab(id) {
   document.querySelectorAll(".tab-btn").forEach(b=>{ if(b.textContent.toLowerCase().includes(id.replace("applications","application"))) b.classList.add("active"); });
   // fix: match by onclick
   document.querySelectorAll(".tab-btn").forEach(b=>{ if(b.getAttribute("onclick")===`showTab('${id}')`) b.classList.add("active"); });
+  if (id === 'brokers') {
+    // Remove any existing watchlist cells first (re-render on tab revisit)
+    document.querySelectorAll('.broker-table tbody tr td:last-child button.btn-add-watch').forEach(btn => btn.closest('td').remove());
+    initBrokerWatchlistButtons();
+  }
 }
 
 
