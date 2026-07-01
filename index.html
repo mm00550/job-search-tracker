@@ -717,10 +717,16 @@
       if (!company) return;
       const already = state.watchlist.some(w => w.company === company);
       const td = document.createElement('td');
-      td.innerHTML = `<button class="btn-add-watch${already?' added':''}"
-        onclick="addBrokerToWatchlist(this,${JSON.stringify(company)},${JSON.stringify(industry)},${JSON.stringify(website)})">
-        ${already ? '✓ Added' : '+ Watchlist'}
-      </button>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn-add-watch' + (already ? ' added' : '');
+      btn.textContent = already ? '✓ Added' : '+ Watchlist';
+      btn.dataset.company  = company;
+      btn.dataset.industry = industry;
+      btn.dataset.website  = website;
+      btn.addEventListener('click', function() {
+        addBrokerToWatchlist(this, this.dataset.company, this.dataset.industry, this.dataset.website);
+      });
+      td.appendChild(btn);
       row.appendChild(td);
     });
   }
