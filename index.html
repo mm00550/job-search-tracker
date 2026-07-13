@@ -1528,6 +1528,11 @@ function renderNetwork() {
   }).sort((a,b)=>{
     if(a.priority==="High"&&b.priority!=="High") return -1;
     if(b.priority==="High"&&a.priority!=="High") return 1;
+    const tsA = (a.history||[]).length ? a.history[a.history.length-1].ts : "";
+    const tsB = (b.history||[]).length ? b.history[b.history.length-1].ts : "";
+    if(tsA && tsB) return tsB.localeCompare(tsA);
+    if(tsA) return -1;
+    if(tsB) return 1;
     return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
   });
 
