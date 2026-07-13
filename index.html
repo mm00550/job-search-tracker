@@ -880,11 +880,15 @@
     <div class="form-group">
       <label class="form-label">Notes / History</label>
       <div class="history-log">
-        <div class="history-add">
-          <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up… (you can paste a screenshot here, Ctrl+V)"></textarea>
-          <input type="file" accept="image/*" id="nf-note-image" style="display:none" onchange="handleNoteImageSelect('nf', this.files[0])">
-          <button type="button" title="Attach screenshot" onclick="document.getElementById('nf-note-image').click()">📷</button>
-          <button onclick="addHistoryEntry()">Add</button>
+        <div class="history-add" style="flex-wrap:wrap;gap:6px">
+          <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up… (you can paste a screenshot here, Ctrl+V)" style="flex:1;min-width:0"></textarea>
+          <div style="display:flex;align-items:center;gap:6px;width:100%;padding:0 0 2px">
+            <label style="font-size:11px;color:var(--muted);white-space:nowrap">Date:</label>
+            <input type="date" id="nf-note-date" class="form-input" style="flex:1;font-size:11px;padding:5px 8px">
+            <input type="file" accept="image/*" id="nf-note-image" style="display:none" onchange="handleNoteImageSelect('nf', this.files[0])">
+            <button type="button" title="Attach screenshot" onclick="document.getElementById('nf-note-image').click()">📷</button>
+            <button onclick="addHistoryEntry()">Add</button>
+          </div>
         </div>
         <div id="nf-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
         <div class="history-entries" id="nf-history-entries"></div>
@@ -2192,8 +2196,7 @@ function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"
 function fmtDatetime(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) + " at " +
-    d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
 }
 
 // ═══════════════════════════ NET MODAL ════════════════════════════════════════
@@ -2216,6 +2219,7 @@ function openNetModal(id) {
   document.getElementById("nf-linkedin").value    = c?.linkedIn||"";
   document.getElementById("nf-shared").checked    = c?.shared||false;
   document.getElementById("nf-note-input").value  = "";
+  document.getElementById("nf-note-date").value   = today();
   clearNoteImage("nf");
   setupNotePasteListener("nf-note-input", "nf");
   renderHistoryEntries();
@@ -2253,7 +2257,9 @@ async function addHistoryEntry() {
   const text = input.value.trim();
   const file = _pendingNoteImage["nf"];
   if (!text && !file) return;
-  const entry = { id: String(Date.now()), ts: new Date().toISOString(), text };
+  const dateVal = document.getElementById("nf-note-date").value;
+  const ts = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+  const entry = { id: String(Date.now()), ts, text };
   if (file) Object.assign(entry, await uploadNoteImage(file));
   _modalHistory.push(entry);
   input.value = "";
