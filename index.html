@@ -1042,6 +1042,57 @@ const RECOMMENDED = [
   { category:"Certification",           title:"SAFe 6.0 SPC Recertification",       provider:"Scaled Agile",      duration:"16h", url:"https://scaledagile.com",           milestone:"Week 10"},
   { category:"Certification",           title:"PMP Exam Prep",                      provider:"PMI",               duration:"35h", url:"https://www.pmi.org",               milestone:"Week 12"},
 ];
+const AI_LEARNING_PATH = [
+  { track:"Track 01 · Foundations",  title:"AI for Everyone",                                   provider:"DeepLearning.AI — Andrew Ng",     duration:"~6 hrs · free to audit",           url:"https://www.deeplearning.ai/courses/ai-for-everyone/",
+    notes:"Non-technical overview of what AI can and can't do, how to spot opportunities in your own work, and how to talk to technical teams about it. No coding." },
+  { track:"Track 01 · Foundations",  title:"Elements of AI",                                    provider:"University of Helsinki",          duration:"6 chapters · free + certificate",  url:"https://course.elementsofai.com/",
+    notes:"Interactive, text-based intro to AI fundamentals with exercises and logic puzzles. No coding or advanced math required." },
+  { track:"Track 01 · Foundations",  title:"Introduction to Generative AI",                     provider:"Google Skills",                   duration:"~6 hrs · free + credential",       url:"https://www.skills.google/paths/118",
+    notes:"Five modules on generative AI basics, how large language models work, and responsible-AI practice. Videos, quizzes, no programming." },
+  { track:"Track 01 · Foundations",  title:"Generative AI: How to Use It and Why It Matters",   provider:"Harvard Kennedy School",          duration:"self-paced · free",                url:"https://generative-ai-course.hks.harvard.edu/1-how-genai-works/class-1",
+    notes:"Explains the mechanics behind generative AI, effective prompting, and its wider societal impact — aimed at leaders without a technical background." },
+  { track:"Track 02 · Generative AI",title:"Generative AI for Beginners",                       provider:"Microsoft",                       duration:"21 lessons · free, open source",   url:"https://github.com/microsoft/generative-ai-for-beginners",
+    notes:"Code-first walkthrough covering prompt engineering, building RAG systems, and AI agents in one connected curriculum — the best single starting point if you want all three topics together." },
+  { track:"Track 02 · Generative AI",title:"LLM Course",                                        provider:"Hugging Face",                    duration:"12 chapters · free, no ads",       url:"https://huggingface.co/learn/llm-course/chapter1/1",
+    notes:"The technical deep dive: transformer architecture, fine-tuning, and language-model fundamentals. Assumes solid Python." },
+  { track:"Track 02 · Generative AI",title:"Anthropic Academy",                                 provider:"Anthropic",                       duration:"84 lessons · 8+ hrs · free + certificate", url:"https://www.anthropic.com/learn",
+    notes:"Practical, hands-on building with Claude — the API, Claude Code, and the Model Context Protocol. Good complement once the theory above makes sense." },
+  { track:"Track 03 · Agentic AI",   title:"AI Agents for Beginners",                           provider:"Microsoft",                       duration:"15 lessons · free, open source",   url:"https://microsoft.github.io/ai-agents-for-beginners/",
+    notes:"Code-focused lessons on agent frameworks and design patterns — a lighter on-ramp than the Hugging Face course below." },
+  { track:"Track 03 · Agentic AI",   title:"Agents Course",                                     provider:"Hugging Face",                    duration:"~3–4 hrs/wk · free + certification", url:"https://huggingface.co/learn/agents-course/en/unit0/introduction",
+    notes:"Goes deepest on agent fundamentals and implementation, using smolagents, LlamaIndex, and LangGraph across real projects." },
+  { track:"Track 03 · Agentic AI",   title:"OpenAI Academy",                                    provider:"OpenAI",                          duration:"self-paced · free, most w/ certificate", url:"https://academy.openai.com/",
+    notes:"Self-paced tracks from basics through agentic workflows, taught directly by the company behind ChatGPT." },
+  { track:"Track 04 · RAG",          title:"Introduction to Retrieval Augmented Generation (RAG)", provider:"Duke University · Coursera",   duration:"self-paced · free to audit",       url:"https://www.coursera.org/learn/introduction-to-retrieval-augmented-generation-rag",
+    notes:"Builds a complete end-to-end RAG system on your own data with open-source tools — the most structured, classroom-style option here." },
+  { track:"Track 04 · RAG",          title:"Building and Evaluating Advanced RAG",               provider:"DeepLearning.AI",                 duration:"~90 min · free",                   url:"https://www.deeplearning.ai/courses/building-evaluating-advanced-rag",
+    notes:"Short and practical — evaluation metrics and techniques for RAG systems that go beyond a basic retrieval setup. Taught by LlamaIndex's co-founder." },
+  { track:"Track 04 · RAG",          title:"Building Agentic RAG with LlamaIndex",              provider:"DeepLearning.AI",                 duration:"short course · free",              url:"https://www.deeplearning.ai/courses/building-agentic-rag-with-llamaindex",
+    notes:"Where RAG and agents meet: router agents and research agents that decide what to retrieve and when, for document-heavy tasks." },
+  { track:"Extra · Also worth a look",title:"Generative AI Leader",                             provider:"Google Cloud",                    duration:"self-paced · training free, exam $99", url:"https://cloud.google.com/learn/certification/generative-ai-leader",
+    notes:"Aimed at non-technical professionals who need to lead or scope AI strategy without writing code themselves." },
+  { track:"Extra · Also worth a look",title:"AI Course Catalog",                                provider:"IBM SkillsBuild",                  duration:"1,000+ courses · free + credentials", url:"https://skillsbuild.org/adult-learners/explore-learning/artificial-intelligence",
+    notes:"A large, self-paced catalog spanning AI topics at every level — a good place to branch out once you've finished the core path above." },
+];
+function seedAiLearningPath() {
+  const existing = new Set(state.trainings.map(t=>t.title));
+  const toAdd = AI_LEARNING_PATH.filter(c=>!existing.has(c.title));
+  if (!toAdd.length) return;
+  toAdd.forEach((c,i)=>{
+    state.trainings.push({
+      id: String(Date.now()) + "_" + i,
+      title: c.title,
+      category: "AI & Technology",
+      status: "Not started",
+      provider: c.provider,
+      duration: c.duration,
+      targetDate: c.track,
+      url: c.url,
+      history: [{ id: String(Date.now()) + "_h" + i, ts: new Date().toISOString(), text: c.notes }],
+    });
+  });
+  saveState();
+}
 // Milestones used to be a hardcoded 9-week plan for one person. They're now
 // generated per-user from their onboarding goals (start/target date, weekly
 // application target, training topics) so every account gets its own timeline.
@@ -2883,6 +2934,7 @@ async function init() {
       return;
     }
     obOverlay.style.display = "none";
+    seedAiLearningPath();
     renderAll();
   });
 }
