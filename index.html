@@ -3021,11 +3021,15 @@ function saveCriteria() {
   renderLinkedIn();
 }
 // Job Sites & Companies — Search Criteria quick-add tags
+// Location chips also need to reach searchCriteria.location — that's the field
+// runJobSitesSearch/runCompanySearch actually filter by, not the free-text list.
+const LOCATION_CHIP_VALUES = new Set(["Gothenburg"]);
 function addCriteriaTag(value) {
   const el = document.getElementById("jsc-freetext");
   const parts = el.value.trim() ? el.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
   if (!parts.includes(value)) parts.push(value);
   el.value = parts.join(", ");
+  if (LOCATION_CHIP_VALUES.has(value)) document.getElementById("sg-location").value = value;
   saveCriteria();
 }
 function renderRoleTitles() {
@@ -3099,13 +3103,25 @@ function renderLinkedIn() {
 // ═══════════════════════════ RUN SEARCH (Job Sites & Companies) ════════════════
 // Combines pinned Role Titles with whatever's in the Search Criteria field —
 // per Markus Job Search Instructions, both feed the same search.
+// The Type of role / Type of company / Location / Office policy chips describe
+// qualifiers, not job titles — searched as their own standalone term against a
+// full-text job index they're far too generic ("Full-time" alone surfaces things
+// like waiter jobs; a real title like "Senior Project Manager" doesn't). So they
+// never become search terms on their own, only role titles do.
+const CRITERIA_QUALIFIER_TERMS = new Set([
+  "full-time","consultancy","interim",
+  "tech","financial services","public services","life science","medtech","pharma","automotive",
+  "gothenburg",
+  "hybrid","on-site","remote",
+].map(s=>s.toLowerCase()));
+
 function buildSearchTerms() {
   const pinned = state.searchCriteria.roleTitles||[];
   const free = (state.searchCriteria.freeText||"").split(",").map(s=>s.trim()).filter(Boolean);
   const seen = new Set(), out = [];
   [...pinned, ...free].forEach(t=>{
     const key = t.toLowerCase();
-    if (t && !seen.has(key)) { seen.add(key); out.push(t); }
+    if (t && !seen.has(key) && !CRITERIA_QUALIFIER_TERMS.has(key)) { seen.add(key); out.push(t); }
   });
   return out;
 }
