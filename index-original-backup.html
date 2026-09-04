@@ -295,10 +295,9 @@
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" onclick="showTab('jobsites')">Job Sites &amp; Companies</button>
+    <button class="tab-btn" onclick="showTab('watchlist')">Watchlist</button>
     <button class="tab-btn" onclick="showTab('suggestions')">Suggestions</button>
     <button class="tab-btn" onclick="showTab('applications')">Applications</button>
-    <button class="tab-btn" onclick="showTab('jobwatchlist')">Job Watchlist</button>
     <button class="tab-btn" onclick="showTab('network')">Network</button>
     <button class="tab-btn" onclick="showTab('checkout')">Notes, Tasks &amp; Reminders</button>
     <button class="tab-btn" onclick="showTab('training')">Training</button>
@@ -335,24 +334,6 @@
   </div>
 
   <div class="card">
-    <div class="card-hdr">
-      <span class="card-ttl" style="color:var(--navy)">🎯 Job Match Fit</span>
-      <span style="font-size:11px;color:var(--muted)">Phase 2 · Markus Job Search Instructions</span>
-    </div>
-    <div class="grid4" id="dash-fit-stats"></div>
-    <div class="grid2" style="margin-top:4px">
-      <div>
-        <div class="sec-label" style="margin-bottom:6px">Highest-fit current leads</div>
-        <div id="dash-top-fit"></div>
-      </div>
-      <div>
-        <div class="sec-label" style="margin-bottom:6px">Refresh</div>
-        <div id="dash-refresh" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
     <div class="card-ttl" style="color:var(--orange);margin-bottom:12px">🔔 Follow-ups & To-Dos</div>
     <div id="dash-followups"></div>
   </div>
@@ -379,29 +360,19 @@
 </div>
 
 <!-- ════════════════════════════ WATCHLIST ════════════════════════════════ -->
-<div id="tab-jobsites" class="section">
+<div id="tab-watchlist" class="section">
   <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple)">🧭 Job Sites &amp; Companies</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Where you search, on the left. Companies you're watching before there's an open role, on the right.</div>
-  </div>
-  <div class="grid2">
-    <div>
-      <div class="hdr-row" style="margin-bottom:10px">
-        <div class="sec-label" style="margin-bottom:0">🔎 Job Sites</div>
-        <button class="btn btn-purple btn-sm" onclick="openSearchSetupModal()">+ Add Source</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--purple)">⭐ Company Watchlist</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Companies you're interested in, before there's an open role to apply for</div>
       </div>
-      <div id="jc-list"></div>
-    </div>
-    <div>
-      <div class="hdr-row" style="margin-bottom:10px">
-        <div class="sec-label" style="margin-bottom:0">⭐ Companies</div>
-        <button class="btn btn-purple btn-sm" onclick="openWatchModal()">+ Add Company</button>
-      </div>
-      <div id="watch-list"></div>
-      <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
-      <div id="watch-shared-list"></div>
+      <button class="btn btn-purple" onclick="openWatchModal()">+ Add Company</button>
     </div>
   </div>
+  <div id="watch-list"></div>
+  <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
+  <div id="watch-shared-list"></div>
 </div>
 
 <!-- ════════════════════════════ SUGGESTIONS ════════════════════════════════ -->
@@ -431,20 +402,6 @@
   <div id="app-active-list"></div>
   <div class="net-section-hdr contacted" style="background:#F1ECEF;color:var(--muted)">🏁 Closed / Withdrawn <span class="net-section-count" id="app-closed-count" style="background:rgba(0,0,0,.1)">0</span></div>
   <div id="app-closed-list"></div>
-</div>
-
-<!-- ══════════════════════════════ JOB WATCHLIST ══════════════════════════════ -->
-<div id="tab-jobwatchlist" class="section">
-  <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple)">🎯 Job Watchlist</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Opportunities you're considering, before you apply — with the field set from Markus Job Search Instructions (Phase 2). Mark one Applied to move it to the Applications tab; nothing here counts as an application yet.</div>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div class="filters" id="jw-status-filters"></div>
-    <button class="btn btn-primary" onclick="openAppModal(null,WATCH_STATUS)">+ Add Opportunity</button>
-  </div>
-  <div class="filters" id="jw-sort-controls" style="margin-bottom:14px"></div>
-  <div id="jw-list"></div>
 </div>
 
 <!-- ══════════════════════════════ NETWORK ═══════════════════════════════════ -->
@@ -843,37 +800,6 @@
       <div><label class="form-label">Track</label><select class="form-input" id="af-track"></select></div>
       <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
     </div>
-
-    <div class="sec-label" style="margin-top:4px">Opportunity Details <span style="text-transform:none;font-weight:500;color:var(--muted)">— optional, feeds the Job Watchlist tab</span></div>
-    <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Source</label><select class="form-input" id="af-source"></select></div>
-      <div><label class="form-label">Location</label><input class="form-input" id="af-location" placeholder="e.g. Gothenburg"></div>
-    </div>
-    <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Work Model</label><select class="form-input" id="af-workmodel"></select></div>
-      <div><label class="form-label">CV Version</label><input class="form-input" id="af-cvversion" placeholder="e.g. CV_Senior_Project_Manager"></div>
-    </div>
-
-    <div class="sec-label" style="margin-top:4px">Job Match Evaluation <span style="text-transform:none;font-weight:500;color:var(--muted)">— optional, per Markus Job Search Instructions</span></div>
-    <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Deadline</label><input class="form-input" id="af-deadline" type="date"></div>
-      <div><label class="form-label">Role Family</label><input class="form-input" id="af-rolefamily" placeholder="e.g. Head of Delivery, CISO"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Stage / Mandate</label><input class="form-input" id="af-stage" placeholder="e.g. Scale-up · first delivery hire"></div>
-    <div class="form-group">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <label class="form-label" style="margin-bottom:0">Fit scores (1–5)</label>
-        <span style="font-size:12px;color:var(--muted)">Overall Fit: <span id="af-fit-overall" style="font-weight:800;color:var(--navy)">—</span></span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Strategic</label><input class="form-input" id="af-fit-strategic" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Build &amp; Growth</label><input class="form-input" id="af-fit-growth" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Leadership</label><input class="form-input" id="af-fit-culture" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Location</label><input class="form-input" id="af-fit-location" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Concerns</label><textarea class="form-textarea" id="af-concerns" rows="2" placeholder="Gaps, trade-offs, unknowns…"></textarea></div>
-
     <div class="form-group">
       <label class="form-label">Notes / History</label>
       <div class="history-log">
@@ -1048,33 +974,9 @@
   </div>
 </div>
 
-<div class="overlay" id="searchSetupModal" style="display:none" onclick="if(event.target===this)closeSearchSetupModal()">
-  <div class="modal">
-    <div class="modal-title" style="color:var(--purple)" id="searchSetupModalTitle">Add Source</div>
-    <div class="form-group"><label class="form-label">Source *</label><input class="form-input" id="ss-source" placeholder="e.g. LinkedIn Jobs, Maquire, AstraZeneca careers"></div>
-    <div class="form-group"><label class="form-label">Search / Channel</label><input class="form-input" id="ss-channel" placeholder="Query family or method"></div>
-    <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Geography</label><input class="form-input" id="ss-geography" placeholder="e.g. Sweden + remote EU"></div>
-      <div><label class="form-label">Frequency</label><select class="form-input" id="ss-frequency"></select></div>
-    </div>
-    <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="ss-status"></select></div>
-    <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Last Run</label><input class="form-input" id="ss-lastrun" type="date"></div>
-      <div><label class="form-label">Next Run</label><input class="form-input" id="ss-nextrun" type="date"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="ss-notes" rows="2" placeholder="Filters, caveats, authentication needs…"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeSearchSetupModal()">Cancel</button>
-      <button class="btn btn-purple" onclick="submitSearchSetup()">Save</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ═══════════════════════════ CONFIG ═══════════════════════════════════════════
-const WATCH_STATUS = "Watching";
 const APP_STATUS = {
-  "Watching":      { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
   "Applied":       { color:"#2F7A86", bg:"#E3F7F3", dot:"#4F9EB0" },
   "Interviewing":  { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
   "Offer":         { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
@@ -1082,22 +984,6 @@ const APP_STATUS = {
   "Withdrawn":     { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
   "Interim Lead":  { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
 };
-const SOURCE_OPTIONS = ["LinkedIn","National job board","Search firm","Company site","Network","Recruiter","Other"];
-const WORKMODEL_OPTIONS = ["Unknown","Remote","Hybrid","On-site","Travel"];
-const SS_FREQUENCY_OPTIONS = ["Weekly","Daily","Fortnightly","Manual"];
-const SS_STATUS = {
-  "Active": { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
-  "Paused": { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
-  "Manual": { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
-};
-const DEFAULT_SEARCH_SETUP = [
-  { id:"ss-seed-1", source:"LinkedIn Jobs", channel:"Executive title families (CEO/MD/COO/CCO/CISO…)", geography:"Sweden + remote EU", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Primary source; search title variants separately, job boards don't normalise them." },
-  { id:"ss-seed-2", source:"Arbetsförmedlingen JobSearch API", channel:"Official API — public sector + general", geography:"Västra Götaland", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Good for public-sector and general roles." },
-  { id:"ss-seed-3", source:"Maquire", channel:"Executive search — direct site + contact", geography:"Sweden", frequency:"Fortnightly", status:"Active", lastRun:"", nextRun:"", notes:"Nordic executive-search firm." },
-  { id:"ss-seed-4", source:"Novare", channel:"Executive search — direct site", geography:"Sweden", frequency:"Fortnightly", status:"Manual", lastRun:"", nextRun:"", notes:"Needs manual login; not yet automatable." },
-  { id:"ss-seed-5", source:"Company career pages", channel:"Direct monitoring of named target companies", geography:"Gothenburg / Sweden", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"e.g. AstraZeneca and other named targets." },
-  { id:"ss-seed-6", source:"The Hub", channel:"Nordic startup / scale-up board", geography:"Nordics", frequency:"Weekly", status:"Paused", lastRun:"", nextRun:"", notes:"Paused — retire or resume based on signal quality." },
-];
 const APP_TRACK = {
   "Permanent": { color:"#3B0030", bg:"#F3E6EF" },
   "Interim":   { color:"#9A4A06", bg:"#FDE7D2" },
@@ -1261,7 +1147,7 @@ function buildTrainMilestones() {
 
 // ═══════════════════════════ STATE ════════════════════════════════════════════
 let state = {
-  apps: [], trainings: [], contacts: [], watchlist: [], checkouts: [], searchSetup: [],
+  apps: [], trainings: [], contacts: [], watchlist: [], checkouts: [],
   kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
@@ -1271,9 +1157,8 @@ let state = {
   goals: null,
   linkedIn: { url: "" },
 };
-let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null, editCheckoutId = null, editSearchSetupId = null;
+let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null, editCheckoutId = null;
 let appStatusFilter = "All", appTrackFilter = "All";
-let jwSort = "fit";
 let trainCatFilter  = "All";
 let netStatusFilter = "All", netPriorityFilter = "All", netRelationFilter = "All";
 let coStatusFilter = "All", coPriorityFilter = "All";
@@ -1330,7 +1215,6 @@ async function loadState() {
         state.contacts        = d.contacts        || [];
         state.watchlist        = d.watchlist       || [];
         state.checkouts        = d.checkouts       || [];
-        state.searchSetup      = d.searchSetup !== undefined ? d.searchSetup : DEFAULT_SEARCH_SETUP;
         state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(d.kpis||{}) };
         state.milestones      = d.milestones      || {};
         state.trainMilestones = d.trainMilestones || {};
@@ -1357,7 +1241,6 @@ async function loadState() {
   state.contacts         = lsGet("contacts")  || [];
   state.watchlist        = lsGet("watchlist") || [];
   state.checkouts        = lsGet("checkouts") || [];
-  { const lsSS = lsGet("searchSetup"); state.searchSetup = lsSS !== null && lsSS !== undefined ? lsSS : DEFAULT_SEARCH_SETUP; }
   state.kpis            = { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0, ...(lsGet("kpis")||{}) };
   state.milestones      = lsGet("ms")        || {};
   state.trainMilestones = lsGet("tms")       || {};
@@ -1373,7 +1256,6 @@ async function saveState() {
   // Always save to localStorage first
   lsSet("apps", state.apps); lsSet("trainings", state.trainings);
   lsSet("contacts", state.contacts); lsSet("watchlist", state.watchlist); lsSet("checkouts", state.checkouts); lsSet("kpis", state.kpis);
-  lsSet("searchSetup", state.searchSetup);
   lsSet("ms", state.milestones); lsSet("tms", state.trainMilestones);
   lsSet("note", state.weeklyNote);
   lsSet("criteria", state.searchCriteria); lsSet("suggestions", state.suggestions);
@@ -1387,7 +1269,7 @@ async function saveState() {
     try {
       await db.collection("users").doc(currentUid).set({
         apps: state.apps, trainings: state.trainings, contacts: state.contacts, watchlist: state.watchlist,
-        checkouts: state.checkouts, searchSetup: state.searchSetup,
+        checkouts: state.checkouts,
         kpis: state.kpis, milestones: state.milestones,
         trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
         searchCriteria: state.searchCriteria, suggestions: state.suggestions,
@@ -1456,12 +1338,11 @@ function sel(id, opts, selected) {
 // ═══════════════════════════ RENDER DASHBOARD ══════════════════════════════════
 function renderDashboard() {
   const apps = state.apps, contacts = state.contacts, trainings = state.trainings, kpis = state.kpis;
-  const realApps = apps.filter(a=>a.status!==WATCH_STATUS);
-  const total = realApps.length;
-  const interviews = realApps.filter(a=>a.status==="Interviewing"||a.status==="Offer").length;
-  const offers = realApps.filter(a=>a.status==="Offer").length;
+  const total = apps.length;
+  const interviews = apps.filter(a=>a.status==="Interviewing"||a.status==="Offer").length;
+  const offers = apps.filter(a=>a.status==="Offer").length;
   const convRate = total>0?Math.round((interviews/total)*100):0;
-  const interimLeads = realApps.filter(a=>a.status==="Interim Lead").length;
+  const interimLeads = apps.filter(a=>a.status==="Interim Lead").length;
   const rateColor = convRate>=20?"var(--green)":"var(--orange)";
 
   document.getElementById("dash-job-stats").innerHTML =
@@ -1469,35 +1350,6 @@ function renderDashboard() {
     stat(convRate+"%", "Interview Rate", rateColor) +
     stat(offers, "Offers", "var(--green)") +
     stat(interimLeads, "Interim Leads", "var(--purple)");
-
-  // Job Match Fit — Phase 2 "Dashboard summary" from Markus Job Search Instructions.
-  // Spans the whole pipeline (Watching + real applications) since fit is scored before applying too.
-  const withFit = apps.filter(a=>a.overallFit!==null && a.overallFit!==undefined);
-  const highFit = withFit.filter(a=>a.overallFit>=75).length;
-  const withDeadline = apps.filter(a=>a.deadline);
-  const deadlines14 = withDeadline.filter(a=>{
-    const days = Math.round((new Date(a.deadline)-new Date(today()))/86400000);
-    return days>=0 && days<=14;
-  }).length;
-  document.getElementById("dash-fit-stats").innerHTML =
-    stat(highFit, "High Overall Fit (≥75)", "var(--green)") +
-    stat(deadlines14, "Deadlines ≤14 days", deadlines14>0?"var(--rose)":"var(--muted)") +
-    stat(withFit.length, "Scored so far", "var(--teal)") +
-    stat(apps.length-withFit.length, "Not yet scored", "var(--muted)");
-
-  const topFit = withFit.slice().sort((a,b)=>b.overallFit-a.overallFit).slice(0,4);
-  document.getElementById("dash-top-fit").innerHTML = topFit.length===0
-    ? `<div style="font-size:12px;color:var(--muted)">No applications scored yet — add fit scores in an application's Job Match Evaluation.</div>`
-    : topFit.map(a=>`
-      <div class="item-row" style="padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openAppModal('${a.id}')">
-        <div style="font-size:12px"><b>${a.role}</b><br><span style="color:var(--muted)">${a.company}</span></div>
-        <div style="font-size:15px;font-weight:800;color:var(--navy)">${a.overallFit}</div>
-      </div>`).join("");
-
-  document.getElementById("dash-refresh").innerHTML =
-    `Last refresh: <b style="color:var(--dark)">not yet automated</b><br>` +
-    `Next scheduled refresh: <b style="color:var(--dark)">—</b><br>` +
-    `<span style="font-size:11px">Weekly review-only automation isn't scheduled yet — see the Phase-completion checklist.</span>`;
 
   const totalC = contacts.length;
   const highPri = contacts.filter(c=>c.priority==="High").length;
@@ -1518,11 +1370,10 @@ function renderDashboard() {
     stat(completed, "Completed", "var(--green)") +
     stat(trainHrs+"h", "This Week", "var(--teal)");
 
-  // App pipeline — real applications only; Watching lives in Job Sites & Companies / Job Watchlist
+  // App pipeline
   let appPip = "";
   Object.entries(APP_STATUS).forEach(([s,cfg])=>{
-    if (s===WATCH_STATUS) return;
-    const c = realApps.filter(a=>a.status===s).length;
+    const c = apps.filter(a=>a.status===s).length;
     appPip += progRow(s, c, total, cfg.dot);
   });
   document.getElementById("dash-app-pipeline").innerHTML = appPip;
@@ -1617,8 +1468,7 @@ function renderDashboard() {
 const APP_CLOSED_STATUSES = new Set(["Rejected","Withdrawn"]);
 
 function renderApplications() {
-  // Watching (not yet applied) lives in Job Watchlist / Job Sites & Companies, not here.
-  const statuses = ["All", ...Object.keys(APP_STATUS).filter(s=>s!==WATCH_STATUS)];
+  const statuses = ["All", ...Object.keys(APP_STATUS)];
   document.getElementById("app-status-filters").innerHTML = statuses.map(s=>`
     <button class="filter-btn${s===appStatusFilter?" active-blue":""}" onclick="setAppStatusFilter('${s}')">${s}</button>`).join("");
 
@@ -1627,7 +1477,6 @@ function renderApplications() {
     <button class="filter-btn${t===appTrackFilter?" active-blue":""}" onclick="setAppTrackFilter('${t}')">${t}</button>`).join("");
 
   const filtered = state.apps.filter(a=>
-    a.status!==WATCH_STATUS &&
     (appStatusFilter==="All"||a.status===appStatusFilter) &&
     (appTrackFilter==="All"||a.track===appTrackFilter)
   );
@@ -1680,84 +1529,6 @@ function renderApplications() {
 
 function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
 function setAppTrackFilter(t)  { appTrackFilter=t;  renderApplications(); }
-
-// ═══════════════════════════ RENDER JOB WATCHLIST ═══════════════════════════════
-function daysLeft(deadline) {
-  if (!deadline) return null;
-  return Math.round((new Date(deadline) - new Date(today())) / 86400000);
-}
-function fitBadgeColor(overallFit) {
-  if (overallFit===null || overallFit===undefined) return { color:"var(--muted)", bg:"#F1ECEF" };
-  if (overallFit>=75) return { color:"#15694A", bg:"#E1FAF0" };
-  if (overallFit>=50) return { color:"#8A6500", bg:"#FFF6CF" };
-  return { color:"#A8293A", bg:"#FFE9EE" };
-}
-function renderJobWatchlist() {
-  document.getElementById("jw-status-filters").innerHTML =
-    `<span style="font-size:12px;color:var(--muted)">Not yet applied — mark one Applied to move it to the Applications tab.</span>`;
-
-  const sorts = [["fit","Overall Fit"],["deadline","Deadline"],["recent","Recently added"]];
-  document.getElementById("jw-sort-controls").innerHTML = "Sort: " + sorts.map(([k,label])=>`
-    <button class="filter-btn${k===jwSort?" active-purple":""}" onclick="setJwSort('${k}')">${label}</button>`).join("");
-
-  // Job Watchlist only ever shows opportunities not yet applied to — once you apply, it lives in Applications.
-  let rows = state.apps.filter(a => a.status===WATCH_STATUS);
-  rows = rows.slice().sort((a,b)=>{
-    if (jwSort==="fit") {
-      const af=a.overallFit??-1, bf=b.overallFit??-1;
-      return bf-af;
-    }
-    if (jwSort==="deadline") {
-      const ad=a.deadline?daysLeft(a.deadline):9999, bd=b.deadline?daysLeft(b.deadline):9999;
-      return ad-bd;
-    }
-    return parseInt(b.id)-parseInt(a.id); // recent = highest timestamp id first
-  });
-
-  document.getElementById("jw-list").innerHTML = rows.length===0
-    ? `<div class="card"><div class="empty-state">No opportunities match this filter. Hit "+ Add Opportunity" to log one.</div></div>`
-    : rows.map(renderJwCard).join("");
-}
-function renderJwCard(app) {
-  const sc = APP_STATUS[app.status]||{};
-  const fc = fitBadgeColor(app.overallFit);
-  const dl = app.deadline ? daysLeft(app.deadline) : null;
-  const urgent = dl!==null && dl>=0 && dl<=14;
-  return `<div class="item-card" style="border-left-color:${sc.dot}">
-    <div class="item-row">
-      <div style="flex:1">
-        <div class="item-badges">
-          <span class="item-name">${app.role}</span>
-          ${badge("Fit " + (app.overallFit??"—"), fc.color, fc.bg)}
-          ${app.roleFamily?badge(app.roleFamily,"#3B0030","#F3E6EF"):""}
-          ${app.source?badge(app.source,"#2F7A86","#E3F7F3"):""}
-        </div>
-        <div style="font-size:13px;margin-bottom:4px">${app.company}${app.stageMandate?` — <span style="color:var(--muted)">${app.stageMandate}</span>`:""}</div>
-        <div class="item-meta">
-          ${app.location||app.workModel!=="Unknown"?`<span>${[app.location,app.workModel!=="Unknown"?app.workModel:""].filter(Boolean).join(" · ")}</span>`:""}
-          ${app.deadline?`<span style="${urgent?"color:var(--rose);font-weight:700":""}">${urgent?"⚠ ":""}Deadline: ${app.deadline}${dl!==null?` (${dl>=0?dl+"d left":"past"})`:""}</span>`:""}
-          ${app.cvVersion?`<span>CV: ${app.cvVersion}</span>`:""}
-          ${app.careerSite?`<span><a href="${app.careerSite}" target="_blank" rel="noopener">🔗 Posting</a></span>`:""}
-        </div>
-        ${app.concerns?`<div class="item-notes">⚠ ${escHtml(app.concerns)}</div>`:""}
-      </div>
-      <div class="item-actions">
-        <button class="btn btn-primary btn-sm" onclick="markApplied('${app.id}')">✅ Mark Applied</button>
-        <button class="btn btn-sky btn-sm" onclick="openAppModal('${app.id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteApp('${app.id}')">✕</button>
-      </div>
-    </div>
-  </div>`;
-}
-function setJwSort(k) { jwSort=k; renderJobWatchlist(); }
-function markApplied(id) {
-  const app = state.apps.find(a=>a.id===id);
-  if (!app) return;
-  if (!confirm(`Mark "${app.role} @ ${app.company}" as applied? It will move from Job Watchlist to Applications.`)) return;
-  app.status = "Applied";
-  if (!app.dateApplied) app.dateApplied = today();
-  saveState(); renderJobWatchlist(); renderApplications(); renderDashboard();
-}
 
 // ═══════════════════════════ RENDER NETWORK ════════════════════════════════════
 function renderNetwork() {
@@ -2268,48 +2039,19 @@ function renderHelp() {
 // ═══════════════════════════ APP MODAL ════════════════════════════════════════
 let _appModalHistory = [];
 
-// Job Match Evaluation — Overall Fit formula from Markus Job Search Instructions, Phase 2
-function computeOverallFit(fit) {
-  if (!fit || !fit.strategic || !fit.growth || !fit.culture || !fit.location) return null;
-  return Math.round((fit.strategic*0.30 + fit.growth*0.30 + fit.culture*0.25 + fit.location*0.15) * 20);
-}
-function updateFitPreview() {
-  const fit = {
-    strategic: parseInt(document.getElementById("af-fit-strategic").value)||0,
-    growth:    parseInt(document.getElementById("af-fit-growth").value)||0,
-    culture:   parseInt(document.getElementById("af-fit-culture").value)||0,
-    location:  parseInt(document.getElementById("af-fit-location").value)||0,
-  };
-  const overall = computeOverallFit(fit);
-  document.getElementById("af-fit-overall").textContent = overall===null ? "—" : overall;
-}
-function openAppModal(id, defaultStatus) {
+function openAppModal(id) {
   editAppId = id||null;
   const app = id ? state.apps.find(a=>a.id===id) : null;
-  const isNewWatch = !id && defaultStatus===WATCH_STATUS;
   _appModalHistory = app?.history ? JSON.parse(JSON.stringify(app.history)) : [];
-  document.getElementById("appModalTitle").textContent = id ? "Edit Opportunity" : (isNewWatch ? "Add Opportunity to Watch" : "Log New Application");
+  document.getElementById("appModalTitle").textContent = id?"Edit Application":"Log New Application";
   document.getElementById("af-company").value  = app?.company||"";
   document.getElementById("af-role").value     = app?.role||"";
   document.getElementById("af-contact").value  = app?.contact||"";
   document.getElementById("af-careersite").value = app?.careerSite||"";
-  document.getElementById("af-date").value     = app?.dateApplied || (isNewWatch ? "" : today());
+  document.getElementById("af-date").value     = app?.dateApplied||today();
   document.getElementById("af-dateresponded").value = app?.dateResponded||"";
   sel("af-track",  Object.keys(APP_TRACK),  app?.track||"Permanent");
-  sel("af-status", Object.keys(APP_STATUS), app?.status||defaultStatus||"Applied");
-  sel("af-source",    SOURCE_OPTIONS,    app?.source||"LinkedIn");
-  sel("af-workmodel", WORKMODEL_OPTIONS, app?.workModel||"Unknown");
-  document.getElementById("af-location").value   = app?.location||"";
-  document.getElementById("af-cvversion").value  = app?.cvVersion||"";
-  document.getElementById("af-deadline").value   = app?.deadline||"";
-  document.getElementById("af-rolefamily").value = app?.roleFamily||"";
-  document.getElementById("af-stage").value      = app?.stageMandate||"";
-  document.getElementById("af-fit-strategic").value = app?.fit?.strategic||"";
-  document.getElementById("af-fit-growth").value    = app?.fit?.growth||"";
-  document.getElementById("af-fit-culture").value   = app?.fit?.culture||"";
-  document.getElementById("af-fit-location").value  = app?.fit?.location||"";
-  document.getElementById("af-concerns").value   = app?.concerns||"";
-  updateFitPreview();
+  sel("af-status", Object.keys(APP_STATUS), app?.status||"Applied");
   document.getElementById("af-note-input").value = "";
   clearNoteImage("af");
   setupNotePasteListener("af-note-input", "af");
@@ -2381,12 +2123,6 @@ async function submitApp() {
     if (pendingFile) Object.assign(note, await uploadNoteImage(pendingFile));
     history.push(note);
   }
-  const fit = {
-    strategic: parseInt(document.getElementById("af-fit-strategic").value)||0,
-    growth:    parseInt(document.getElementById("af-fit-growth").value)||0,
-    culture:   parseInt(document.getElementById("af-fit-culture").value)||0,
-    location:  parseInt(document.getElementById("af-fit-location").value)||0,
-  };
   const entry = {
     id: editAppId||String(Date.now()),
     company, role,
@@ -2396,28 +2132,18 @@ async function submitApp() {
     dateResponded:document.getElementById("af-dateresponded").value,
     track:      document.getElementById("af-track").value,
     status:     document.getElementById("af-status").value,
-    source:     document.getElementById("af-source").value,
-    location:   document.getElementById("af-location").value.trim(),
-    workModel:  document.getElementById("af-workmodel").value,
-    cvVersion:  document.getElementById("af-cvversion").value.trim(),
-    deadline:   document.getElementById("af-deadline").value,
-    roleFamily: document.getElementById("af-rolefamily").value.trim(),
-    stageMandate: document.getElementById("af-stage").value.trim(),
-    fit,
-    overallFit: computeOverallFit(fit),
-    concerns:   document.getElementById("af-concerns").value.trim(),
     history,
     followUp:   document.getElementById("af-followup").checked,
     followUpDate:document.getElementById("af-followupdate").value,
   };
   if (editAppId) state.apps = state.apps.map(a=>a.id===editAppId?entry:a);
   else state.apps.push(entry);
-  saveState(); closeAppModal(); renderApplications(); renderJobWatchlist(); renderDashboard();
+  saveState(); closeAppModal(); renderApplications(); renderDashboard();
 }
 function deleteApp(id) {
   if (!confirm("Delete this application?")) return;
   state.apps = state.apps.filter(a=>a.id!==id);
-  saveState(); renderApplications(); renderJobWatchlist(); renderDashboard();
+  saveState(); renderApplications(); renderDashboard();
 }
 
 // ═══════════════════════════ TRAIN MODAL ══════════════════════════════════════
@@ -2857,77 +2583,6 @@ function deleteWatch(id) {
   unmirrorShared("sharedWatchlist", id);
 }
 
-// ═══════════════════════════ JOB SEARCH CRITERIA (Search Setup) ════════════════
-function renderSearchSetupTab() {
-  const list = state.searchSetup||[];
-  document.getElementById("jc-list").innerHTML = list.length===0
-    ? `<div class="card"><div class="empty-state">No sources set up yet. Hit "+ Add Source" to log where and how often you search.</div></div>`
-    : list.map(renderSearchSetupCard).join("");
-}
-function renderSearchSetupCard(s) {
-  const sc = SS_STATUS[s.status]||{};
-  return `<div class="item-card" style="border-left-color:${sc.dot}">
-    <div class="item-row">
-      <div style="flex:1">
-        <div class="item-badges">
-          <span class="item-name">${escHtml(s.source)}</span>
-          ${badge(s.status, sc.color, sc.bg)}
-          ${badge(s.frequency, "#2F7A86", "#E3F7F3")}
-        </div>
-        ${s.channel?`<div style="font-size:13px;margin-bottom:4px">${escHtml(s.channel)}</div>`:""}
-        <div class="item-meta">
-          ${s.geography?`<span>📍 ${escHtml(s.geography)}</span>`:""}
-          ${s.lastRun?`<span>Last run: ${s.lastRun}</span>`:""}
-          ${s.nextRun?`<span>Next run: ${s.nextRun}</span>`:""}
-        </div>
-        ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
-      </div>
-      <div class="item-actions">
-        <button class="btn btn-sky btn-sm" onclick="openSearchSetupModal('${s.id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteSearchSetup('${s.id}')">✕</button>
-      </div>
-    </div>
-  </div>`;
-}
-function openSearchSetupModal(id) {
-  editSearchSetupId = id||null;
-  const s = id ? state.searchSetup.find(x=>x.id===id) : null;
-  document.getElementById("searchSetupModalTitle").textContent = id?"Edit Source":"Add Source";
-  document.getElementById("ss-source").value    = s?.source||"";
-  document.getElementById("ss-channel").value   = s?.channel||"";
-  document.getElementById("ss-geography").value = s?.geography||"";
-  sel("ss-frequency", SS_FREQUENCY_OPTIONS, s?.frequency||"Weekly");
-  sel("ss-status",    Object.keys(SS_STATUS), s?.status||"Active");
-  document.getElementById("ss-lastrun").value   = s?.lastRun||"";
-  document.getElementById("ss-nextrun").value   = s?.nextRun||"";
-  document.getElementById("ss-notes").value     = s?.notes||"";
-  document.getElementById("searchSetupModal").style.display="flex";
-}
-function closeSearchSetupModal() { document.getElementById("searchSetupModal").style.display="none"; editSearchSetupId=null; }
-function submitSearchSetup() {
-  const source = document.getElementById("ss-source").value.trim();
-  if (!source) return;
-  const entry = {
-    id: editSearchSetupId||String(Date.now()),
-    source,
-    channel:   document.getElementById("ss-channel").value.trim(),
-    geography: document.getElementById("ss-geography").value.trim(),
-    frequency: document.getElementById("ss-frequency").value,
-    status:    document.getElementById("ss-status").value,
-    lastRun:   document.getElementById("ss-lastrun").value,
-    nextRun:   document.getElementById("ss-nextrun").value,
-    notes:     document.getElementById("ss-notes").value.trim(),
-  };
-  if (editSearchSetupId) state.searchSetup = state.searchSetup.map(s=>s.id===editSearchSetupId?entry:s);
-  else state.searchSetup.push(entry);
-  saveState(); closeSearchSetupModal(); renderSearchSetupTab();
-}
-function deleteSearchSetup(id) {
-  if (!confirm("Remove this source?")) return;
-  state.searchSetup = state.searchSetup.filter(s=>s.id!==id);
-  saveState(); renderSearchSetupTab();
-}
-
 // ═══════════════════════════ SUGGESTIONS ═══════════════════════════════════════
 // Replace with your deployed Cloud Function URL after running `firebase deploy --only functions`.
 const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/scanWatchlist";
@@ -3292,8 +2947,6 @@ async function renderAll() {
   renderWatchlist();
   renderSuggestions();
   renderApplications();
-  renderJobWatchlist();
-  renderSearchSetupTab();
   renderNetwork();
   renderTraining();
   renderCheckout();
