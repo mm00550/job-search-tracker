@@ -386,6 +386,16 @@
   </div>
 
   <div class="card" style="margin-bottom:16px">
+    <div class="sec-label" style="margin-bottom:4px">📌 Role Titles</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Pinned from your Career Database — the roles your experience matches best, several already applied to for real. Click one to drop it into Search Criteria below, or add your own.</div>
+    <div id="jsc-roletitles" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <input class="form-input" id="jsc-newroletitle" placeholder="Add another role title…" style="max-width:260px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPinnedRoleTitle();}">
+      <button class="btn btn-sky btn-sm" onclick="addPinnedRoleTitle()">+ Add</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
     <div class="sec-label" style="margin-bottom:8px">🔎 Search Criteria</div>
     <div class="form-group" style="margin-bottom:8px">
       <textarea class="form-textarea" id="jsc-freetext" rows="2" placeholder="e.g. Senior Project Manager, Full-time, Life science, Gothenburg, Hybrid" oninput="debounce(saveCriteria,600)()"></textarea>
@@ -1127,6 +1137,20 @@ const SS_STATUS = {
   "Paused": { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
   "Manual": { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
 };
+// Seeded from the Career Database (Profile Statements "Best Fit For Roles" + Target Roles Log)
+// — the roles Markus's experience most directly matches, several already applied to for real.
+const DEFAULT_ROLE_TITLES = [
+  "Senior Project Manager",
+  "Head of Delivery",
+  "IT Delivery Manager",
+  "Chief Operating Officer",
+  "Program Management Lead",
+  "AI Change Agent",
+  "Transformation Lead",
+  "Senior Delivery Manager",
+  "VP Operations",
+  "Director of Delivery",
+];
 const DEFAULT_SEARCH_SETUP = [
   { id:"ss-seed-1", source:"LinkedIn Jobs", channel:"Executive title families (CEO/MD/COO/CCO/CISO…)", geography:"Sweden + remote EU", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Primary source; search title variants separately, job boards don't normalise them." },
   { id:"ss-seed-2", source:"Arbetsförmedlingen JobSearch API", channel:"Official API — public sector + general", geography:"Västra Götaland", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Good for public-sector and general roles." },
@@ -1302,7 +1326,7 @@ let state = {
   kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
-  searchCriteria: { keywords: [], location: "", freeText: "" },
+  searchCriteria: { keywords: [], location: "", freeText: "", roleTitles: DEFAULT_ROLE_TITLES },
   suggestions: [],
   dismissedSuggestions: [],
   goals: null,
@@ -1373,6 +1397,7 @@ async function loadState() {
         state.trainMilestones = d.trainMilestones || {};
         state.weeklyNote      = d.weeklyNote      || "";
         state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(d.searchCriteria||{}) };
+        if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
         state.suggestions     = d.suggestions     || [];
         state.dismissedSuggestions = d.dismissedSuggestions || [];
         state.goals           = d.goals           || null;
@@ -1400,6 +1425,7 @@ async function loadState() {
   state.trainMilestones = lsGet("tms")       || {};
   state.weeklyNote      = lsGet("note")      || "";
   state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(lsGet("criteria")||{}) };
+  if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
   state.suggestions     = lsGet("suggestions") || [];
   state.dismissedSuggestions = lsGet("dismissedSuggestions") || [];
   state.goals            = lsGet("goals") || null;
@@ -2990,6 +3016,29 @@ function addCriteriaTag(value) {
   el.value = parts.join(", ");
   saveCriteria();
 }
+function renderRoleTitles() {
+  const titles = state.searchCriteria.roleTitles||[];
+  document.getElementById("jsc-roletitles").innerHTML = titles.length===0
+    ? `<span style="font-size:12px;color:var(--muted)">No pinned role titles — add one below.</span>`
+    : titles.map(t=>`
+      <span style="padding:5px 6px 5px 11px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--white);color:var(--muted);display:inline-flex;align-items:center;gap:6px">
+        <span style="cursor:pointer" onclick="addCriteriaTag('${t.replace(/'/g,"\\'")}')" title="Add to search field">${escHtml(t)}</span>
+        <span style="cursor:pointer;color:var(--crimson);font-weight:800;padding:0 2px" onclick="removePinnedRoleTitle('${t.replace(/'/g,"\\'")}')" title="Remove from pinned list">✕</span>
+      </span>`).join("");
+}
+function removePinnedRoleTitle(title) {
+  state.searchCriteria.roleTitles = (state.searchCriteria.roleTitles||[]).filter(t=>t!==title);
+  saveState(); renderRoleTitles();
+}
+function addPinnedRoleTitle() {
+  const el = document.getElementById("jsc-newroletitle");
+  const val = el.value.trim();
+  if (!val) return;
+  if (!state.searchCriteria.roleTitles) state.searchCriteria.roleTitles = [];
+  if (!state.searchCriteria.roleTitles.includes(val)) state.searchCriteria.roleTitles.push(val);
+  el.value = "";
+  saveState(); renderRoleTitles();
+}
 
 // ═══════════════════════════ LINKEDIN ══════════════════════════════════════════
 function loadLinkedInInputs() {
@@ -3334,6 +3383,7 @@ async function renderAll() {
   document.getElementById("headerUserName").textContent = "👤 " + currentDisplayName();
   populateSelects();
   loadCriteriaInputs();
+  renderRoleTitles();
   loadLinkedInInputs();
   renderDashboard();
   renderWatchlist();
