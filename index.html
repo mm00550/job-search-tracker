@@ -3004,6 +3004,7 @@ function renderSearchSetupCard(s) {
         ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
       </div>
       <div class="item-actions">
+        <button class="btn ${/arbetsf[oö]rmedlingen/i.test(s.source)?"btn-primary":"btn-teal"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${/arbetsf[oö]rmedlingen/i.test(s.source)?"▶ Search":"🔗 Open"}</button>
         <button class="btn btn-sky btn-sm" onclick="openSearchSetupModal('${s.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSearchSetup('${s.id}')">✕</button>
       </div>
@@ -3075,6 +3076,54 @@ function addStarterJobSites() {
   renderSearchSetupTab();
   document.getElementById("jsc-sites-status").textContent =
     `Added ${added} starter source${added===1?"":"s"}` + (skipped?` · ${skipped} already in your list`:"");
+}
+
+// Per-card search — runs regardless of the source's Status (Active/Paused/
+// Manual), unlike the column-level Run Search which only ever touches
+// Arbetsförmedlingen and only when it's Active. Arbetsförmedlingen here gets
+// the same real search; every other source opens its saved Search URL,
+// pre-filled, in a new tab — a deliberate single click, not an automatic
+// sweep, so this is a different case from the tab-opening that was removed
+// from the bulk button.
+async function runSingleJobSite(id) {
+  const s = (state.searchSetup||[]).find(x=>x.id===id);
+  if (!s) return;
+  const terms = buildSearchTerms();
+  const location = state.searchCriteria.location||"";
+  const statusEl = document.getElementById("jsc-sites-status");
+  if (!terms.length) {
+    statusEl.textContent = "Add Role Titles or Search Criteria above first.";
+    return;
+  }
+
+  if (/arbetsf[oö]rmedlingen/i.test(s.source)) {
+    const btn = document.getElementById("jsc-site-btn-"+id);
+    btn.disabled = true; btn.textContent = "Searching…";
+    statusEl.textContent = `Searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
+    try {
+      const { added, dupes } = await searchArbetsformedlingen(terms, location);
+      s.lastRun = today();
+      saveState();
+      renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
+      document.getElementById("jsc-sites-status").textContent =
+        `Arbetsförmedlingen added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist${dupes?` (${dupes} already tracked)`:""}`;
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "▶ Search";
+      statusEl.textContent = `Arbetsförmedlingen failed: ${e.message}`;
+    }
+    return;
+  }
+
+  if (!s.url) {
+    statusEl.textContent = `No Search URL saved for ${s.source} — add one via Edit first.`;
+    return;
+  }
+  const url = s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(terms.join(" "));
+  window.open(url, "_blank");
+  s.lastRun = today();
+  saveState();
+  renderSearchSetupTab();
+  statusEl.textContent = `Opened ${s.source} in a new tab for: ${terms.join(", ")}`;
 }
 
 // ═══════════════════════════ SUGGESTIONS ═══════════════════════════════════════
