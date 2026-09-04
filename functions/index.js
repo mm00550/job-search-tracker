@@ -101,6 +101,7 @@ function findJobArray(node, depth) {
     if (looksLikeJobs) {
       return node.map((o) => ({
         title: o.title || o.name,
+        company: o.company || o.employer || (o.company && o.company.name) || (o.employer && o.employer.name) || "",
         location: (o.location && (o.location.name || o.location)) || o.city || "",
         url: o.url || o.absolute_url || o.link || "",
       }));
@@ -145,6 +146,45 @@ exports.scanWatchlist = onRequest({ cors: true, timeoutSeconds: 120, region: "us
       });
     } catch (e) {
       results.push({ company: company.company, companyId: company.id, error: e.message, jobs: [] });
+    }
+  }
+
+  res.json({ results, scannedAt: new Date().toISOString() });
+});
+
+// Same approach as scanWatchlist, but for general job-board search-result
+// pages instead of a single company's career page. The caller resolves each
+// site's real search URL (Search URL template with {q}/{location} filled in)
+// client-side and sends it here already-built — this function just fetches
+// and parses whatever URL it's given. Arbetsförmedlingen is deliberately not
+// routed through here — it has its own real API, called directly from the
+// browser. LinkedIn is deliberately never sent here either — scraping it
+// violates their Terms of Service; that stays a manual "Open" link only.
+exports.scanJobSites = onRequest({ cors: true, timeoutSeconds: 120, region: "us-central1" }, async (req, res) => {
+  const { sites = [], criteria = {} } = req.body || {};
+  const results = [];
+
+  for (const site of sites) {
+    if (!site.url) continue;
+    let jobs = [];
+    let matchedVia = "generic";
+    try {
+      const ats = KNOWN_ATS.find((a) => a.test(site.url));
+      if (ats) {
+        jobs = await ats.fetchJobs(site.url);
+        matchedVia = ats.name;
+      } else {
+        jobs = await fetchGeneric(site.url);
+      }
+      results.push({
+        source: site.source,
+        sourceId: site.id,
+        matchedVia,
+        jobs: jobs.filter((j) => matchesCriteria(j, criteria)),
+        totalFound: jobs.length,
+      });
+    } catch (e) {
+      results.push({ source: site.source, sourceId: site.id, error: e.message, jobs: [] });
     }
   }
 

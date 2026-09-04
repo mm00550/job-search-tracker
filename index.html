@@ -442,7 +442,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-sites-runbtn" onclick="runJobSitesSearch()">▶ Run Search</button>
-        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Searches Arbetsförmedlingen for real and files matches into Job Watchlist. No other source is integrated yet.</span>
+        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Searches every Active source with a Search URL for real and files matches into Job Watchlist. LinkedIn can't be automated (ToS) — use its Open link instead.</span>
       </div>
       <div id="jc-list"></div>
     </div>
@@ -3028,7 +3028,7 @@ function renderSearchSetupCard(s) {
         ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
       </div>
       <div class="item-actions">
-        <button class="btn ${/arbetsf[oö]rmedlingen/i.test(s.source)?"btn-primary":"btn-teal"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${/arbetsf[oö]rmedlingen/i.test(s.source)?"▶ Search":"🔗 Open"}</button>
+        <button class="btn ${/linkedin/i.test(s.source)?"btn-teal":"btn-primary"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${/linkedin/i.test(s.source)?"🔗 Open":"▶ Search"}</button>
         <button class="btn btn-sky btn-sm" onclick="openSearchSetupModal('${s.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSearchSetup('${s.id}')">✕</button>
       </div>
@@ -3103,25 +3103,25 @@ function addStarterJobSites() {
 }
 
 // Per-card search — runs regardless of the source's Status (Active/Paused/
-// Manual), unlike the column-level Run Search which only ever touches
-// Arbetsförmedlingen and only when it's Active. Arbetsförmedlingen here gets
-// the same real search; every other source opens its saved Search URL,
-// pre-filled, in a new tab — a deliberate single click, not an automatic
-// sweep, so this is a different case from the tab-opening that was removed
-// from the bulk button.
+// Manual), unlike the column-level Run Search which only touches Active
+// sources. Arbetsförmedlingen gets its real API search; any other source
+// with a saved Search URL gets a real single-source scrape via
+// scanJobSites, scoped to just that card. LinkedIn is the one exception —
+// it only ever opens its Search URL in a new tab, since scraping it
+// violates their Terms of Service.
 async function runSingleJobSite(id) {
   const s = (state.searchSetup||[]).find(x=>x.id===id);
   if (!s) return;
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
   const statusEl = document.getElementById("jsc-sites-status");
+  const btn = document.getElementById("jsc-site-btn-"+id);
   if (!terms.length) {
     statusEl.textContent = "Add Role Titles or Search Criteria above first.";
     return;
   }
 
   if (/arbetsf[oö]rmedlingen/i.test(s.source)) {
-    const btn = document.getElementById("jsc-site-btn-"+id);
     btn.disabled = true; btn.textContent = "Searching…";
     statusEl.textContent = `Searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
     try {
@@ -3142,16 +3142,36 @@ async function runSingleJobSite(id) {
     statusEl.textContent = `No Search URL saved for ${s.source} — add one via Edit first.`;
     return;
   }
-  window.open(resolveSearchUrl(s, terms, location), "_blank");
-  s.lastRun = today();
-  saveState();
-  renderSearchSetupTab();
-  statusEl.textContent = `Opened ${s.source} in a new tab for: ${terms.join(", ")}`;
+
+  if (/linkedin/i.test(s.source)) {
+    window.open(resolveSearchUrl(s, terms, location), "_blank");
+    s.lastRun = today();
+    saveState();
+    renderSearchSetupTab();
+    statusEl.textContent = `Opened ${s.source} in a new tab for: ${terms.join(", ")} — LinkedIn can't be automated (ToS).`;
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = "Searching…";
+  statusEl.textContent = `Searching ${s.source} for: ${terms.join(", ")}…`;
+  try {
+    const r = await searchOtherJobSites([{ id:s.id, source:s.source, url: resolveSearchUrl(s, terms, location) }], { keywords: terms, location });
+    s.lastRun = today();
+    saveState();
+    renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
+    document.getElementById("jsc-sites-status").textContent = r.errors.length
+      ? `${s.source} failed: ${r.errors.join("; ")}`
+      : `${s.source} added ${r.added} new opportunit${r.added===1?"y":"ies"} to Job Watchlist${r.dupes?` (${r.dupes} already tracked)`:""}`;
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "▶ Search";
+    statusEl.textContent = `${s.source} failed: Cloud Function unreachable — is scanJobSites deployed? (${e.message})`;
+  }
 }
 
 // ═══════════════════════════ SUGGESTIONS ═══════════════════════════════════════
 // Replace with your deployed Cloud Function URL after running `firebase deploy --only functions`.
 const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/scanWatchlist";
+const SCAN_JOBSITES_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/scanJobSites";
 
 function loadCriteriaInputs() {
   document.getElementById("sg-keywords").value = (state.searchCriteria.keywords||[]).join(", ");
@@ -3318,10 +3338,66 @@ async function searchArbetsformedlingen(terms, location) {
   return { added, dupes };
 }
 
-// Job Sites: Arbetsförmedlingen gets a real API search filed into Job
-// Watchlist. No other source has an API or scraping integration, and this
-// no longer opens tabs for them either — per Markus's instruction, Run
-// Search does nothing for a source it can't genuinely search.
+// Non-AF, non-LinkedIn sources: scraped server-side via the scanJobSites
+// Cloud Function, using each source's resolved Search URL (the {q}/{location}
+// template already filled in client-side). A general job board's HTML often
+// doesn't reliably expose which company posted a given job (unlike a single
+// company's own career page, where the company is already known) — when the
+// scraper can't find one, the entry is filed with the source name as an
+// honest placeholder ("via Randstad Sweden") rather than a fabricated one.
+// Dedup prefers the posting URL when known — a placeholder company name is
+// not a reliable identity key on its own, since many different postings from
+// the same board could share it.
+async function searchOtherJobSites(sitesToScan, criteria) {
+  const res = await fetch(SCAN_JOBSITES_FUNCTION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sites: sitesToScan, criteria }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
+  const existingUrls = new Set(state.apps.map(a=>a.careerSite).filter(Boolean));
+  let added = 0, dupes = 0;
+  const errors = [];
+  for (const r of data.results||[]) {
+    if (r.error) { errors.push(`${r.source}: ${r.error}`); continue; }
+    for (const job of r.jobs||[]) {
+      const role = job.title||"";
+      if (!role) continue;
+      const company = job.company || `via ${r.source}`;
+      if (job.url) {
+        if (existingUrls.has(job.url)) { dupes++; continue; }
+        existingUrls.add(job.url);
+      } else {
+        const key = (company+"::"+role).toLowerCase().trim();
+        if (existingKeys.has(key)) { dupes++; continue; }
+        existingKeys.add(key);
+      }
+      state.apps.push({
+        id: String(Date.now()) + Math.random().toString(36).slice(2,7),
+        company, role,
+        contact: "", careerSite: job.url||"",
+        dateApplied: "", dateResponded: "",
+        track: "Permanent", status: WATCH_STATUS,
+        source: "National job board", location: job.location||"", workModel: "Unknown", cvVersion: "",
+        deadline: "", roleFamily: "", stageMandate: "",
+        fit: { strategic:0, growth:0, culture:0, location:0 }, overallFit: null, concerns: "",
+        history: [], followUp: false, followUpDate: "",
+      });
+      added++;
+    }
+  }
+  return { added, dupes, errors };
+}
+
+// Job Sites: Arbetsförmedlingen gets a real API search (client-side, no
+// deployment needed). Every other Active source with a saved Search URL gets
+// a real scrape via the scanJobSites Cloud Function — requires that function
+// to be deployed (firebase deploy --only functions); if it isn't, this fails
+// with a clear error rather than silently doing nothing. LinkedIn is never
+// sent to either path — scraping it violates their Terms of Service — it
+// stays available only via its own card's manual "Open" link.
 async function runJobSitesSearch() {
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
@@ -3338,31 +3414,46 @@ async function runJobSitesSearch() {
   }
 
   const afSource = active.find(s=>/arbetsf[oö]rmedlingen/i.test(s.source));
-  const unsupported = active.filter(s=>s!==afSource).map(s=>s.source);
-
-  if (!afSource) {
-    statusEl.textContent = `No automated search for: ${unsupported.join(", ")}. Only Arbetsförmedlingen is integrated — set it Active to search.`;
-    return;
-  }
+  const linkedinSources = active.filter(s=>s!==afSource && /linkedin/i.test(s.source));
+  const otherSources = active.filter(s=>s!==afSource && !linkedinSources.includes(s));
+  const scanTargets = otherSources.filter(s=>s.url).map(s=>({ id:s.id, source:s.source, url: resolveSearchUrl(s, terms, location) }));
+  const noUrlSources = otherSources.filter(s=>!s.url).map(s=>s.source);
 
   btn.disabled = true; btn.textContent = "Searching…";
-  statusEl.textContent = `Searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
-  let added = 0, dupes = 0, afError = null;
-  try {
-    ({ added, dupes } = await searchArbetsformedlingen(terms, location));
-    afSource.lastRun = today();
-  } catch (e) {
-    afError = e.message;
-  }
-  btn.disabled = false; btn.textContent = "▶ Run Search";
+  statusEl.textContent = `Searching for: ${terms.join(", ")}…`;
 
+  let afAdded=0, afDupes=0, afError=null;
+  if (afSource) {
+    try {
+      ({ added: afAdded, dupes: afDupes } = await searchArbetsformedlingen(terms, location));
+      afSource.lastRun = today();
+    } catch (e) { afError = e.message; }
+  }
+
+  let otherAdded=0, otherDupes=0, otherError=null;
+  if (scanTargets.length) {
+    statusEl.textContent = `Arbetsförmedlingen done · scanning ${scanTargets.length} other site${scanTargets.length===1?"":"s"}…`;
+    try {
+      const r = await searchOtherJobSites(scanTargets, { keywords: terms, location });
+      otherAdded = r.added; otherDupes = r.dupes;
+      if (r.errors.length) otherError = r.errors.join("; ");
+      scanTargets.forEach(t=>{
+        const src = otherSources.find(s=>s.id===t.id);
+        if (src) src.lastRun = today();
+      });
+    } catch (e) { otherError = `Cloud Function unreachable — is scanJobSites deployed? (${e.message})`; }
+  }
+
+  btn.disabled = false; btn.textContent = "▶ Run Search";
   saveState();
   renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
 
-  statusEl.textContent = afError
-    ? `Arbetsförmedlingen failed: ${afError}`
-    : `Arbetsförmedlingen added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist${dupes?` (${dupes} already tracked)`:""}` +
-      (unsupported.length ? ` · no automated search for: ${unsupported.join(", ")}` : "");
+  const parts = [];
+  if (afSource) parts.push(afError ? `Arbetsförmedlingen failed: ${afError}` : `Arbetsförmedlingen +${afAdded}${afDupes?` (${afDupes} dupes)`:""}`);
+  if (scanTargets.length) parts.push(otherError ? `Other sites: ${otherError}` : `${scanTargets.length} other site${scanTargets.length===1?"":"s"} +${otherAdded}${otherDupes?` (${otherDupes} dupes)`:""}`);
+  if (linkedinSources.length) parts.push(`LinkedIn can't be automated (ToS) — use its own Open link`);
+  if (noUrlSources.length) parts.push(`no Search URL saved: ${noUrlSources.join(", ")}`);
+  statusEl.textContent = parts.join(" · ") || "Nothing to search.";
 }
 
 // Companies: reuses the deployed scanWatchlist Cloud Function for real — this
