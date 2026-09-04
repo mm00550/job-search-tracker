@@ -384,6 +384,43 @@
     <div style="font-size:14px;font-weight:700;color:var(--purple)">🧭 Job Sites &amp; Companies</div>
     <div style="font-size:12px;color:var(--muted);margin-top:2px">Where you search, on the left. Companies you're watching before there's an open role, on the right.</div>
   </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-label" style="margin-bottom:8px">🔎 Search Criteria</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <textarea class="form-textarea" id="jsc-freetext" rows="2" placeholder="e.g. Senior Project Manager, Full-time, Life science, Gothenburg, Hybrid" oninput="debounce(saveCriteria,600)()"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Role title is free text — type it straight into the field above. Click a tag below to drop it in instead of typing it.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+        <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">Type of role</span>
+        <button class="filter-btn" onclick="addCriteriaTag('Full-time')">Full-time</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Consultancy')">Consultancy</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Interim')">Interim</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+        <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">Type of company</span>
+        <button class="filter-btn" onclick="addCriteriaTag('Tech')">Tech</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Financial services')">Financial services</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Public services')">Public services</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Life science')">Life science</button>
+        <button class="filter-btn" onclick="addCriteriaTag('MedTech')">MedTech</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Pharma')">Pharma</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Automotive')">Automotive</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+        <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">Location</span>
+        <button class="filter-btn" onclick="addCriteriaTag('Gothenburg')">Gothenburg</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+        <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">Office policy</span>
+        <button class="filter-btn" onclick="addCriteriaTag('Hybrid')">Hybrid</button>
+        <button class="filter-btn" onclick="addCriteriaTag('On-site')">On-site</button>
+        <button class="filter-btn" onclick="addCriteriaTag('Remote')">Remote</button>
+      </div>
+    </div>
+  </div>
+
   <div class="grid2">
     <div>
       <div class="hdr-row" style="margin-bottom:10px">
@@ -1265,7 +1302,7 @@ let state = {
   kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
-  searchCriteria: { keywords: [], location: "" },
+  searchCriteria: { keywords: [], location: "", freeText: "" },
   suggestions: [],
   dismissedSuggestions: [],
   goals: null,
@@ -1335,7 +1372,7 @@ async function loadState() {
         state.milestones      = d.milestones      || {};
         state.trainMilestones = d.trainMilestones || {};
         state.weeklyNote      = d.weeklyNote      || "";
-        state.searchCriteria  = { keywords: [], location: "", ...(d.searchCriteria||{}) };
+        state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(d.searchCriteria||{}) };
         state.suggestions     = d.suggestions     || [];
         state.dismissedSuggestions = d.dismissedSuggestions || [];
         state.goals           = d.goals           || null;
@@ -1362,7 +1399,7 @@ async function loadState() {
   state.milestones      = lsGet("ms")        || {};
   state.trainMilestones = lsGet("tms")       || {};
   state.weeklyNote      = lsGet("note")      || "";
-  state.searchCriteria  = { keywords: [], location: "", ...(lsGet("criteria")||{}) };
+  state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(lsGet("criteria")||{}) };
   state.suggestions     = lsGet("suggestions") || [];
   state.dismissedSuggestions = lsGet("dismissedSuggestions") || [];
   state.goals            = lsGet("goals") || null;
@@ -2935,13 +2972,23 @@ const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfun
 function loadCriteriaInputs() {
   document.getElementById("sg-keywords").value = (state.searchCriteria.keywords||[]).join(", ");
   document.getElementById("sg-location").value = state.searchCriteria.location||"";
+  document.getElementById("jsc-freetext").value = state.searchCriteria.freeText||"";
 }
 function saveCriteria() {
   const keywords = document.getElementById("sg-keywords").value.split(",").map(s=>s.trim()).filter(Boolean);
   const location = document.getElementById("sg-location").value.trim();
-  state.searchCriteria = { keywords, location };
+  const freeText = document.getElementById("jsc-freetext").value;
+  state.searchCriteria = { keywords, location, freeText };
   saveState();
   renderLinkedIn();
+}
+// Job Sites & Companies — Search Criteria quick-add tags
+function addCriteriaTag(value) {
+  const el = document.getElementById("jsc-freetext");
+  const parts = el.value.trim() ? el.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
+  if (!parts.includes(value)) parts.push(value);
+  el.value = parts.join(", ");
+  saveCriteria();
 }
 
 // ═══════════════════════════ LINKEDIN ══════════════════════════════════════════
@@ -3228,7 +3275,7 @@ function submitOnboarding() {
   const weeklyAppTarget = parseInt(document.getElementById("ob-weeklytarget").value,10) || 3;
   const trainingTopics = document.getElementById("ob-training").value.split(",").map(s=>s.trim()).filter(Boolean);
   state.goals = { startDate, targetDate, weeklyAppTarget, trainingTopics };
-  state.searchCriteria = { keywords, location };
+  state.searchCriteria = { ...(state.searchCriteria||{}), keywords, location };
   state.milestones = {};
   state.trainMilestones = {};
   saveState();
