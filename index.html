@@ -437,12 +437,20 @@
         <div class="sec-label" style="margin-bottom:0">🔎 Job Sites</div>
         <button class="btn btn-purple btn-sm" onclick="openSearchSetupModal()">+ Add Source</button>
       </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button class="btn btn-primary btn-sm" onclick="runJobSitesSearch()">▶ Run Search</button>
+        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Opens each Active source pre-filled with your criteria — it doesn't fetch results back here.</span>
+      </div>
       <div id="jc-list"></div>
     </div>
     <div>
       <div class="hdr-row" style="margin-bottom:10px">
         <div class="sec-label" style="margin-bottom:0">⭐ Companies</div>
         <button class="btn btn-purple btn-sm" onclick="openWatchModal()">+ Add Company</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button class="btn btn-primary btn-sm" id="jsc-companies-runbtn" onclick="runCompanySearch()">▶ Run Search</button>
+        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches and filters real postings from each company's career page.</span>
       </div>
       <div id="watch-list"></div>
       <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
@@ -1100,6 +1108,7 @@
     <div class="modal-title" style="color:var(--purple)" id="searchSetupModalTitle">Add Source</div>
     <div class="form-group"><label class="form-label">Source *</label><input class="form-input" id="ss-source" placeholder="e.g. LinkedIn Jobs, Maquire, AstraZeneca careers"></div>
     <div class="form-group"><label class="form-label">Search / Channel</label><input class="form-input" id="ss-channel" placeholder="Query family or method"></div>
+    <div class="form-group"><label class="form-label">Search URL</label><input class="form-input" id="ss-url" placeholder="https://… — the site's search page, so Run Search can open it pre-filled"></div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Geography</label><input class="form-input" id="ss-geography" placeholder="e.g. Sweden + remote EU"></div>
       <div><label class="form-label">Frequency</label><select class="form-input" id="ss-frequency"></select></div>
@@ -1152,8 +1161,8 @@ const DEFAULT_ROLE_TITLES = [
   "Director of Delivery",
 ];
 const DEFAULT_SEARCH_SETUP = [
-  { id:"ss-seed-1", source:"LinkedIn Jobs", channel:"Executive title families (CEO/MD/COO/CCO/CISO…)", geography:"Sweden + remote EU", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Primary source; search title variants separately, job boards don't normalise them." },
-  { id:"ss-seed-2", source:"Arbetsförmedlingen JobSearch API", channel:"Official API — public sector + general", geography:"Västra Götaland", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Good for public-sector and general roles." },
+  { id:"ss-seed-1", source:"LinkedIn Jobs", channel:"Executive title families (CEO/MD/COO/CCO/CISO…)", url:"https://www.linkedin.com/jobs/search/", geography:"Sweden + remote EU", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Primary source; search title variants separately, job boards don't normalise them." },
+  { id:"ss-seed-2", source:"Arbetsförmedlingen JobSearch API", channel:"Official API — public sector + general", url:"https://arbetsformedlingen.se/platsbanken/annonser", geography:"Västra Götaland", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"Good for public-sector and general roles." },
   { id:"ss-seed-3", source:"Maquire", channel:"Executive search — direct site + contact", geography:"Sweden", frequency:"Fortnightly", status:"Active", lastRun:"", nextRun:"", notes:"Nordic executive-search firm." },
   { id:"ss-seed-4", source:"Novare", channel:"Executive search — direct site", geography:"Sweden", frequency:"Fortnightly", status:"Manual", lastRun:"", nextRun:"", notes:"Needs manual login; not yet automatable." },
   { id:"ss-seed-5", source:"Company career pages", channel:"Direct monitoring of named target companies", geography:"Gothenburg / Sweden", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"e.g. AstraZeneca and other named targets." },
@@ -2942,6 +2951,7 @@ function renderSearchSetupCard(s) {
           ${s.geography?`<span>📍 ${escHtml(s.geography)}</span>`:""}
           ${s.lastRun?`<span>Last run: ${s.lastRun}</span>`:""}
           ${s.nextRun?`<span>Next run: ${s.nextRun}</span>`:""}
+          ${s.url?`<span><a href="${s.url}" target="_blank" rel="noopener">🔗 Search page</a></span>`:""}
         </div>
         ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
       </div>
@@ -2958,6 +2968,7 @@ function openSearchSetupModal(id) {
   document.getElementById("searchSetupModalTitle").textContent = id?"Edit Source":"Add Source";
   document.getElementById("ss-source").value    = s?.source||"";
   document.getElementById("ss-channel").value   = s?.channel||"";
+  document.getElementById("ss-url").value       = s?.url||"";
   document.getElementById("ss-geography").value = s?.geography||"";
   sel("ss-frequency", SS_FREQUENCY_OPTIONS, s?.frequency||"Weekly");
   sel("ss-status",    Object.keys(SS_STATUS), s?.status||"Active");
@@ -2974,6 +2985,7 @@ function submitSearchSetup() {
     id: editSearchSetupId||String(Date.now()),
     source,
     channel:   document.getElementById("ss-channel").value.trim(),
+    url:       document.getElementById("ss-url").value.trim(),
     geography: document.getElementById("ss-geography").value.trim(),
     frequency: document.getElementById("ss-frequency").value,
     status:    document.getElementById("ss-status").value,
@@ -3084,6 +3096,107 @@ function renderLinkedIn() {
       ${escHtml(keywords[0])} roles find your profile.
     </div>`;
 }
+// ═══════════════════════════ RUN SEARCH (Job Sites & Companies) ════════════════
+// Combines pinned Role Titles with whatever's in the Search Criteria field —
+// per Markus Job Search Instructions, both feed the same search.
+function buildSearchTerms() {
+  const pinned = state.searchCriteria.roleTitles||[];
+  const free = (state.searchCriteria.freeText||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const seen = new Set(), out = [];
+  [...pinned, ...free].forEach(t=>{
+    const key = t.toLowerCase();
+    if (t && !seen.has(key)) { seen.add(key); out.push(t); }
+  });
+  return out;
+}
+
+// Known query-string patterns for sources without a saved Search URL.
+// Matched by source name so LinkedIn/Arbetsförmedlingen work even on entries
+// seeded before the Search URL field existed.
+const KNOWN_SEARCH_URL_BUILDERS = [
+  { test: s => /linkedin/i.test(s.source), build: (terms, location) =>
+      `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(terms.join(" OR "))}` +
+      (location ? `&location=${encodeURIComponent(location)}` : "") },
+  { test: s => /arbetsf[oö]rmedlingen/i.test(s.source), build: (terms, location) =>
+      `https://arbetsformedlingen.se/platsbanken/annonser?q=${encodeURIComponent(terms.join(" "))}` +
+      (location ? `&l=${encodeURIComponent(location)}` : "") },
+];
+
+// Job Sites: no API/scraping integration exists for most of these sources, so
+// "running" the search means opening each Active source's results, pre-filled
+// with your criteria, in a new tab — not an automated scan like Companies below.
+function runJobSitesSearch() {
+  const terms = buildSearchTerms();
+  const location = state.searchCriteria.location||"";
+  const active = (state.searchSetup||[]).filter(s=>s.status==="Active");
+  const statusEl = document.getElementById("jsc-sites-status");
+  if (!active.length) {
+    statusEl.textContent = "No Active job sites — set a source to Active first.";
+    return;
+  }
+  let opened = 0;
+  const skipped = [];
+  active.forEach(s=>{
+    const builder = KNOWN_SEARCH_URL_BUILDERS.find(b=>b.test(s));
+    let url = null;
+    if (builder) url = builder.build(terms, location);
+    else if (s.url) url = s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(terms.join(" "));
+    if (url) { window.open(url, "_blank"); opened++; s.lastRun = today(); }
+    else skipped.push(s.source);
+  });
+  statusEl.textContent =
+    `Opened ${opened} search${opened===1?"":"es"} for: ${terms.join(", ")||"(no criteria set — add Role Titles or Search Criteria above)"}` +
+    (skipped.length ? ` · skipped, no Search URL saved: ${skipped.join(", ")}` : "") +
+    (opened>1 ? " — allow pop-ups if a tab didn't open." : "");
+  if (opened) { saveState(); renderSearchSetupTab(); }
+}
+
+// Companies: reuses the deployed scanWatchlist Cloud Function for real — this
+// one actually fetches and filters postings, it doesn't just open a tab.
+async function runCompanySearch() {
+  const terms = buildSearchTerms();
+  const companies = state.watchlist.filter(w=>w.careerSite);
+  const statusEl = document.getElementById("jsc-companies-status");
+  const btn = document.getElementById("jsc-companies-runbtn");
+  if (!companies.length) {
+    statusEl.textContent = "Add a company with a career site link first.";
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Searching…";
+  statusEl.textContent = `Scanning ${companies.length} compan${companies.length===1?"y":"ies"} for: ${terms.join(", ")||"(no criteria set)"}…`;
+  try {
+    const res = await fetch(SCAN_FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companies, criteria: { keywords: terms, location: state.searchCriteria.location||"" } }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const dismissed = new Set(state.dismissedSuggestions);
+    const found = [];
+    for (const r of data.results||[]) {
+      if (r.error) continue;
+      for (const job of r.jobs||[]) {
+        const key = job.url || `${r.company}::${job.title}`;
+        if (dismissed.has(key)) continue;
+        found.push({ key, company: r.company, title: job.title, location: job.location||"", url: job.url||"" });
+      }
+    }
+    state.suggestions = found;
+    saveState();
+    const errors = (data.results||[]).filter(r=>r.error);
+    statusEl.textContent =
+      `Found ${found.length} match${found.length===1?"":"es"} — see the Suggestions tab` +
+      (errors.length?` · ${errors.length} site${errors.length===1?"":"s"} failed to load`:"");
+    renderSuggestions();
+    renderLinkedIn();
+  } catch (e) {
+    statusEl.textContent = `Search failed: ${e.message}. Is the Cloud Function deployed?`;
+  } finally {
+    btn.disabled = false; btn.textContent = "▶ Run Search";
+  }
+}
+
 async function scanWatchlist() {
   const companies = state.watchlist.filter(w=>w.careerSite);
   if (!companies.length) {
