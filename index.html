@@ -438,8 +438,8 @@
         <button class="btn btn-purple btn-sm" onclick="openSearchSetupModal()">+ Add Source</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <button class="btn btn-primary btn-sm" onclick="runJobSitesSearch()">▶ Run Search</button>
-        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Opens each Active source pre-filled with your criteria — it doesn't fetch results back here.</span>
+        <button class="btn btn-primary btn-sm" id="jsc-sites-runbtn" onclick="runJobSitesSearch()">▶ Run Search</button>
+        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Arbetsförmedlingen is searched for real and filed into Job Watchlist; other Active sources just open pre-filled tabs.</span>
       </div>
       <div id="jc-list"></div>
     </div>
@@ -3110,33 +3110,87 @@ function buildSearchTerms() {
   return out;
 }
 
-// Known query-string patterns for sources without a saved Search URL.
-// Matched by source name so LinkedIn/Arbetsförmedlingen work even on entries
-// seeded before the Search URL field existed.
+// Known query-string patterns for sources without a saved Search URL, and
+// without a real API integration below. Matched by source name so entries
+// seeded before the Search URL field existed still work.
 const KNOWN_SEARCH_URL_BUILDERS = [
   { test: s => /linkedin/i.test(s.source), build: (terms, location) =>
       `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(terms.join(" OR "))}` +
       (location ? `&location=${encodeURIComponent(location)}` : "") },
-  { test: s => /arbetsf[oö]rmedlingen/i.test(s.source), build: (terms, location) =>
-      `https://arbetsformedlingen.se/platsbanken/annonser?q=${encodeURIComponent(terms.join(" "))}` +
-      (location ? `&l=${encodeURIComponent(location)}` : "") },
 ];
 
-// Job Sites: no API/scraping integration exists for most of these sources, so
-// "running" the search means opening each Active source's results, pre-filled
-// with your criteria, in a new tab — not an automated scan like Companies below.
-function runJobSitesSearch() {
+// Arbetsförmedlingen's JobSearch API (jobtechdev.se) is public, unauthenticated,
+// and CORS-open (access-control-allow-origin: *) — real search, called directly
+// from the browser, no backend needed. One request per term (title variants
+// aren't normalised any better here than on any other board), results merged
+// and deduped by posting id, then filtered by location client-side since the
+// API's location params need taxonomy concept ids, not free-text place names.
+const AF_SEARCH_URL = "https://jobsearch.api.jobtechdev.se/search";
+const AF_TERM_CAP = 15; // be a reasonable citizen of a free public API
+
+async function searchArbetsformedlingen(terms, location) {
+  const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
+  const seenIds = new Set();
+  let added = 0, dupes = 0;
+  for (const term of terms.slice(0, AF_TERM_CAP)) {
+    const res = await fetch(`${AF_SEARCH_URL}?q=${encodeURIComponent(term)}&limit=20`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} for "${term}"`);
+    const data = await res.json();
+    for (const hit of data.hits||[]) {
+      if (!hit.id || seenIds.has(hit.id)) continue;
+      seenIds.add(hit.id);
+      const role = hit.headline||"";
+      const company = (hit.employer && hit.employer.name) || "Unknown employer";
+      if (!role) continue;
+      const loc = [hit.workplace_address && hit.workplace_address.municipality, hit.workplace_address && hit.workplace_address.region].filter(Boolean).join(", ");
+      if (location && loc && !loc.toLowerCase().includes(location.toLowerCase())) continue;
+      const key = (company+"::"+role).toLowerCase().trim();
+      if (existingKeys.has(key)) { dupes++; continue; }
+      existingKeys.add(key);
+      state.apps.push({
+        id: String(Date.now()) + Math.random().toString(36).slice(2,7),
+        company, role,
+        contact: "", careerSite: hit.webpage_url||"",
+        dateApplied: "", dateResponded: "",
+        track: "Permanent", status: WATCH_STATUS,
+        source: "National job board", location: loc, workModel: "Unknown", cvVersion: "",
+        deadline: hit.application_deadline ? hit.application_deadline.slice(0,10) : "",
+        roleFamily: "", stageMandate: "",
+        fit: { strategic:0, growth:0, culture:0, location:0 }, overallFit: null, concerns: "",
+        history: [], followUp: false, followUpDate: "",
+      });
+      added++;
+    }
+  }
+  return { added, dupes };
+}
+
+// Job Sites: Arbetsförmedlingen gets a real API search filed into Job Watchlist.
+// Everything else still has no API/scraping integration, so it opens each
+// other Active source's results pre-filled with your criteria in a new tab —
+// tabs are opened first and synchronously (before the async AF call) so
+// popup blockers don't treat them as unrequested.
+async function runJobSitesSearch() {
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
   const active = (state.searchSetup||[]).filter(s=>s.status==="Active");
   const statusEl = document.getElementById("jsc-sites-status");
+  const btn = document.getElementById("jsc-sites-runbtn");
   if (!active.length) {
     statusEl.textContent = "No Active job sites — set a source to Active first.";
     return;
   }
+  if (!terms.length) {
+    statusEl.textContent = "Add Role Titles or Search Criteria above first.";
+    return;
+  }
+
+  const afSource = active.find(s=>/arbetsf[oö]rmedlingen/i.test(s.source));
+  const others = active.filter(s=>s!==afSource);
+
   let opened = 0;
   const skipped = [];
-  active.forEach(s=>{
+  others.forEach(s=>{
     const builder = KNOWN_SEARCH_URL_BUILDERS.find(b=>b.test(s));
     let url = null;
     if (builder) url = builder.build(terms, location);
@@ -3144,11 +3198,30 @@ function runJobSitesSearch() {
     if (url) { window.open(url, "_blank"); opened++; s.lastRun = today(); }
     else skipped.push(s.source);
   });
-  statusEl.textContent =
-    `Opened ${opened} search${opened===1?"":"es"} for: ${terms.join(", ")||"(no criteria set — add Role Titles or Search Criteria above)"}` +
-    (skipped.length ? ` · skipped, no Search URL saved: ${skipped.join(", ")}` : "") +
-    (opened>1 ? " — allow pop-ups if a tab didn't open." : "");
-  if (opened) { saveState(); renderSearchSetupTab(); }
+
+  let added = 0, dupes = 0, afError = null;
+  if (afSource) {
+    btn.disabled = true; btn.textContent = "Searching…";
+    statusEl.textContent = (opened ? `Opened ${opened} tab${opened===1?"":"s"} · ` : "") + `searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
+    try {
+      ({ added, dupes } = await searchArbetsformedlingen(terms, location));
+      afSource.lastRun = today();
+    } catch (e) {
+      afError = e.message;
+    }
+    btn.disabled = false; btn.textContent = "▶ Run Search";
+  }
+
+  saveState();
+  renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
+
+  const parts = [];
+  if (opened) parts.push(`opened ${opened} tab${opened===1?"":"s"}`);
+  if (afSource) parts.push(afError
+    ? `Arbetsförmedlingen failed: ${afError}`
+    : `Arbetsförmedlingen added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist${dupes?` (${dupes} already tracked)`:""}`);
+  if (skipped.length) parts.push(`skipped, no Search URL: ${skipped.join(", ")}`);
+  statusEl.textContent = parts.join(" · ") || "Nothing to search — no Active sources.";
 }
 
 // Companies: reuses the deployed scanWatchlist Cloud Function for real — this
