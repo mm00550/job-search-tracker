@@ -450,7 +450,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-companies-runbtn" onclick="runCompanySearch()">▶ Run Search</button>
-        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches and filters real postings from each company's career page.</span>
+        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches real postings and files matches straight into Job Watchlist.</span>
       </div>
       <div id="watch-list"></div>
       <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
@@ -3153,6 +3153,8 @@ function runJobSitesSearch() {
 
 // Companies: reuses the deployed scanWatchlist Cloud Function for real — this
 // one actually fetches and filters postings, it doesn't just open a tab.
+// Every match becomes a real Job Watchlist ("Watching") entry directly —
+// no separate review-and-add step, matches are filed as opportunities.
 async function runCompanySearch() {
   const terms = buildSearchTerms();
   const companies = state.watchlist.filter(w=>w.careerSite);
@@ -3172,24 +3174,35 @@ async function runCompanySearch() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const dismissed = new Set(state.dismissedSuggestions);
-    const found = [];
+    const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
+    let added = 0, dupes = 0;
     for (const r of data.results||[]) {
       if (r.error) continue;
       for (const job of r.jobs||[]) {
-        const key = job.url || `${r.company}::${job.title}`;
-        if (dismissed.has(key)) continue;
-        found.push({ key, company: r.company, title: job.title, location: job.location||"", url: job.url||"" });
+        const key = (r.company+"::"+job.title).toLowerCase().trim();
+        if (existingKeys.has(key)) { dupes++; continue; }
+        existingKeys.add(key);
+        state.apps.push({
+          id: String(Date.now()) + Math.random().toString(36).slice(2,7),
+          company: r.company, role: job.title,
+          contact: "", careerSite: job.url||"",
+          dateApplied: "", dateResponded: "",
+          track: "Permanent", status: WATCH_STATUS,
+          source: "Company site", location: job.location||"", workModel: "Unknown", cvVersion: "",
+          deadline: "", roleFamily: "", stageMandate: "",
+          fit: { strategic:0, growth:0, culture:0, location:0 }, overallFit: null, concerns: "",
+          history: [], followUp: false, followUpDate: "",
+        });
+        added++;
       }
     }
-    state.suggestions = found;
     saveState();
+    renderJobWatchlist(); renderApplications(); renderDashboard();
     const errors = (data.results||[]).filter(r=>r.error);
     statusEl.textContent =
-      `Found ${found.length} match${found.length===1?"":"es"} — see the Suggestions tab` +
+      `Added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist` +
+      (dupes?` · ${dupes} already tracked`:"") +
       (errors.length?` · ${errors.length} site${errors.length===1?"":"s"} failed to load`:"");
-    renderSuggestions();
-    renderLinkedIn();
   } catch (e) {
     statusEl.textContent = `Search failed: ${e.message}. Is the Cloud Function deployed?`;
   } finally {
