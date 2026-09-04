@@ -1113,7 +1113,11 @@
     <div class="form-group"><label class="form-label">Category</label><input class="form-input" id="ss-category" placeholder="e.g. Swedish general job boards, Gothenburg-specific…" list="ss-category-options"></div>
     <datalist id="ss-category-options"></datalist>
     <div class="form-group"><label class="form-label">Search / Channel</label><input class="form-input" id="ss-channel" placeholder="Query family or method"></div>
-    <div class="form-group"><label class="form-label">Search URL</label><input class="form-input" id="ss-url" placeholder="https://… — the site's search page, so Run Search can open it pre-filled"></div>
+    <div class="form-group">
+      <label class="form-label">Search URL</label>
+      <input class="form-input" id="ss-url" placeholder="https://…?q={q}&l={location} — or just the site's URL if you haven't confirmed its search pattern yet">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Use <code style="background:var(--off);padding:1px 4px;border-radius:3px">{q}</code> (and <code style="background:var(--off);padding:1px 4px;border-radius:3px">{location}</code> if the site supports it) where your search terms should go — Open/Search will substitute them in. No placeholder means a generic <code style="background:var(--off);padding:1px 4px;border-radius:3px">?q=</code> gets appended instead, which only works on some sites.</div>
+    </div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Geography</label><input class="form-input" id="ss-geography" placeholder="e.g. Sweden + remote EU"></div>
       <div><label class="form-label">Frequency</label><select class="form-input" id="ss-frequency"></select></div>
@@ -1177,30 +1181,34 @@ const DEFAULT_SEARCH_SETUP = [
 // Curated list for the "+ Add Starter Sources" bulk-add button — Markus's own
 // list. Platsbanken/Arbetsförmedlingen isn't repeated here since it's already
 // the one with real search integration (see ss-seed-2 above).
+// url uses {q} (and {location} where the site supports it) for CONFIRMED
+// query templates — tested directly against the live site. Plain URLs with
+// no placeholder are unverified: "Open" will land on the site's own search
+// page or homepage, not necessarily pre-filtered — see each one's notes.
 const STARTER_JOB_SITES = [
-  { category:"Swedish general job boards", source:"LinkedIn Jobs Sweden", url:"https://se.linkedin.com/jobs", geography:"Sweden" },
-  { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com", geography:"Sweden" },
-  { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://jobb.blocket.se", geography:"Sweden" },
-  { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se", geography:"Sweden" },
+  { category:"Swedish general job boards", source:"LinkedIn Jobs Sweden", url:"https://www.linkedin.com/jobs/search/?keywords={q}&location={location}", geography:"Sweden", notes:"Confirmed query template." },
+  { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com/jobs?q={q}&l={location}", geography:"Sweden", notes:"Confirmed query template." },
+  { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://jobb.blocket.se", geography:"Sweden", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se", geography:"Sweden", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
 
-  { category:"Gothenburg-specific", source:"Lediga Jobb Göteborg", url:"https://www.ledigajobbgoteborg.se", geography:"Gothenburg" },
-  { category:"Gothenburg-specific", source:"Göteborg Lediga Jobb", url:"https://www.goteborgledigajobb.se", geography:"Gothenburg" },
-  { category:"Gothenburg-specific", source:"Info Göteborg jobs", url:"https://infogoteborg.se/lediga-jobb-goteborg/", geography:"Gothenburg" },
-  { category:"Gothenburg-specific", source:"Business Region Göteborg", url:"https://www.businessregiongoteborg.se/om-oss/jobb-praktik-och-prao", geography:"Gothenburg" },
+  { category:"Gothenburg-specific", source:"Lediga Jobb Göteborg", url:"https://www.ledigajobbgoteborg.se", geography:"Gothenburg", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Gothenburg-specific", source:"Göteborg Lediga Jobb", url:"https://www.goteborgledigajobb.se", geography:"Gothenburg", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Gothenburg-specific", source:"Info Göteborg jobs", url:"https://infogoteborg.se/lediga-jobb-goteborg/", geography:"Gothenburg", notes:"Looks like a listing/info page rather than a searchable board — likely no query template exists." },
+  { category:"Gothenburg-specific", source:"Business Region Göteborg", url:"https://www.businessregiongoteborg.se/om-oss/jobb-praktik-och-prao", geography:"Gothenburg", notes:"Informational page about jobs/internships, not a searchable board." },
 
-  { category:"Public sector", source:"Göteborgs Stad careers (Varbi)", url:"https://goteborgsstad.varbi.com/", geography:"Gothenburg", notes:"Also relevant to the Göteborg Stad watchlist entry." },
-  { category:"Public sector", source:"Västra Götalandsregionen jobs", url:"https://www.vgregion.se/jobba-i-vgr/sok-jobb-i-vgr/", geography:"Västra Götaland" },
-  { category:"Public sector", source:"Offentliga Jobb (Västra Götalands län)", url:"https://www.offentligajobb.se/lediga-jobb/vastra-gotalands-lan", geography:"Västra Götaland", notes:"All Swedish public-sector postings, filtered to the region." },
+  { category:"Public sector", source:"Göteborgs Stad careers (Varbi)", url:"https://goteborgsstad.varbi.com/", geography:"Gothenburg", notes:"Also relevant to the Göteborg Stad watchlist entry. Unverified query template — Varbi portals often support ?query= or similar; test and confirm." },
+  { category:"Public sector", source:"Västra Götalandsregionen jobs", url:"https://www.vgregion.se/jobba-i-vgr/sok-jobb-i-vgr/", geography:"Västra Götaland", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Public sector", source:"Offentliga Jobb (Västra Götalands län)", url:"https://www.offentligajobb.se/lediga-jobb/vastra-gotalands-lan", geography:"Västra Götaland", notes:"All Swedish public-sector postings, filtered to the region. Unverified query template." },
 
-  { category:"Recruitment & staffing agencies", source:"Randstad Sweden", url:"https://www.randstad.se", geography:"Sweden", frequency:"Fortnightly" },
-  { category:"Recruitment & staffing agencies", source:"Michael Page Sweden", url:"https://www.michaelpage.se", geography:"Sweden", frequency:"Fortnightly" },
-  { category:"Recruitment & staffing agencies", source:"Academic Work", url:"https://www.academicwork.se", geography:"Sweden", frequency:"Fortnightly" },
-  { category:"Recruitment & staffing agencies", source:"Poolia", url:"https://www.poolia.se", geography:"Sweden", frequency:"Fortnightly" },
-  { category:"Recruitment & staffing agencies", source:"Manpower Sweden", url:"https://www.manpower.se/sv/lediga-jobb/stad/goteborg", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg." },
-  { category:"Recruitment & staffing agencies", source:"Bravura", url:"https://www.bravura.se/karriar/lediga-jobb-goteborg/", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg." },
+  { category:"Recruitment & staffing agencies", source:"Randstad Sweden", url:"https://www.randstad.se/jobb/?q={q}", geography:"Sweden", frequency:"Fortnightly", notes:"Query param guessed as ?q=, not independently confirmed to filter — check the first open." },
+  { category:"Recruitment & staffing agencies", source:"Michael Page Sweden", url:"https://www.michaelpage.se", geography:"Sweden", frequency:"Fortnightly", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Recruitment & staffing agencies", source:"Academic Work", url:"https://www.academicwork.se/jobb?q={q}", geography:"Sweden", frequency:"Fortnightly", notes:"Query param guessed as ?q=, not independently confirmed to filter — check the first open." },
+  { category:"Recruitment & staffing agencies", source:"Poolia", url:"https://www.poolia.se", geography:"Sweden", frequency:"Fortnightly", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Recruitment & staffing agencies", source:"Manpower Sweden", url:"https://www.manpower.se/sv/lediga-jobb/stad/goteborg", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg by the site itself, but appending a role search on top is unverified." },
+  { category:"Recruitment & staffing agencies", source:"Bravura", url:"https://www.bravura.se/karriar/lediga-jobb-goteborg/", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg by the site itself, but appending a role search on top is unverified." },
 
-  { category:"Life Science / MedTech", source:"Nature Careers", url:"https://www.naturecareers.com", geography:"Sweden filter", frequency:"Fortnightly" },
-  { category:"Life Science / MedTech", source:"GoCo Health Innovation City", url:"https://goco.se/", geography:"Gothenburg", frequency:"Fortnightly", notes:"Listings mostly appear via Indeed/LinkedIn rather than their own site — this URL is the parent site." },
+  { category:"Life Science / MedTech", source:"Nature Careers", url:"https://www.naturecareers.com/jobs?text={q}", geography:"Sweden filter", frequency:"Fortnightly", notes:"Query param guessed as ?text=, not independently confirmed to filter — check the first open." },
+  { category:"Life Science / MedTech", source:"GoCo Health Innovation City", url:"https://goco.se/", geography:"Gothenburg", frequency:"Fortnightly", notes:"Listings mostly appear via Indeed/LinkedIn rather than their own site — this URL is just the parent site, no search function." },
 ];
 const APP_TRACK = {
   "Permanent": { color:"#3B0030", bg:"#F3E6EF" },
@@ -2984,8 +2992,24 @@ function renderSearchSetupTab() {
     ${groups[cat].map(renderSearchSetupCard).join("")}
   `).join("");
 }
+// A Search URL containing {q} (and optionally {location}) is a confirmed
+// query template — those placeholders get substituted directly, giving exact
+// control over each site's real param names. A URL with no placeholder falls
+// back to a generic ?q= append, which works for some sites (Indeed) and not
+// others — see the Search Setup notes on which is which.
+function resolveSearchUrl(s, terms, location) {
+  if (!s.url) return null;
+  const q = terms.join(" ");
+  if (s.url.includes("{q}") || s.url.includes("{location}")) {
+    return s.url.replace(/\{q\}/g, encodeURIComponent(q)).replace(/\{location\}/g, encodeURIComponent(location||""));
+  }
+  return s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(q);
+}
 function renderSearchSetupCard(s) {
   const sc = SS_STATUS[s.status]||{};
+  const terms = buildSearchTerms();
+  const location = state.searchCriteria.location||"";
+  const resolvedUrl = s.url ? resolveSearchUrl(s, terms, location) : null;
   return `<div class="item-card" style="border-left-color:${sc.dot}">
     <div class="item-row">
       <div style="flex:1">
@@ -2999,7 +3023,7 @@ function renderSearchSetupCard(s) {
           ${s.geography?`<span>📍 ${escHtml(s.geography)}</span>`:""}
           ${s.lastRun?`<span>Last run: ${s.lastRun}</span>`:""}
           ${s.nextRun?`<span>Next run: ${s.nextRun}</span>`:""}
-          ${s.url?`<span><a href="${s.url}" target="_blank" rel="noopener">🔗 Search page</a></span>`:""}
+          ${resolvedUrl?`<span><a href="${resolvedUrl}" target="_blank" rel="noopener">🔗 Search page${terms.length?" (pre-filled)":""}</a></span>`:""}
         </div>
         ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
       </div>
@@ -3118,8 +3142,7 @@ async function runSingleJobSite(id) {
     statusEl.textContent = `No Search URL saved for ${s.source} — add one via Edit first.`;
     return;
   }
-  const url = s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(terms.join(" "));
-  window.open(url, "_blank");
+  window.open(resolveSearchUrl(s, terms, location), "_blank");
   s.lastRun = today();
   saveState();
   renderSearchSetupTab();
