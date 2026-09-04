@@ -439,7 +439,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-sites-runbtn" onclick="runJobSitesSearch()">▶ Run Search</button>
-        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Arbetsförmedlingen is searched for real and filed into Job Watchlist; other Active sources just open pre-filled tabs.</span>
+        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Searches Arbetsförmedlingen for real and files matches into Job Watchlist. No other source is integrated yet.</span>
       </div>
       <div id="jc-list"></div>
     </div>
@@ -3110,15 +3110,6 @@ function buildSearchTerms() {
   return out;
 }
 
-// Known query-string patterns for sources without a saved Search URL, and
-// without a real API integration below. Matched by source name so entries
-// seeded before the Search URL field existed still work.
-const KNOWN_SEARCH_URL_BUILDERS = [
-  { test: s => /linkedin/i.test(s.source), build: (terms, location) =>
-      `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(terms.join(" OR "))}` +
-      (location ? `&location=${encodeURIComponent(location)}` : "") },
-];
-
 // Arbetsförmedlingen's JobSearch API (jobtechdev.se) is public, unauthenticated,
 // and CORS-open (access-control-allow-origin: *) — real search, called directly
 // from the browser, no backend needed. One request per term (title variants
@@ -3165,11 +3156,10 @@ async function searchArbetsformedlingen(terms, location) {
   return { added, dupes };
 }
 
-// Job Sites: Arbetsförmedlingen gets a real API search filed into Job Watchlist.
-// Everything else still has no API/scraping integration, so it opens each
-// other Active source's results pre-filled with your criteria in a new tab —
-// tabs are opened first and synchronously (before the async AF call) so
-// popup blockers don't treat them as unrequested.
+// Job Sites: Arbetsförmedlingen gets a real API search filed into Job
+// Watchlist. No other source has an API or scraping integration, and this
+// no longer opens tabs for them either — per Markus's instruction, Run
+// Search does nothing for a source it can't genuinely search.
 async function runJobSitesSearch() {
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
@@ -3186,42 +3176,31 @@ async function runJobSitesSearch() {
   }
 
   const afSource = active.find(s=>/arbetsf[oö]rmedlingen/i.test(s.source));
-  const others = active.filter(s=>s!==afSource);
+  const unsupported = active.filter(s=>s!==afSource).map(s=>s.source);
 
-  let opened = 0;
-  const skipped = [];
-  others.forEach(s=>{
-    const builder = KNOWN_SEARCH_URL_BUILDERS.find(b=>b.test(s));
-    let url = null;
-    if (builder) url = builder.build(terms, location);
-    else if (s.url) url = s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(terms.join(" "));
-    if (url) { window.open(url, "_blank"); opened++; s.lastRun = today(); }
-    else skipped.push(s.source);
-  });
-
-  let added = 0, dupes = 0, afError = null;
-  if (afSource) {
-    btn.disabled = true; btn.textContent = "Searching…";
-    statusEl.textContent = (opened ? `Opened ${opened} tab${opened===1?"":"s"} · ` : "") + `searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
-    try {
-      ({ added, dupes } = await searchArbetsformedlingen(terms, location));
-      afSource.lastRun = today();
-    } catch (e) {
-      afError = e.message;
-    }
-    btn.disabled = false; btn.textContent = "▶ Run Search";
+  if (!afSource) {
+    statusEl.textContent = `No automated search for: ${unsupported.join(", ")}. Only Arbetsförmedlingen is integrated — set it Active to search.`;
+    return;
   }
+
+  btn.disabled = true; btn.textContent = "Searching…";
+  statusEl.textContent = `Searching Arbetsförmedlingen for: ${terms.join(", ")}…`;
+  let added = 0, dupes = 0, afError = null;
+  try {
+    ({ added, dupes } = await searchArbetsformedlingen(terms, location));
+    afSource.lastRun = today();
+  } catch (e) {
+    afError = e.message;
+  }
+  btn.disabled = false; btn.textContent = "▶ Run Search";
 
   saveState();
   renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
 
-  const parts = [];
-  if (opened) parts.push(`opened ${opened} tab${opened===1?"":"s"}`);
-  if (afSource) parts.push(afError
+  statusEl.textContent = afError
     ? `Arbetsförmedlingen failed: ${afError}`
-    : `Arbetsförmedlingen added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist${dupes?` (${dupes} already tracked)`:""}`);
-  if (skipped.length) parts.push(`skipped, no Search URL: ${skipped.join(", ")}`);
-  statusEl.textContent = parts.join(" · ") || "Nothing to search — no Active sources.";
+    : `Arbetsförmedlingen added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist${dupes?` (${dupes} already tracked)`:""}` +
+      (unsupported.length ? ` · no automated search for: ${unsupported.join(", ")}` : "");
 }
 
 // Companies: reuses the deployed scanWatchlist Cloud Function for real — this
