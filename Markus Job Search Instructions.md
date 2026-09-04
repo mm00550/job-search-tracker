@@ -239,14 +239,17 @@ Live now on the **Job Sites & Companies** tab, Job Sites column — not a propos
 | Field | Purpose |
 |---|---|
 | Source | Job board, search firm, company list or portfolio list |
+| Category | Free-text grouping label (e.g. "Swedish general job boards", "Gothenburg-specific", "Public sector", "Recruitment & staffing agencies", "Life Science / MedTech") — the list is rendered grouped by this, not flat |
 | Search / Channel | Query family or method |
-| Search URL | The site's own search page — lets Run Search open it pre-filled |
+| Search URL | The site's own search page — a manual, one-click reference link on the card; Run Search itself only ever uses it for Arbetsförmedlingen |
 | Geography | Area and remote rules |
 | Frequency | Weekly, daily, fortnightly or manual |
-| Status | Active, Paused or Manual — only **Active** sources get opened by Run Search |
-| Last Run | Date completed — Run Search updates this automatically on any source it opens |
+| Status | Active, Paused or Manual |
+| Last Run | Date completed — Arbetsförmedlingen's updates automatically when Run Search actually searches it |
 | Next Run | Scheduled date |
 | Notes | Filters, caveats and authentication needs |
+
+**"+ Add Starter Sources"** bulk-adds a curated list of 19 Swedish/Gothenburg sources Candidate provided (general boards, Gothenburg-specific sites, public-sector portals, recruitment agencies, Life Science/MedTech), deduplicated by source name against what's already there. This exists because the assistant has no way to write directly to Candidate's live Firestore data — updating a default/seed list in the code only affects brand-new accounts, not an already-populated one, so a bulk-add button triggered by Candidate in their own authenticated session is the only way to get a curated list into real data. Keep this pattern in mind for any future "add a batch of records to Candidate's live account" request — write a button, don't assume a code change reaches production data.
 
 ### Dashboard summary
 

@@ -435,7 +435,10 @@
     <div>
       <div class="hdr-row" style="margin-bottom:10px">
         <div class="sec-label" style="margin-bottom:0">🔎 Job Sites</div>
-        <button class="btn btn-purple btn-sm" onclick="openSearchSetupModal()">+ Add Source</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sky btn-sm" onclick="addStarterJobSites()" title="Bulk-add the curated Swedish/Gothenburg job site list">+ Add Starter Sources</button>
+          <button class="btn btn-purple btn-sm" onclick="openSearchSetupModal()">+ Add Source</button>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-sites-runbtn" onclick="runJobSitesSearch()">▶ Run Search</button>
@@ -1107,6 +1110,8 @@
   <div class="modal">
     <div class="modal-title" style="color:var(--purple)" id="searchSetupModalTitle">Add Source</div>
     <div class="form-group"><label class="form-label">Source *</label><input class="form-input" id="ss-source" placeholder="e.g. LinkedIn Jobs, Maquire, AstraZeneca careers"></div>
+    <div class="form-group"><label class="form-label">Category</label><input class="form-input" id="ss-category" placeholder="e.g. Swedish general job boards, Gothenburg-specific…" list="ss-category-options"></div>
+    <datalist id="ss-category-options"></datalist>
     <div class="form-group"><label class="form-label">Search / Channel</label><input class="form-input" id="ss-channel" placeholder="Query family or method"></div>
     <div class="form-group"><label class="form-label">Search URL</label><input class="form-input" id="ss-url" placeholder="https://… — the site's search page, so Run Search can open it pre-filled"></div>
     <div class="form-grid2" style="margin-bottom:14px">
@@ -1167,6 +1172,35 @@ const DEFAULT_SEARCH_SETUP = [
   { id:"ss-seed-4", source:"Novare", channel:"Executive search — direct site", geography:"Sweden", frequency:"Fortnightly", status:"Manual", lastRun:"", nextRun:"", notes:"Needs manual login; not yet automatable." },
   { id:"ss-seed-5", source:"Company career pages", channel:"Direct monitoring of named target companies", geography:"Gothenburg / Sweden", frequency:"Weekly", status:"Active", lastRun:"", nextRun:"", notes:"e.g. AstraZeneca and other named targets." },
   { id:"ss-seed-6", source:"The Hub", channel:"Nordic startup / scale-up board", geography:"Nordics", frequency:"Weekly", status:"Paused", lastRun:"", nextRun:"", notes:"Paused — retire or resume based on signal quality." },
+];
+
+// Curated list for the "+ Add Starter Sources" bulk-add button — Markus's own
+// list. Platsbanken/Arbetsförmedlingen isn't repeated here since it's already
+// the one with real search integration (see ss-seed-2 above).
+const STARTER_JOB_SITES = [
+  { category:"Swedish general job boards", source:"LinkedIn Jobs Sweden", url:"https://se.linkedin.com/jobs", geography:"Sweden" },
+  { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com", geography:"Sweden" },
+  { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://jobb.blocket.se", geography:"Sweden" },
+  { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se", geography:"Sweden" },
+
+  { category:"Gothenburg-specific", source:"Lediga Jobb Göteborg", url:"https://www.ledigajobbgoteborg.se", geography:"Gothenburg" },
+  { category:"Gothenburg-specific", source:"Göteborg Lediga Jobb", url:"https://www.goteborgledigajobb.se", geography:"Gothenburg" },
+  { category:"Gothenburg-specific", source:"Info Göteborg jobs", url:"https://infogoteborg.se/lediga-jobb-goteborg/", geography:"Gothenburg" },
+  { category:"Gothenburg-specific", source:"Business Region Göteborg", url:"https://www.businessregiongoteborg.se/om-oss/jobb-praktik-och-prao", geography:"Gothenburg" },
+
+  { category:"Public sector", source:"Göteborgs Stad careers (Varbi)", url:"https://goteborgsstad.varbi.com/", geography:"Gothenburg", notes:"Also relevant to the Göteborg Stad watchlist entry." },
+  { category:"Public sector", source:"Västra Götalandsregionen jobs", url:"https://www.vgregion.se/jobba-i-vgr/sok-jobb-i-vgr/", geography:"Västra Götaland" },
+  { category:"Public sector", source:"Offentliga Jobb (Västra Götalands län)", url:"https://www.offentligajobb.se/lediga-jobb/vastra-gotalands-lan", geography:"Västra Götaland", notes:"All Swedish public-sector postings, filtered to the region." },
+
+  { category:"Recruitment & staffing agencies", source:"Randstad Sweden", url:"https://www.randstad.se", geography:"Sweden", frequency:"Fortnightly" },
+  { category:"Recruitment & staffing agencies", source:"Michael Page Sweden", url:"https://www.michaelpage.se", geography:"Sweden", frequency:"Fortnightly" },
+  { category:"Recruitment & staffing agencies", source:"Academic Work", url:"https://www.academicwork.se", geography:"Sweden", frequency:"Fortnightly" },
+  { category:"Recruitment & staffing agencies", source:"Poolia", url:"https://www.poolia.se", geography:"Sweden", frequency:"Fortnightly" },
+  { category:"Recruitment & staffing agencies", source:"Manpower Sweden", url:"https://www.manpower.se/sv/lediga-jobb/stad/goteborg", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg." },
+  { category:"Recruitment & staffing agencies", source:"Bravura", url:"https://www.bravura.se/karriar/lediga-jobb-goteborg/", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg." },
+
+  { category:"Life Science / MedTech", source:"Nature Careers", url:"https://www.naturecareers.com", geography:"Sweden filter", frequency:"Fortnightly" },
+  { category:"Life Science / MedTech", source:"GoCo Health Innovation City", url:"https://goco.se/", geography:"Gothenburg", frequency:"Fortnightly", notes:"Listings mostly appear via Indeed/LinkedIn rather than their own site — this URL is the parent site." },
 ];
 const APP_TRACK = {
   "Permanent": { color:"#3B0030", bg:"#F3E6EF" },
@@ -2932,9 +2966,23 @@ function deleteWatch(id) {
 // ═══════════════════════════ JOB SEARCH CRITERIA (Search Setup) ════════════════
 function renderSearchSetupTab() {
   const list = state.searchSetup||[];
-  document.getElementById("jc-list").innerHTML = list.length===0
-    ? `<div class="card"><div class="empty-state">No sources set up yet. Hit "+ Add Source" to log where and how often you search.</div></div>`
-    : list.map(renderSearchSetupCard).join("");
+  document.getElementById("ss-category-options").innerHTML =
+    [...new Set(STARTER_JOB_SITES.map(s=>s.category))].map(c=>`<option value="${escHtml(c)}">`).join("");
+  if (list.length===0) {
+    document.getElementById("jc-list").innerHTML = `<div class="card"><div class="empty-state">No sources set up yet. Hit "+ Add Source" to log where and how often you search.</div></div>`;
+    return;
+  }
+  const groups = {};
+  const order = [];
+  list.forEach(s=>{
+    const cat = s.category||"Other";
+    if (!groups[cat]) { groups[cat]=[]; order.push(cat); }
+    groups[cat].push(s);
+  });
+  document.getElementById("jc-list").innerHTML = order.map(cat => `
+    <div class="sec-label" style="margin:14px 0 8px">${escHtml(cat)}</div>
+    ${groups[cat].map(renderSearchSetupCard).join("")}
+  `).join("");
 }
 function renderSearchSetupCard(s) {
   const sc = SS_STATUS[s.status]||{};
@@ -2967,6 +3015,7 @@ function openSearchSetupModal(id) {
   const s = id ? state.searchSetup.find(x=>x.id===id) : null;
   document.getElementById("searchSetupModalTitle").textContent = id?"Edit Source":"Add Source";
   document.getElementById("ss-source").value    = s?.source||"";
+  document.getElementById("ss-category").value  = s?.category||"";
   document.getElementById("ss-channel").value   = s?.channel||"";
   document.getElementById("ss-url").value       = s?.url||"";
   document.getElementById("ss-geography").value = s?.geography||"";
@@ -2984,6 +3033,7 @@ function submitSearchSetup() {
   const entry = {
     id: editSearchSetupId||String(Date.now()),
     source,
+    category:  document.getElementById("ss-category").value.trim(),
     channel:   document.getElementById("ss-channel").value.trim(),
     url:       document.getElementById("ss-url").value.trim(),
     geography: document.getElementById("ss-geography").value.trim(),
@@ -3001,6 +3051,30 @@ function deleteSearchSetup(id) {
   if (!confirm("Remove this source?")) return;
   state.searchSetup = state.searchSetup.filter(s=>s.id!==id);
   saveState(); renderSearchSetupTab();
+}
+function addStarterJobSites() {
+  const existing = new Set((state.searchSetup||[]).map(s=>s.source.toLowerCase().trim()));
+  let added = 0, skipped = 0;
+  STARTER_JOB_SITES.forEach((s,i)=>{
+    if (existing.has(s.source.toLowerCase().trim())) { skipped++; return; }
+    state.searchSetup.push({
+      id: "starter-" + Date.now() + "-" + i,
+      source: s.source,
+      category: s.category,
+      channel: s.channel||"",
+      url: s.url||"",
+      geography: s.geography||"",
+      frequency: s.frequency||"Weekly",
+      status: "Active",
+      lastRun: "", nextRun: "",
+      notes: s.notes||"",
+    });
+    added++;
+  });
+  if (added) saveState();
+  renderSearchSetupTab();
+  document.getElementById("jsc-sites-status").textContent =
+    `Added ${added} starter source${added===1?"":"s"}` + (skipped?` · ${skipped} already in your list`:"");
 }
 
 // ═══════════════════════════ SUGGESTIONS ═══════════════════════════════════════
