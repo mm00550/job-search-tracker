@@ -156,12 +156,12 @@ Before adding anything, read the current state: `index.html`'s tab structure, th
 
 ### Existing tabs — map the brief onto these, don't add duplicates
 
-The site already has: **Dashboard**, **Watchlist**, **Suggestions**, **Applications**, **Network**, **Notes, Tasks & Reminders**, **Training**, **Strategy**, **Konsultmäklare** (consultant brokers) and **LinkedIn**. Before proposing a new tab, check whether one of these is the right home for it:
+The site already has: **Dashboard**, **Job Sites & Companies** (job sites on the left, watched companies on the right — this absorbed the old separate Watchlist tab), **Suggestions**, **Applications**, **Job Watchlist** (opportunities not yet applied to — a "Watching" status, separate from Applications' real statuses), **Network**, **Notes, Tasks & Reminders**, **Training**, **Strategy**, **Konsultmäklare** (consultant brokers) and **LinkedIn**. Before proposing a new tab, check whether one of these is the right home for it:
 
 | This brief's concept | Likely home in the existing site |
 |---|---|
-| Opportunities / one row per lead | **Watchlist** and/or **Applications** — extend their existing fields, don't create a new list |
-| Search Setup (sources, cadence) | **Strategy**, or a new sub-section there, if nothing existing fits |
+| Opportunities / one row per lead | **Applications** (once applied) and **Job Watchlist** (before applying) — both read from the same underlying records; extend existing fields, don't create a new list |
+| Search Setup (sources, cadence) | **Job Sites & Companies** tab, Job Sites column — live now, not a proposal |
 | Evidence Library | Not here — lives in the `Career Database` workbook (Phase 1) |
 | Job Search Criteria | Not here — lives in this file (Phase 1) |
 | Job Match Evaluation | Not here — lives in this file as a method (Phase 1); its output per opportunity feeds Overall Fit / Why Fit / Concerns above |
@@ -234,19 +234,19 @@ Check the site's existing status values (`af-status` and equivalents) before int
 
 ### Search Setup fields
 
+Live now on the **Job Sites & Companies** tab, Job Sites column — not a proposal:
+
 | Field | Purpose |
 |---|---|
 | Source | Job board, search firm, company list or portfolio list |
 | Search / Channel | Query family or method |
+| Search URL | The site's own search page — lets Run Search open it pre-filled |
 | Geography | Area and remote rules |
 | Frequency | Weekly, daily, fortnightly or manual |
-| Status | Active, paused or manual |
-| Last Run | Date completed |
+| Status | Active, Paused or Manual — only **Active** sources get opened by Run Search |
+| Last Run | Date completed — Run Search updates this automatically on any source it opens |
 | Next Run | Scheduled date |
-| URL / API | Direct search page or endpoint |
 | Notes | Filters, caveats and authentication needs |
-
-Add these to the **Strategy** tab (or the closest existing equivalent) rather than creating a new tab, unless Candidate agrees a dedicated one is clearer.
 
 ### Dashboard summary
 
@@ -273,6 +273,8 @@ The search should be a funnel, not a single keyword query.
 ### Step 1: Read the approved search configuration
 
 Use the target roles, acceptable adjacent titles, location rules, stage preferences, exclusions and salary constraints. Do not silently narrow the search to the candidate's current industry.
+
+**Where this actually lives:** the **Job Sites & Companies** tab has two live sections that feed the search directly — **Role Titles** (a pinned, editable chip list of the titles Candidate's experience matches best, seeded from the Career Database) and **Search Criteria** (a free-text field plus quick-add tags for type of role, type of company, location and office policy). Clicking a chip in either section drops it into the same free-text field; both are combined and deduplicated before a search runs — a pinned Role Title counts even if it was never clicked into the field. This combined list is stored as `searchCriteria.roleTitles` and `searchCriteria.freeText` in the app's data. Read these before generating query families rather than re-deriving title variants from scratch.
 
 ### Step 2: Generate query families
 
@@ -324,6 +326,17 @@ Optional Sweden/Nordic starter sources:
 - Nordic PE/VC portfolio pages and their company career sites.
 
 Treat this as a starting list, not a permanent monopoly. Add productive sources and retire noisy ones.
+
+### Run Search buttons — what they actually do
+
+The Job Sites & Companies tab has a **Run Search** button in each column. Both draw on the same combined terms from Step 1 above. They are not equivalent — be precise about which one ran when reporting back to Candidate:
+
+- **Companies → Run Search** is real, automated search: it calls the deployed `scanWatchlist` Cloud Function, which fetches each watched company's career page (fast paths for Greenhouse/Lever/SmartRecruiters, generic scraping otherwise) and filters postings against the combined terms. Matches land in `state.suggestions` and appear on the **Suggestions** tab, same as the pre-existing Scan Watchlist feature it reuses.
+- **Job Sites → Run Search** is not automated the same way — there is no API or scraping integration for LinkedIn, Arbetsförmedlingen, Maquire, Novare or the other sources. Clicking it opens each **Active** source's search results in a new browser tab, pre-filled with the combined terms: a real query string for LinkedIn and Arbetsförmedlingen (detected by source name), or the source's saved **Search URL** with the terms appended otherwise. A source with neither is skipped, and the status line names exactly what was skipped. It updates that source's **Last Run** date on every source it opens.
+
+Never describe a Job Sites run as having "found" or "fetched" anything — it opens tabs for Candidate to review personally. Only the Companies scan actually retrieves results into the app.
+
+Real API integration for the remaining Job Sites — most plausibly Arbetsförmedlingen's public JobSearch API — is a distinct, larger piece of work, not something these buttons do today.
 
 ---
 
@@ -798,7 +811,7 @@ Do not schedule the recurring process until at least one manual refresh produces
 
 ### Dashboard is ready when
 
-- Every source has a query, geography, frequency and status in the Strategy tab (or wherever Search Setup landed).
+- Every source has a query, geography, frequency and status on the Job Sites & Companies tab.
 - Opportunity IDs are stable.
 - Status values are reconciled with the site's existing vocabulary, not a second parallel list.
 - Overall Fit and Days Left are computed and shown on each record.
