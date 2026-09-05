@@ -3171,7 +3171,7 @@ async function runSingleJobSite(id) {
 // ═══════════════════════════ SUGGESTIONS ═══════════════════════════════════════
 // Replace with your deployed Cloud Function URL after running `firebase deploy --only functions`.
 const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/scanWatchlist";
-const SCAN_JOBSITES_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/scanJobSites";
+const SCAN_JOBSITES_FUNCTION_URL = "https://scanjobsites-516931338723.europe-north2.run.app";
 
 function loadCriteriaInputs() {
   document.getElementById("sg-keywords").value = (state.searchCriteria.keywords||[]).join(", ");

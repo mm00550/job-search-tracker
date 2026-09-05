@@ -56,6 +56,20 @@ const KNOWN_ATS = [
   },
 ];
 
+// Job-posting URL patterns, English and Swedish — Swedish boards use "jobb",
+// "tjänst(er)", "annons(er)" where English ones use "job(s)"/"career(s)" etc.
+const JOB_HREF = /\/(jobs?|vacanc\w*|careers?|positions?|openings?|jobb|tj[aä]nster?|annons(er)?|lediga-jobb)\//i;
+// An individual posting almost always carries some kind of unique id in the
+// URL (a UUID, or a run of digits) — a category/filter link in the same nav
+// (e.g. "/jobb/re-stockholms-lan/") typically doesn't, so this is what tells
+// a real listing apart from navigation on the same search-results page.
+const HAS_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{4,}/i;
+// Many sites put the actual job title in a heading next to the link rather
+// than in the link's own text (the link just says "see job details" or
+// similar) — these are the generic phrases that trigger falling back to a
+// nearby heading instead of trusting the link text.
+const GENERIC_LINK_TEXT = /^(läs mer|read more|view job|see job|apply|ansök|se jobbdetaljer|more info|details?|show more|visa mer)$/i;
+
 // Best-effort fallback for everything else: pull embedded SSR JSON (Next.js
 // __NEXT_DATA__ and similar) when present, otherwise fall back to scanning
 // <a> tags whose href looks like a job posting link.
@@ -71,9 +85,14 @@ async function fetchGeneric(url) {
   const jobs = [];
   $("a").each((_, el) => {
     const href = $(el).attr("href");
-    const title = $(el).text().trim().replace(/\s+/g, " ");
-    if (!href || !title || title.length < 4 || title.length > 120) return;
-    if (!/\/(job|jobs|vacanc|career|position|opening)[s]?\//i.test(href)) return;
+    if (!href || !JOB_HREF.test(href) || !HAS_ID.test(href)) return;
+    let title = $(el).text().trim().replace(/\s+/g, " ");
+    if (!title || title.length < 4 || title.length > 120 || GENERIC_LINK_TEXT.test(title)) {
+      const card = $(el).closest("article, li, div[class*='card'], div[class*='job']");
+      const heading = card.find("h1,h2,h3,h4,[class*='title'],[class*='heading']").first().text().trim().replace(/\s+/g, " ");
+      title = heading || $(el).attr("aria-label") || "";
+    }
+    if (!title || title.length < 4 || title.length > 160) return;
     try {
       jobs.push({ title, url: new URL(href, url).href, location: "" });
     } catch { /* invalid href */ }
