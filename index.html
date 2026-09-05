@@ -3199,7 +3199,7 @@ async function runSingleJobSite(id) {
   btn.disabled = true; btn.textContent = "Searching…";
   statusEl.textContent = `Searching ${s.source} for: ${terms.join(", ")}…`;
   try {
-    const r = await searchOtherJobSites(buildJobSiteScanTargets([s], terms, location, 6), { keywords: terms, location });
+    const r = await searchOtherJobSites(buildJobSiteScanTargets([s], terms, location, AF_TERM_CAP), { keywords: terms, location });
     s.lastRun = today();
     saveState();
     renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
