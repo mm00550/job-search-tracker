@@ -3004,8 +3004,14 @@ function renderSearchSetupTab() {
 // Some sites (query-string search) take {q}/{location} URL-encoded as-is.
 // Others (e.g. ledigajobb.se) build the search into the URL path itself as a
 // lowercase, hyphenated slug — {q-slug}/{location-slug} covers that pattern.
+// Swedish boards' own slugs use the Swedish spelling of a place name (the
+// "Gothenburg" chip's value is English, but ledigajobb.se 404s on anything
+// but "göteborg") — mapped here since it's specific to this slug format,
+// not the general {location} substitution other sites use.
+const SWEDISH_PLACE_NAMES = { gothenburg: "göteborg" };
 function slugify(str) {
-  return encodeURIComponent(String(str||"").trim().toLowerCase().replace(/\s+/g, "-"));
+  const key = String(str||"").trim().toLowerCase();
+  return encodeURIComponent((SWEDISH_PLACE_NAMES[key]||key).replace(/\s+/g, "-"));
 }
 function resolveSearchUrl(s, terms, location) {
   if (!s.url) return null;
@@ -3193,7 +3199,7 @@ async function runSingleJobSite(id) {
   btn.disabled = true; btn.textContent = "Searching…";
   statusEl.textContent = `Searching ${s.source} for: ${terms.join(", ")}…`;
   try {
-    const r = await searchOtherJobSites([{ id:s.id, source:s.source, url: resolveSearchUrl(s, terms, location) }], { keywords: terms, location });
+    const r = await searchOtherJobSites(buildJobSiteScanTargets([s], terms, location, 6), { keywords: terms, location });
     s.lastRun = today();
     saveState();
     renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
@@ -3376,6 +3382,24 @@ async function searchArbetsformedlingen(terms, location) {
   return { added, dupes };
 }
 
+// A job board's search box takes one phrase at a time — joining every pinned
+// Role Title into a single mega-query (as this used to do) produces either a
+// nonsense URL (slug-style sites) or a query so specific it matches nothing
+// (query-string sites). So each site gets one resolved URL per search term,
+// same principle as searchArbetsformedlingen's per-term loop, capped to stay
+// a reasonable citizen of sites we don't run and to keep the batch inside the
+// Cloud Function's timeout.
+const SITE_TERM_CAP = 4;
+function buildJobSiteScanTargets(sites, terms, location, termCap) {
+  const targets = [];
+  sites.forEach(s=>{
+    terms.slice(0, termCap||SITE_TERM_CAP).forEach((term, i)=>{
+      targets.push({ id: s.id+"::"+i, source: s.source, url: resolveSearchUrl(s, [term], location) });
+    });
+  });
+  return targets;
+}
+
 // Non-AF, non-LinkedIn sources: scraped server-side via the scanJobSites
 // Cloud Function, using each source's resolved Search URL (the {q}/{location}
 // template already filled in client-side). A general job board's HTML often
@@ -3397,9 +3421,14 @@ async function searchOtherJobSites(sitesToScan, criteria) {
   const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
   const existingUrls = new Set(state.apps.map(a=>a.careerSite).filter(Boolean));
   let added = 0, dupes = 0;
+  const seenErrors = new Set(); // one source now maps to several scan targets (one per search term) — collapse repeats
   const errors = [];
   for (const r of data.results||[]) {
-    if (r.error) { errors.push(`${r.source}: ${r.error}`); continue; }
+    if (r.error) {
+      const msg = `${r.source}: ${r.error}`;
+      if (!seenErrors.has(msg)) { seenErrors.add(msg); errors.push(msg); }
+      continue;
+    }
     for (const job of r.jobs||[]) {
       const role = job.title||"";
       if (!role) continue;
@@ -3455,7 +3484,8 @@ async function runJobSitesSearch() {
   const afSource = active.find(s=>/arbetsf[oö]rmedlingen/i.test(s.source));
   const manualOnlySources = active.filter(s=>s!==afSource && isManualOnly(s));
   const otherSources = active.filter(s=>s!==afSource && !isManualOnly(s));
-  const scanTargets = otherSources.filter(s=>s.url).map(s=>({ id:s.id, source:s.source, url: resolveSearchUrl(s, terms, location) }));
+  const otherSourcesWithUrl = otherSources.filter(s=>s.url);
+  const scanTargets = buildJobSiteScanTargets(otherSourcesWithUrl, terms, location);
   const noUrlSources = otherSources.filter(s=>!s.url).map(s=>s.source);
 
   btn.disabled = true; btn.textContent = "Searching…";
@@ -3476,10 +3506,7 @@ async function runJobSitesSearch() {
       const r = await searchOtherJobSites(scanTargets, { keywords: terms, location });
       otherAdded = r.added; otherDupes = r.dupes;
       if (r.errors.length) otherError = r.errors.join("; ");
-      scanTargets.forEach(t=>{
-        const src = otherSources.find(s=>s.id===t.id);
-        if (src) src.lastRun = today();
-      });
+      otherSourcesWithUrl.forEach(s=>{ s.lastRun = today(); });
     } catch (e) { otherError = `Cloud Function unreachable — is scanJobSites deployed? (${e.message})`; }
   }
 
