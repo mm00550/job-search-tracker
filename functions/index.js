@@ -84,6 +84,11 @@ async function fetchGeneric(url) {
 
   const $ = cheerio.load(html);
   const jobs = [];
+  // Some sites (e.g. ledigajobb.se) wrap the same posting in several <a>
+  // tags — a title link, plus separate location/tag badges pointing at the
+  // same URL with just "Göteborg" or "Distans" as their text — so results
+  // are deduped by absolute URL, keeping whichever text is most descriptive.
+  const byUrl = new Map();
   $("a").each((_, el) => {
     const href = $(el).attr("href");
     if (!href || !JOB_HREF.test(href) || !HAS_ID.test(href)) return;
@@ -95,7 +100,15 @@ async function fetchGeneric(url) {
     }
     if (!title || title.length < 4 || title.length > 160) return;
     try {
-      jobs.push({ title, url: new URL(href, url).href, location: "" });
+      const absUrl = new URL(href, url).href;
+      const existing = byUrl.get(absUrl);
+      if (existing) {
+        if (title.length > existing.title.length) existing.title = title;
+        return;
+      }
+      const job = { title, url: absUrl, location: "" };
+      byUrl.set(absUrl, job);
+      jobs.push(job);
     } catch { /* invalid href */ }
   });
   return jobs;
