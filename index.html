@@ -841,10 +841,437 @@
     </div>
     <div style="font-size:12px;color:var(--muted)">Job titles/keywords and location are shared with the Suggestions tab — <a href="#" onclick="showTab('suggestions');return false;">edit them there</a>.</div>
   </div>
-  <div class="card">
-    <div class="card-ttl" style="font-size:14px;margin-bottom:10px">📊 Job Match Summary</div>
-    <div id="li-match-summary"></div>
+  <style>
+    #li-dashboard{
+      --li-navy:#3B0030; --li-navy2:#6B1052; --li-parch:#F9F8F6; --li-parch2:#E9DEE5;
+      --li-ink:#2B0A23; --li-inkmute:#7C6470; --li-line:#E9DEE5;
+      --li-amber:#F16D07; --li-amber-d:#A8293A; --li-amber-l:#FFF6CF;
+      --li-green:#1F9C6E; --li-green-l:#E1FAF0; --li-green-d:#16734F;
+      --li-red:#A8293A; --li-red-l:#FFE9EE; --li-red-d:#7C1C29;
+      --li-gold:#FFCD00;
+      background:var(--li-parch); font-family:'Inter',sans-serif; color:var(--li-ink);
+    }
+    #li-dashboard .wrap{max-width:1080px;margin:0 auto;padding:24px 0 48px;}
+    #li-dashboard .eyebrow{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--li-amber-d);margin:0 0 8px;}
+    #li-dashboard h1{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-weight:600;font-size:40px;margin:0 0 6px;color:var(--li-navy);letter-spacing:-0.01em;}
+    #li-dashboard .sub{color:var(--li-inkmute);font-size:15px;margin:0 0 40px;max-width:640px;line-height:1.6;}
+
+    #li-dashboard .hero{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center;background:var(--li-navy);border-radius:18px;padding:36px 40px;margin-bottom:44px;color:#fff;}
+    #li-dashboard .ring-wrap{position:relative;width:160px;height:160px;}
+    #li-dashboard .ring-wrap svg{transform:rotate(-90deg);}
+    #li-dashboard .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    #li-dashboard .ring-num .n{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:40px;font-weight:600;}
+    #li-dashboard .ring-num .l{font-family:'Inter',sans-serif;font-size:11px;letter-spacing:0.08em;color:#C9D3D8;text-transform:uppercase;}
+    #li-dashboard .hero h2{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:22px;font-weight:500;margin:0 0 12px;}
+    #li-dashboard .hero p{color:#CBD6DB;font-size:14.5px;line-height:1.7;margin:0;max-width:560px;}
+    #li-dashboard .hero-tags{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+    #li-dashboard .htag{font-family:'Inter',sans-serif;font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);padding:5px 10px;border-radius:20px;color:#E8EDEE;}
+
+    #li-dashboard section{margin-bottom:48px;}
+    #li-dashboard .stitle{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:24px;font-weight:600;color:var(--li-navy);margin:0 0 4px;}
+    #li-dashboard .sdesc{color:var(--li-inkmute);font-size:14px;margin:0 0 22px;}
+
+    #li-dashboard .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+    #li-dashboard .card{background:#fff;border:1px solid var(--li-line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s;}
+    #li-dashboard .card:hover{border-color:var(--li-amber);}
+    #li-dashboard .card.active{border-color:var(--li-amber);box-shadow:0 0 0 2px var(--li-amber-l);}
+    #li-dashboard .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+    #li-dashboard .card-name{font-weight:600;font-size:15px;color:var(--li-navy);}
+    #li-dashboard .card-tag{font-family:'Inter',sans-serif;font-size:10.5px;color:var(--li-inkmute);margin-top:2px;}
+    #li-dashboard .score-pill{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:20px;font-weight:600;padding:2px 0;}
+    #li-dashboard .bar-track{height:6px;background:var(--li-parch2);border-radius:4px;overflow:hidden;}
+    #li-dashboard .bar-fill{height:100%;border-radius:4px;}
+
+    #li-dashboard .detail{background:#fff;border:1px solid var(--li-line);border-radius:14px;padding:28px 30px;margin-top:18px;}
+    #li-dashboard .detail-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
+    #li-dashboard .detail-head h3{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:19px;margin:0;color:var(--li-navy);}
+    #li-dashboard .detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+    #li-dashboard .gap-list,#li-dashboard .fix-list{list-style:none;margin:0;padding:0;}
+    #li-dashboard .gap-list li,#li-dashboard .fix-list li{font-size:13.5px;line-height:1.6;padding:9px 0 9px 24px;position:relative;border-bottom:1px solid var(--li-parch2);color:#3A464D;}
+    #li-dashboard .gap-list li:last-child,#li-dashboard .fix-list li:last-child{border-bottom:none;}
+    #li-dashboard .gap-list li::before{content:"";position:absolute;left:2px;top:14px;width:7px;height:7px;border-radius:50%;background:var(--li-red);}
+    #li-dashboard .fix-list li::before{content:"";position:absolute;left:2px;top:14px;width:7px;height:7px;border-radius:50%;background:var(--li-green);}
+    #li-dashboard .col-label{font-family:'Inter',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--li-inkmute);margin-bottom:6px;display:block;}
+
+    #li-dashboard .role-row{display:grid;grid-template-columns:200px 1fr 50px;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--li-parch2);}
+    #li-dashboard .role-row:last-child{border-bottom:none;}
+    #li-dashboard .role-name{font-size:13.5px;font-weight:500;color:var(--li-navy);}
+    #li-dashboard .role-track{height:10px;background:var(--li-parch2);border-radius:6px;overflow:hidden;}
+    #li-dashboard .role-fill{height:100%;border-radius:6px;}
+    #li-dashboard .role-pct{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--li-inkmute);text-align:right;}
+
+    #li-dashboard .prog-row{display:grid;grid-template-columns:150px 60px 24px 60px 1fr 70px;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--li-parch2);}
+    #li-dashboard .prog-row:last-child{border-bottom:none;}
+    #li-dashboard .prog-name{font-size:14px;font-weight:500;color:var(--li-navy);}
+    #li-dashboard .prog-old{font-family:'Inter',sans-serif;font-size:13px;color:var(--li-inkmute);text-align:center;}
+    #li-dashboard .prog-arrow{color:var(--li-inkmute);text-align:center;}
+    #li-dashboard .prog-new{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;text-align:center;}
+    #li-dashboard .prog-track{height:8px;background:var(--li-parch2);border-radius:5px;overflow:hidden;position:relative;}
+    #li-dashboard .prog-fill-old{position:absolute;height:100%;background:var(--li-inkmute);opacity:0.35;border-radius:5px;}
+    #li-dashboard .prog-fill-new{position:absolute;height:100%;border-radius:5px;}
+    #li-dashboard .prog-delta{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-align:right;padding:3px 8px;border-radius:10px;background:var(--li-green-l);color:var(--li-green-d);}
+    #li-dashboard .prog-delta.flat{background:var(--li-parch2);color:var(--li-inkmute);}
+
+    #li-dashboard .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+    #li-dashboard .tab{font-family:'Inter',sans-serif;font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--li-line);background:#fff;color:var(--li-inkmute);cursor:pointer;}
+    #li-dashboard .tab.active{background:var(--li-navy);color:#fff;border-color:var(--li-navy);}
+    #li-dashboard .rewrite-box{background:#fff;border:1px solid var(--li-line);border-radius:14px;padding:26px 28px;}
+    #li-dashboard .rw-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    #li-dashboard .rw-block{padding:16px 18px;border-radius:10px;font-size:13.5px;line-height:1.65;position:relative;}
+    #li-dashboard .rw-before{background:var(--li-red-l);color:var(--li-red-d);}
+    #li-dashboard .rw-after{background:var(--li-green-l);color:var(--li-green-d);}
+    #li-dashboard .rw-label{font-family:'Inter',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;display:block;font-weight:600;}
+    #li-dashboard .copy-btn{position:absolute;top:14px;right:14px;font-family:'Inter',sans-serif;font-size:10px;background:rgba(255,255,255,0.7);border:1px solid currentColor;border-radius:6px;padding:4px 8px;cursor:pointer;opacity:0.75;}
+    #li-dashboard .copy-btn:hover{opacity:1;}
+    #li-dashboard .skills-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+    #li-dashboard .skill-chip{font-family:'Inter',sans-serif;font-size:12px;background:var(--li-amber-l);color:var(--li-amber-d);padding:6px 11px;border-radius:20px;}
+    #li-dashboard .skill-chip.existing{background:var(--li-green-l);color:var(--li-green-d);}
+    #li-dashboard .skill-chip.trim{background:var(--li-red-l);color:var(--li-red-d);}
+    #li-dashboard .group-h{font-weight:600;font-size:13px;color:var(--li-navy);margin:18px 0 8px;}
+    #li-dashboard .group-h:first-child{margin-top:0;}
+
+    #li-dashboard .checklist{background:#fff;border:1px solid var(--li-line);border-radius:14px;padding:8px 28px;}
+    #li-dashboard .chk{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--li-parch2);}
+    #li-dashboard .chk:last-child{border-bottom:none;}
+    #li-dashboard .chk input{width:18px;height:18px;accent-color:var(--li-amber);flex-shrink:0;}
+    #li-dashboard .chk label{font-size:14px;line-height:1.5;cursor:pointer;}
+    #li-dashboard .chk .impact{font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;background:var(--li-amber-l);color:var(--li-amber-d);padding:3px 8px;border-radius:10px;margin-left:auto;flex-shrink:0;}
+    #li-dashboard .chk.done label{text-decoration:line-through;color:var(--li-inkmute);}
+
+    @media(max-width:680px){
+      #li-dashboard .hero{grid-template-columns:1fr;text-align:center;}
+      #li-dashboard .ring-wrap{margin:0 auto;}
+      #li-dashboard .detail-cols,#li-dashboard .rw-pair{grid-template-columns:1fr;}
+      #li-dashboard .role-row{grid-template-columns:110px 1fr 40px;}
+    }
+  </style>
+  <div id="li-dashboard">
+    <div class="wrap">
+
+      <p class="eyebrow">LinkedIn profile · optimization dashboard</p>
+      <h1>Markus Mosleitner</h1>
+      <p class="sub">Scored against 9 target role clusters in the Gothenburg senior market: Senior Project Manager, Software Delivery, Delivery Manager, Head of Delivery, Head of Operations, Operations Manager, Transformation Lead, Digitalisation Lead, Programme Manager.</p>
+
+      <div class="hero">
+        <div class="ring-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="14"/>
+            <circle id="li-heroRing" cx="80" cy="80" r="68" fill="none" stroke="#C97D3C" stroke-width="14" stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="427"/>
+          </svg>
+          <div class="ring-num"><span class="n">88</span><span class="l">/ 100</span></div>
+        </div>
+        <div>
+          <h2>Overall recruiter-search readiness: strong</h2>
+          <p>This is a genuine rewrite, not a touch-up — headline, About, Skills and Experience all moved. Every quick-win from the last checklist landed: typo fixed, Skills expanded with the right keywords, About now references your certifications and stakeholder/vendor/risk language, and the Evinova AB Board role is now its own Experience entry. One trade-off worth a look: the new headline dropped the word "Operations," which softens your Head of Operations / Operations Manager search match slightly even though Skills and About still carry it.</p>
+          <div class="hero-tags">
+            <span class="htag">+22 points vs last review</span>
+            <span class="htag">Typo: fixed</span>
+            <span class="htag">Board role: added</span>
+            <span class="htag">"Operations" dropped from headline</span>
+          </div>
+        </div>
+      </div>
+
+      <section>
+        <p class="stitle">Progress since last review</p>
+        <p class="sdesc">Score out of 10 per section, then vs. the previous version of your profile.</p>
+        <div class="detail" id="li-progressList"></div>
+      </section>
+
+      <section>
+        <p class="stitle">Section scores</p>
+        <p class="sdesc">Click a card to see the specific gaps and fixes behind the score.</p>
+        <div class="cards" id="li-cardGrid"></div>
+        <div class="detail" id="li-detailPanel"></div>
+      </section>
+
+      <section>
+        <p class="stitle">Match by target role</p>
+        <p class="sdesc">Estimated keyword/positioning match — how findable you are if a recruiter searches that exact title today.</p>
+        <div class="detail" id="li-roleList"></div>
+      </section>
+
+      <section>
+        <p class="stitle">Rewrite: before → after</p>
+        <p class="sdesc">Drop-in replacements. Pick a tab to see the comparison.</p>
+        <div class="tabs" id="li-rwTabs"></div>
+        <div class="rewrite-box" id="li-rwContent"></div>
+      </section>
+
+      <section>
+        <p class="stitle">Quick-win checklist</p>
+        <p class="sdesc">Ordered by impact on search visibility. Tick as you action them in LinkedIn — your progress stays in this file while open.</p>
+        <div class="checklist" id="li-checklist"></div>
+      </section>
+
+    </div>
   </div>
+  <script>
+  const liSections = [
+    {
+      id:'headline', name:'Headline', tag:'1 line · top of profile', score:9, prevScore:6, color:'green',
+      gaps:[
+        'The word "Operations" no longer appears — softens match for Head of Operations / Operations Manager searches specifically, even though Skills and About still carry it',
+        'Minor: doesn\'t name "Stakeholder" or "Risk Management," but 220-char headlines can\'t hold everything — those now live correctly in Skills and About instead'
+      ],
+      fixes:[
+        'Optional: if Operations roles become a higher priority, swap "Delivery Leader" for "Delivery & Operations Leader" — currently 170/220 characters, so there\'s room',
+        'Otherwise, no action needed — this now covers Project, Programme, Delivery, Digital Transformation, Digitalisation, AI/Agile/SAFe, and your $50M/130-team proof points'
+      ]
+    },
+    {
+      id:'about', name:'About', tag:'summary paragraph', score:9, prevScore:6, color:'green',
+      gaps:[
+        'Essentially resolved — Project & Programme Management, PMO, stakeholder/vendor/risk management, IPMA-B and Scrum Master certifications, operations leadership and digitalisation are all now explicitly named'
+      ],
+      fixes:[
+        'No action needed. If anything, this paragraph is now keyword-complete enough that future edits should focus on readability rather than adding more terms'
+      ]
+    },
+    {
+      id:'skills', name:'Skills', tag:'sidebar · ~40 of 50 slots used', score:9, prevScore:8, color:'green',
+      gaps:[
+        'Typo fixed, and all 5 previously-missing terms added (Programme Management, Stakeholder Management, Risk Management, Digitalisation, GxP) — well done',
+        'Still a slightly dense Project-Management cluster (Project Management, Programme Management, Project Portfolio Management, Software Project Management, Project Planning, Project Delivery, Product Delivery — 7 variants), though this is now less of a concern given Operations and Transformation terms have caught up'
+      ],
+      fixes:[
+        'Optional only: if you want to free up slots for something new later, this PM cluster is the first place to trim',
+        'No urgent action needed'
+      ]
+    },
+    {
+      id:'experience', name:'Experience', tag:'role-by-role bullets', score:8, prevScore:6, color:'green',
+      gaps:[
+        'Evinova AB Board Member is now its own Experience entry — resolved',
+        'Bullet vocabulary in the Head of Product Deployment and Senior Director roles is only lightly revised — still leans on "delivery governance and operating models" rather than explicitly naming stakeholder, vendor or risk management within the bullets themselves'
+      ],
+      fixes:[
+        'Low priority now that About and Skills carry that vocabulary, but if you want Experience to fully match: add "stakeholder," "vendor," or "risk" explicitly into 1-2 bullets on your two most recent roles'
+      ]
+    },
+    {
+      id:'certs', name:'Certifications', tag:'sidebar', score:9, prevScore:7, color:'green',
+      gaps:[
+        'Resolved — IPMA-B Senior Project Manager and Certified Scrum Master are now both referenced directly in About, closing the disconnect between credentials and narrative'
+      ],
+      fixes:[
+        'No action needed'
+      ]
+    }
+  ];
+
+  const liColorMap = {amber:'#C97D3C', red:'#B14438', green:'#3F7A3A'};
+
+  const liCardGrid = document.getElementById('li-cardGrid');
+  const liDetailPanel = document.getElementById('li-detailPanel');
+
+  function liRenderCards(activeId){
+    liCardGrid.innerHTML = liSections.map(s => `
+      <div class="card ${s.id===activeId?'active':''}" data-id="${s.id}">
+        <div class="card-top">
+          <div><div class="card-name">${s.name}</div><div class="card-tag">${s.tag}</div></div>
+          <div class="score-pill" style="color:${liColorMap[s.color]}">${s.score}<span style="font-size:13px;color:var(--li-inkmute)">/10</span></div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${s.score*10}%;background:${liColorMap[s.color]}"></div></div>
+      </div>
+    `).join('');
+    liCardGrid.querySelectorAll('.card').forEach(c=>{
+      c.addEventListener('click', ()=>{ liRenderCards(c.dataset.id); liRenderDetail(c.dataset.id); });
+    });
+  }
+
+  function liRenderDetail(id){
+    const s = liSections.find(x=>x.id===id);
+    liDetailPanel.innerHTML = `
+      <div class="detail-head"><h3>${s.name}</h3><span class="score-pill" style="color:${liColorMap[s.color]}">${s.score}/10</span></div>
+      <div class="detail-cols">
+        <div><span class="col-label"><i></i>Gaps found</span><ul class="gap-list">${s.gaps.map(g=>`<li>${g}</li>`).join('')}</ul></div>
+        <div><span class="col-label">Fix it</span><ul class="fix-list">${s.fixes.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+      </div>
+    `;
+  }
+
+  liRenderCards('skills');
+  liRenderDetail('skills');
+
+  function liRenderProgress(){
+    document.getElementById('li-progressList').innerHTML = liSections.map(s=>{
+      const delta = s.score - s.prevScore;
+      const deltaLabel = delta > 0 ? `+${delta}` : delta === 0 ? '—' : `${delta}`;
+      return `
+      <div class="prog-row">
+        <div class="prog-name">${s.name}</div>
+        <div class="prog-old">${s.prevScore}/10</div>
+        <div class="prog-arrow">&#8594;</div>
+        <div class="prog-new" style="color:${liColorMap[s.color]}">${s.score}/10</div>
+        <div class="prog-track">
+          <div class="prog-fill-old" style="width:${s.prevScore*10}%"></div>
+          <div class="prog-fill-new" style="width:${s.score*10}%;background:${liColorMap[s.color]};opacity:0.55;"></div>
+        </div>
+        <div class="prog-delta ${delta===0?'flat':''}">${deltaLabel}</div>
+      </div>
+    `;}).join('');
+  }
+  liRenderProgress();
+
+  // Hero ring animation
+  const liHeroScore = 88;
+  const liCircumference = 427;
+  const liOffset = liCircumference - (liHeroScore/100)*liCircumference;
+  document.getElementById('li-heroRing').style.strokeDashoffset = liOffset;
+
+  // Role match
+  const liRoles = [
+    {name:'Delivery Manager', pct:92},
+    {name:'Programme Manager', pct:92},
+    {name:'Software Delivery', pct:88},
+    {name:'Senior Project Manager', pct:88},
+    {name:'Head of Delivery', pct:85},
+    {name:'Transformation Lead', pct:85},
+    {name:'Digitalisation Lead', pct:82},
+    {name:'Head of Operations', pct:70},
+    {name:'Operations Manager', pct:65}
+  ];
+  liRoles.sort((a,b)=>b.pct-a.pct);
+  function liRoleColor(p){ return p>=70?liColorMap.green : p>=50?liColorMap.amber : liColorMap.red; }
+  document.getElementById('li-roleList').innerHTML = liRoles.map(r=>`
+    <div class="role-row">
+      <div class="role-name">${r.name}</div>
+      <div class="role-track"><div class="role-fill" style="width:${r.pct}%;background:${liRoleColor(r.pct)}"></div></div>
+      <div class="role-pct">${r.pct}%</div>
+    </div>
+  `).join('');
+
+  // Rewrites
+  const liRewrites = {
+    headline: {
+      label:'Headline',
+      custom: true
+    },
+    about: {
+      label:'About',
+      before: `Senior technology delivery, transformation and operations leader with over 20 years of experience of leading complex, cross-functional technoligy programmes and software delivery organisation in regulated international environments. I specialise in end-to-end (agile) delivery — building and scaling delivery teams, establishing governance and operating models, and driving predictable, high-quality outcomes across multiple concurrent projects and workstreams. (original — no PM/PMO/stakeholder/vendor/risk language, no certifications named)`,
+      after: `Senior Project, Programme & Delivery Manager with over 20 years experience of leading complex, cross-functional digitalisation and transformations programmes as well as software delivery organisations in regulated international environments (financial services, digital health). As IPMA-B certified Senior Project Manager and Certified Scrum Master, I specialise in end-to-end programme and delivery management — building and scaling teams globally, establishing PMO governance, stakeholder, vendor and risk management frameworks, and driving predictable, high-quality outcomes across multiple concurrent workstreams. I bring equal strength in operations leadership and digital transformation: owning $50M+ annual budgets, building global delivery and operating organisations of up to 130 specialists, and leading AI-enabled digitalisation initiatives that generated multi-million-dollar efficiency gains. (live now — fully closes the gap)`
+    },
+    skills: { label:'Skills', custom:true },
+    experience: { label:'Experience bullets', custom:true }
+  };
+
+  const liHeadlineOptions = [
+    {
+      label:'Live now — implemented',
+      text:'Senior Project, Programme & Delivery Leader | Driving Digital Transformation & Digitalisation at Scale | AI and Agile (SAFe) enabled Delivery | $50M+ Budgets & 130+ Teams'
+    },
+    {
+      label:'Optional variant — if Operations roles become a priority',
+      text:'Senior Project, Programme & Delivery Leader | Operations & Digital Transformation at Scale | AI and Agile (SAFe) enabled Delivery | $50M+ Budgets & 130+ Teams'
+    }
+  ];
+
+  const liSkillsList = {
+    'Added since last review':['Programme Management','Stakeholder Management','Risk Management','Digitalisation','GxP'],
+    'Removed since last review (good trim)':['Value Propositions','Process Efficiency','Offshore Management'],
+    'Project/Programme cluster (still dense — optional trim)':['Project Management','Project Portfolio Management','Software Project Management','Project Planning','Project Delivery','Product Delivery'],
+    'Operations & Transformation':['Operations Management','Operational Excellence','Organizational Leadership','Digital Transformation','Business Process Improvement','Change Management','Planning Budgeting & Forecasting'],
+    'Delivery & Agile':['Scaled Agile Framework','Agile','Agile Methodologies','Scrum','SDLC','Team Leadership'],
+    'Typo fix confirmed':['Platform operatons → Platform Operations — done']
+  };
+
+  const liExpBullets = [
+    {
+      role:'Evinova AB — Board Member',
+      before:'(was missing from LinkedIn entirely)',
+      after:'Now live as its own Experience entry: "Board Member, Evinova AB — Jan 2025–present. Supported establishing \'Evinova AB\' (Swedish subsidiary of AstraZeneca Group) as board member and accountable for the company\'s financial obligations including SHE."'
+    },
+    {
+      role:'Head of Product Deployment (still optional to refine)',
+      before:'Established operational governance and support models ensuring reliable global platform operations and predictable service delivery',
+      after:'Established delivery governance and operating models to ensure predictable service platform delivery and operations (current — could go further: add "vendor and stakeholder governance" to explicitly mirror the language now in About)'
+    }
+  ];
+
+  const liRwTabs = document.getElementById('li-rwTabs');
+  const liRwContent = document.getElementById('li-rwContent');
+  const liTabOrder = ['headline','about','skills','experience'];
+
+  function copyText(btn, text){
+    navigator.clipboard.writeText(text).then(()=>{
+      const orig = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(()=>btn.textContent = orig, 1400);
+    });
+  }
+
+  function liRenderRewrite(id){
+    if(id==='headline'){
+      liRwContent.innerHTML = liHeadlineOptions.map(o=>`
+        <div style="margin-bottom:18px;">
+          <span class="col-label">${o.label}</span>
+          <div class="rw-block rw-after" style="position:relative;">
+            <button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(o.text)}'))">copy</button>
+            ${o.text}
+          </div>
+        </div>
+      `).join('') + `<p style="font-size:12.5px;color:var(--li-inkmute);margin:14px 0 0;">Your live headline is 170/220 characters — there's room left if you want to add "Operations" back in later. No action needed otherwise.</p>`;
+    } else if(id==='about'){
+      const r = liRewrites.about;
+      liRwContent.innerHTML = `
+        <div class="rw-pair">
+          <div class="rw-block rw-before"><span class="rw-label">Previous version</span>${r.before}</div>
+          <div class="rw-block rw-after" style="position:relative;"><span class="rw-label">Live now</span><button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(r.after)}'))">copy</button>${r.after}</div>
+        </div>`;
+    } else if(id==='skills'){
+      const styleFor = (group) => group.startsWith('Project/Programme') ? '' : 'existing';
+      liRwContent.innerHTML = Object.entries(liSkillsList).map(([group, items])=>`
+        <div class="group-h">${group}</div>
+        <div class="skills-grid">${items.map(i=>`<span class="skill-chip ${styleFor(group)}">${i}</span>`).join('')}</div>
+      `).join('') + `<p style="font-size:12.5px;color:var(--li-inkmute);margin:18px 0 0;">All 5 previously-recommended additions are now live (green), the typo is fixed, and 3 low-value entries were trimmed. The amber Project/Programme cluster still has 6 near-overlapping terms — optional to thin out, not urgent.</p>`;
+    } else if(id==='experience'){
+      liRwContent.innerHTML = liExpBullets.map(b=>`
+        <div style="margin-bottom:20px;">
+          <span class="col-label">${b.role}</span>
+          <div class="rw-pair">
+            <div class="rw-block rw-before"><span class="rw-label">Current</span>${b.before}</div>
+            <div class="rw-block rw-after" style="position:relative;"><span class="rw-label">Rewrite</span><button class="copy-btn" onclick="copyText(this, decodeURIComponent('${encodeURIComponent(b.after)}'))">copy</button>${b.after}</div>
+          </div>
+        </div>
+      `).join('') + `<p style="font-size:12.5px;color:var(--li-inkmute);margin:4px 0 0;">The Board entry is the big win here. Remaining bullet wording is low priority since About and Skills already carry the stakeholder/vendor/risk vocabulary.</p>`;
+    }
+  }
+
+  function liRenderTabs(activeId){
+    liRwTabs.innerHTML = liTabOrder.map(id=>`<div class="tab ${id===activeId?'active':''}" data-id="${id}">${liRewrites[id].label}</div>`).join('');
+    liRwTabs.querySelectorAll('.tab').forEach(t=>{
+      t.addEventListener('click', ()=>{ liRenderTabs(t.dataset.id); liRenderRewrite(t.dataset.id); });
+    });
+  }
+  liRenderTabs('headline');
+  liRenderRewrite('headline');
+
+  // Checklist
+  const liChecklistItems = [
+    {label:'Fix "Platform operatons" typo in Skills', impact:'done', done:true},
+    {label:'Add Stakeholder Management, Risk Management, Programme Management, Digitalisation, GxP to Skills', impact:'done', done:true},
+    {label:'Add "Project Manager / Programme Manager" language to headline', impact:'done', done:true},
+    {label:'Add Evinova AB Board Member as its own Experience entry', impact:'done', done:true},
+    {label:'Rewrite About to reference IPMA-B, PMO, stakeholder/vendor/risk and digitalisation', impact:'done', done:true},
+    {label:'Consider re-adding "Operations" to headline if Operations Manager / Head of Operations roles are a high priority', impact:'optional', done:false},
+    {label:'Trim 2-3 redundant project-management skill variants to reduce dilution', impact:'optional', done:false},
+    {label:'Add "stakeholder," "vendor," or "risk" language directly into 1-2 Experience bullets', impact:'low impact', done:false}
+  ];
+  document.getElementById('li-checklist').innerHTML = liChecklistItems.map((c,i)=>`
+    <div class="chk ${c.done?'done':''}" id="li-chk-${i}">
+      <input type="checkbox" id="li-chk-input-${i}" ${c.done?'checked':''}>
+      <label for="li-chk-input-${i}">${c.label}</label>
+      <span class="impact" style="${c.impact==='done'?'background:var(--li-green-l);color:var(--li-green-d);':''}">${c.impact}</span>
+    </div>
+  `).join('');
+  liChecklistItems.forEach((c,i)=>{
+    document.getElementById(`li-chk-input-${i}`).addEventListener('change', e=>{
+      document.getElementById(`li-chk-${i}`).classList.toggle('done', e.target.checked);
+    });
+  });
+  </script>
 </div>
 
 <!-- ════════════════════════════ HELP ════════════════════════════════════════ -->
@@ -2331,8 +2758,8 @@ const HELP_SECTIONS = [
   ]},
   { icon:"🔗", title:"LinkedIn", color:"var(--navy)", items:[
     "Paste your LinkedIn profile URL — it's saved automatically as you type.",
-    "The Job Match Summary is generated from your own Suggestions scan results: how many matching roles, across how many companies, and the most common locations — no AI involved, just your own data.",
-    "Run a scan from the Suggestions tab first if the summary says there's nothing to show yet.",
+    "Below that sits your LinkedIn optimization dashboard: section-by-section scores, gaps and fixes, match-by-role estimates, before/after rewrite suggestions, and a quick-win checklist.",
+    "This dashboard reflects a specific point-in-time review of your profile — update the content directly in the code when you complete a fresh review.",
   ]},
   { icon:"👥", title:"Accounts & Sharing", color:"var(--teal)", items:[
     "Each account's applications, contacts, watchlist, goals and notes are completely private — other users can never read them.",
@@ -3204,7 +3631,6 @@ function saveCriteria() {
   // clicking a criteria chip must not silently wipe out.
   state.searchCriteria = { ...(state.searchCriteria||{}), keywords, location, freeText };
   saveState();
-  renderLinkedIn();
 }
 // Job Sites & Companies — Search Criteria quick-add tags. Each row (Type of
 // role, Type of company, Location, Office policy) is a user-configurable
@@ -3311,42 +3737,6 @@ function loadLinkedInInputs() {
 function saveLinkedInUrl() {
   state.linkedIn = { url: document.getElementById("li-url").value.trim() };
   saveState();
-}
-function renderLinkedIn() {
-  const el = document.getElementById("li-match-summary");
-  if (!el) return;
-  const keywords = state.searchCriteria?.keywords || [];
-  if (!state.linkedIn?.url) {
-    el.innerHTML = `<div class="empty-state">Add your LinkedIn profile URL above to get started.</div>`;
-    return;
-  }
-  if (!keywords.length) {
-    el.innerHTML = `<div class="empty-state">Set the job titles/keywords you're targeting in the Suggestions tab to generate a match summary.</div>`;
-    return;
-  }
-  const matches = state.suggestions || [];
-  if (!matches.length) {
-    el.innerHTML = `<div class="empty-state">No matches yet — run a scan from the Suggestions tab to populate this summary.</div>`;
-    return;
-  }
-  const companies = [...new Set(matches.map(m=>m.company))];
-  const locationCounts = {};
-  matches.forEach(m => { if (m.location) locationCounts[m.location] = (locationCounts[m.location]||0)+1; });
-  const topLocations = Object.entries(locationCounts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([l])=>l);
-  el.innerHTML = `
-    <div class="grid3" style="margin-bottom:16px">
-      ${stat(matches.length, "Matching roles", "var(--green)")}
-      ${stat(companies.length, "Companies", "var(--navy)")}
-      ${stat(topLocations.length, "Top locations", "var(--teal)")}
-    </div>
-    <div style="font-size:13px;color:var(--dark);line-height:1.6">
-      Based on your target keywords <strong>${escHtml(keywords.join(", "))}</strong>, you currently have
-      <strong>${matches.length}</strong> matching open role${matches.length===1?"":"s"} across
-      <strong>${companies.length}</strong> watchlist compan${companies.length===1?"y":"ies"}
-      ${topLocations.length?` — most common location${topLocations.length===1?"":"s"}: <strong>${escHtml(topLocations.join(", "))}</strong>.`:"."}
-      Make sure your LinkedIn headline and About section mirror these keywords so recruiters searching for
-      ${escHtml(keywords[0])} roles find your profile.
-    </div>`;
 }
 // ═══════════════════════════ RUN SEARCH (Job Sites & Companies) ════════════════
 // Combines pinned Role Titles with whatever's in the Search Criteria field —
@@ -3650,7 +4040,6 @@ async function scanWatchlist() {
       `Last scanned ${new Date().toLocaleString("en-GB")} · ${found.length} match${found.length===1?"":"es"} found` +
       (errors.length?` · ${errors.length} site${errors.length===1?"":"s"} failed to load`:"");
     renderSuggestions();
-    renderLinkedIn();
   } catch (e) {
     document.getElementById("sg-status").textContent = `Scan failed: ${e.message}. Is the Cloud Function deployed?`;
   } finally {
@@ -3928,7 +4317,6 @@ async function renderAll() {
   renderTraining();
   renderCheckout();
   renderStrategy();
-  renderLinkedIn();
   renderHelp();
   await loadSharedData();
   renderWatchlist();
