@@ -1193,7 +1193,7 @@ const STARTER_JOB_SITES = [
   { category:"Swedish general job boards", source:"LinkedIn Jobs Sweden", url:"https://www.linkedin.com/jobs/search/?keywords={q}&location={location}", geography:"Sweden", notes:"Confirmed query template." },
   { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com/jobs?q={q}&l={location}", geography:"Sweden", manualOnly:true, notes:"Confirmed query template, but Indeed returns HTTP 403 to Cloud Run's IP range specifically (works fine from a normal browser) — blocks automated scraping, not just an unverified pattern. Manual search only." },
   { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://www.blocket.se/annonser/jobb", geography:"Sweden", notes:"Corrected URL — jobb.blocket.se doesn't exist. This one loads, but a ?q= search seemed to route into Blocket's general marketplace rather than clean job listings when tested; verify manually before trusting the scrape." },
-  { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se", geography:"Sweden", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se/pr/{q-slug}-jobb/{location-slug}", geography:"Sweden", notes:"Confirmed template — uses lowercase hyphenated path slugs (e.g. /pr/teknisk-projektledare-jobb/göteborg), not query params." },
 
   { category:"Gothenburg-specific", source:"Lediga Jobb Göteborg", url:"https://www.ledigajobbgoteborg.se", geography:"Gothenburg", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
   { category:"Gothenburg-specific", source:"Göteborg Lediga Jobb", url:"https://www.goteborgledigajobb.se", geography:"Gothenburg", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
@@ -3001,11 +3001,21 @@ function renderSearchSetupTab() {
 // control over each site's real param names. A URL with no placeholder falls
 // back to a generic ?q= append, which works for some sites (Indeed) and not
 // others — see the Search Setup notes on which is which.
+// Some sites (query-string search) take {q}/{location} URL-encoded as-is.
+// Others (e.g. ledigajobb.se) build the search into the URL path itself as a
+// lowercase, hyphenated slug — {q-slug}/{location-slug} covers that pattern.
+function slugify(str) {
+  return encodeURIComponent(String(str||"").trim().toLowerCase().replace(/\s+/g, "-"));
+}
 function resolveSearchUrl(s, terms, location) {
   if (!s.url) return null;
   const q = terms.join(" ");
-  if (s.url.includes("{q}") || s.url.includes("{location}")) {
-    return s.url.replace(/\{q\}/g, encodeURIComponent(q)).replace(/\{location\}/g, encodeURIComponent(location||""));
+  if (s.url.includes("{q}") || s.url.includes("{location}") || s.url.includes("{q-slug}") || s.url.includes("{location-slug}")) {
+    return s.url
+      .replace(/\{q\}/g, encodeURIComponent(q))
+      .replace(/\{location\}/g, encodeURIComponent(location||""))
+      .replace(/\{q-slug\}/g, slugify(q))
+      .replace(/\{location-slug\}/g, slugify(location||"sverige"));
   }
   return s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(q);
 }

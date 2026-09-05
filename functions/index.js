@@ -60,10 +60,11 @@ const KNOWN_ATS = [
 // "tjänst(er)", "annons(er)" where English ones use "job(s)"/"career(s)" etc.
 const JOB_HREF = /\/(jobs?|vacanc\w*|careers?|positions?|openings?|jobb|tj[aä]nster?|annons(er)?|lediga-jobb)\//i;
 // An individual posting almost always carries some kind of unique id in the
-// URL (a UUID, or a run of digits) — a category/filter link in the same nav
-// (e.g. "/jobb/re-stockholms-lan/") typically doesn't, so this is what tells
-// a real listing apart from navigation on the same search-results page.
-const HAS_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{4,}/i;
+// URL (a UUID, a run of digits, or a short opaque hex id like ledigajobb.se's
+// "/jobb/cc29e5/...") — a category/filter link in the same nav (e.g.
+// "/jobb/re-stockholms-lan/") typically doesn't, so this is what tells a real
+// listing apart from navigation on the same search-results page.
+const HAS_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{4,}|(?:^|\/)[0-9a-f]{6,}(?:\/|$)/i;
 // Many sites put the actual job title in a heading next to the link rather
 // than in the link's own text (the link just says "see job details" or
 // similar) — these are the generic phrases that trigger falling back to a
