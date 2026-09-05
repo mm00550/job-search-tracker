@@ -1128,6 +1128,10 @@
       <div><label class="form-label">Next Run</label><input class="form-input" id="ss-nextrun" type="date"></div>
     </div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="ss-notes" rows="2" placeholder="Filters, caveats, authentication needs…"></textarea></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+      <input type="checkbox" id="ss-manualonly" style="width:16px;height:16px;cursor:pointer">
+      <label for="ss-manualonly" style="font-size:13px;cursor:pointer">🚫 Manual search only — site blocks automated requests (403 / refuses connection) or can't be automated for another reason</label>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeSearchSetupModal()">Cancel</button>
       <button class="btn btn-purple" onclick="submitSearchSetup()">Save</button>
@@ -1187,8 +1191,8 @@ const DEFAULT_SEARCH_SETUP = [
 // page or homepage, not necessarily pre-filtered — see each one's notes.
 const STARTER_JOB_SITES = [
   { category:"Swedish general job boards", source:"LinkedIn Jobs Sweden", url:"https://www.linkedin.com/jobs/search/?keywords={q}&location={location}", geography:"Sweden", notes:"Confirmed query template." },
-  { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com/jobs?q={q}&l={location}", geography:"Sweden", notes:"Confirmed query template." },
-  { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://jobb.blocket.se", geography:"Sweden", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Swedish general job boards", source:"Indeed Sweden", url:"https://se.indeed.com/jobs?q={q}&l={location}", geography:"Sweden", manualOnly:true, notes:"Confirmed query template, but Indeed returns HTTP 403 to Cloud Run's IP range specifically (works fine from a normal browser) — blocks automated scraping, not just an unverified pattern. Manual search only." },
+  { category:"Swedish general job boards", source:"Blocket Jobb", url:"https://www.blocket.se/annonser/jobb", geography:"Sweden", notes:"Corrected URL — jobb.blocket.se doesn't exist. This one loads, but a ?q= search seemed to route into Blocket's general marketplace rather than clean job listings when tested; verify manually before trusting the scrape." },
   { category:"Swedish general job boards", source:"Ledigajobb.se", url:"https://ledigajobb.se", geography:"Sweden", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
 
   { category:"Gothenburg-specific", source:"Lediga Jobb Göteborg", url:"https://www.ledigajobbgoteborg.se", geography:"Gothenburg", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
@@ -1203,11 +1207,11 @@ const STARTER_JOB_SITES = [
   { category:"Recruitment & staffing agencies", source:"Randstad Sweden", url:"https://www.randstad.se/jobb/?q={q}", geography:"Sweden", frequency:"Fortnightly", notes:"Query param guessed as ?q=, not independently confirmed to filter — check the first open." },
   { category:"Recruitment & staffing agencies", source:"Michael Page Sweden", url:"https://www.michaelpage.se", geography:"Sweden", frequency:"Fortnightly", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
   { category:"Recruitment & staffing agencies", source:"Academic Work", url:"https://www.academicwork.se/jobb?q={q}", geography:"Sweden", frequency:"Fortnightly", notes:"Query param guessed as ?q=, not independently confirmed to filter — check the first open." },
-  { category:"Recruitment & staffing agencies", source:"Poolia", url:"https://www.poolia.se", geography:"Sweden", frequency:"Fortnightly", notes:"Unverified — do one search on the site itself, copy the resulting URL, and replace your search words with {q} here." },
+  { category:"Recruitment & staffing agencies", source:"Poolia", url:"https://www.poolia.se", geography:"Sweden", frequency:"Fortnightly", manualOnly:true, notes:"Returns HTTP 403 to automated requests generally (not just from Cloud Run) — likely bot-detection infrastructure. Manual search only." },
   { category:"Recruitment & staffing agencies", source:"Manpower Sweden", url:"https://www.manpower.se/sv/lediga-jobb/stad/goteborg", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg by the site itself, but appending a role search on top is unverified." },
   { category:"Recruitment & staffing agencies", source:"Bravura", url:"https://www.bravura.se/karriar/lediga-jobb-goteborg/", geography:"Gothenburg", frequency:"Fortnightly", notes:"URL pre-filtered to Gothenburg by the site itself, but appending a role search on top is unverified." },
 
-  { category:"Life Science / MedTech", source:"Nature Careers", url:"https://www.naturecareers.com/jobs?text={q}", geography:"Sweden filter", frequency:"Fortnightly", notes:"Query param guessed as ?text=, not independently confirmed to filter — check the first open." },
+  { category:"Life Science / MedTech", source:"Nature Careers", url:"https://www.nature.com/naturecareers/searchjobs/?keywords={q}", geography:"Sweden filter", frequency:"Fortnightly", notes:"Corrected URL — the standalone naturecareers.com domain refuses connections; the real site is under nature.com. They also expose a job-search RSS feed (nature.com/naturecareers/jobsrss/?keywords=X), confirmed working but not wired up here — mostly global science/academia roles, so may return little for generalist Swedish searches." },
   { category:"Life Science / MedTech", source:"GoCo Health Innovation City", url:"https://goco.se/", geography:"Gothenburg", frequency:"Fortnightly", notes:"Listings mostly appear via Indeed/LinkedIn rather than their own site — this URL is just the parent site, no search function." },
 ];
 const APP_TRACK = {
@@ -3005,11 +3009,17 @@ function resolveSearchUrl(s, terms, location) {
   }
   return s.url + (s.url.includes("?") ? "&" : "?") + "q=" + encodeURIComponent(q);
 }
+// LinkedIn is unified into the same manualOnly mechanism as any other
+// blocked source — it's just always true for LinkedIn, never editable off,
+// since that one's permanent (ToS), not a technical block that might change.
+function isManualOnly(s) { return !!s.manualOnly || /linkedin/i.test(s.source); }
+
 function renderSearchSetupCard(s) {
   const sc = SS_STATUS[s.status]||{};
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
   const resolvedUrl = s.url ? resolveSearchUrl(s, terms, location) : null;
+  const manualOnly = isManualOnly(s);
   return `<div class="item-card" style="border-left-color:${sc.dot}">
     <div class="item-row">
       <div style="flex:1">
@@ -3017,6 +3027,7 @@ function renderSearchSetupCard(s) {
           <span class="item-name">${escHtml(s.source)}</span>
           ${badge(s.status, sc.color, sc.bg)}
           ${badge(s.frequency, "#2F7A86", "#E3F7F3")}
+          ${manualOnly?badge("Manual only","#9A4A06","#FDE7D2"):""}
         </div>
         ${s.channel?`<div style="font-size:13px;margin-bottom:4px">${escHtml(s.channel)}</div>`:""}
         <div class="item-meta">
@@ -3028,7 +3039,10 @@ function renderSearchSetupCard(s) {
         ${s.notes?`<div class="item-notes">${escHtml(s.notes)}</div>`:""}
       </div>
       <div class="item-actions">
-        <button class="btn ${/linkedin/i.test(s.source)?"btn-teal":"btn-primary"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${/linkedin/i.test(s.source)?"🔗 Open":"▶ Search"}</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <button class="btn ${manualOnly?"btn-teal":"btn-primary"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${manualOnly?"🔗 Open":"▶ Search"}</button>
+          ${manualOnly?`<span style="font-size:10px;color:var(--muted)">(manual search only)</span>`:""}
+        </div>
         <button class="btn btn-sky btn-sm" onclick="openSearchSetupModal('${s.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSearchSetup('${s.id}')">✕</button>
       </div>
@@ -3049,6 +3063,7 @@ function openSearchSetupModal(id) {
   document.getElementById("ss-lastrun").value   = s?.lastRun||"";
   document.getElementById("ss-nextrun").value   = s?.nextRun||"";
   document.getElementById("ss-notes").value     = s?.notes||"";
+  document.getElementById("ss-manualonly").checked = s?.manualOnly||false;
   document.getElementById("searchSetupModal").style.display="flex";
 }
 function closeSearchSetupModal() { document.getElementById("searchSetupModal").style.display="none"; editSearchSetupId=null; }
@@ -3064,6 +3079,7 @@ function submitSearchSetup() {
     geography: document.getElementById("ss-geography").value.trim(),
     frequency: document.getElementById("ss-frequency").value,
     status:    document.getElementById("ss-status").value,
+    manualOnly: document.getElementById("ss-manualonly").checked,
     lastRun:   document.getElementById("ss-lastrun").value,
     nextRun:   document.getElementById("ss-nextrun").value,
     notes:     document.getElementById("ss-notes").value.trim(),
@@ -3106,9 +3122,9 @@ function addStarterJobSites() {
 // Manual), unlike the column-level Run Search which only touches Active
 // sources. Arbetsförmedlingen gets its real API search; any other source
 // with a saved Search URL gets a real single-source scrape via
-// scanJobSites, scoped to just that card. LinkedIn is the one exception —
-// it only ever opens its Search URL in a new tab, since scraping it
-// violates their Terms of Service.
+// scanJobSites, scoped to just that card. A source flagged manualOnly
+// (LinkedIn always, or any other source Candidate has marked as blocking
+// automated requests) only ever opens its Search URL in a new tab instead.
 async function runSingleJobSite(id) {
   const s = (state.searchSetup||[]).find(x=>x.id===id);
   if (!s) return;
@@ -3143,12 +3159,13 @@ async function runSingleJobSite(id) {
     return;
   }
 
-  if (/linkedin/i.test(s.source)) {
+  if (isManualOnly(s)) {
     window.open(resolveSearchUrl(s, terms, location), "_blank");
     s.lastRun = today();
     saveState();
     renderSearchSetupTab();
-    statusEl.textContent = `Opened ${s.source} in a new tab for: ${terms.join(", ")} — LinkedIn can't be automated (ToS).`;
+    const why = /linkedin/i.test(s.source) ? "LinkedIn can't be automated (ToS)" : "manual search only";
+    statusEl.textContent = `Opened ${s.source} in a new tab for: ${terms.join(", ")} — ${why}.`;
     return;
   }
 
@@ -3395,9 +3412,10 @@ async function searchOtherJobSites(sitesToScan, criteria) {
 // deployment needed). Every other Active source with a saved Search URL gets
 // a real scrape via the scanJobSites Cloud Function — requires that function
 // to be deployed (firebase deploy --only functions); if it isn't, this fails
-// with a clear error rather than silently doing nothing. LinkedIn is never
-// sent to either path — scraping it violates their Terms of Service — it
-// stays available only via its own card's manual "Open" link.
+// with a clear error rather than silently doing nothing. A source flagged
+// manualOnly (LinkedIn always, or any source Candidate has marked as
+// blocking automated requests — 403s, refused connections, etc.) is never
+// sent to either path — it stays available only via its own card's "Open".
 async function runJobSitesSearch() {
   const terms = buildSearchTerms();
   const location = state.searchCriteria.location||"";
@@ -3414,8 +3432,8 @@ async function runJobSitesSearch() {
   }
 
   const afSource = active.find(s=>/arbetsf[oö]rmedlingen/i.test(s.source));
-  const linkedinSources = active.filter(s=>s!==afSource && /linkedin/i.test(s.source));
-  const otherSources = active.filter(s=>s!==afSource && !linkedinSources.includes(s));
+  const manualOnlySources = active.filter(s=>s!==afSource && isManualOnly(s));
+  const otherSources = active.filter(s=>s!==afSource && !isManualOnly(s));
   const scanTargets = otherSources.filter(s=>s.url).map(s=>({ id:s.id, source:s.source, url: resolveSearchUrl(s, terms, location) }));
   const noUrlSources = otherSources.filter(s=>!s.url).map(s=>s.source);
 
@@ -3451,7 +3469,7 @@ async function runJobSitesSearch() {
   const parts = [];
   if (afSource) parts.push(afError ? `Arbetsförmedlingen failed: ${afError}` : `Arbetsförmedlingen +${afAdded}${afDupes?` (${afDupes} dupes)`:""}`);
   if (scanTargets.length) parts.push(otherError ? `Other sites: ${otherError}` : `${scanTargets.length} other site${scanTargets.length===1?"":"s"} +${otherAdded}${otherDupes?` (${otherDupes} dupes)`:""}`);
-  if (linkedinSources.length) parts.push(`LinkedIn can't be automated (ToS) — use its own Open link`);
+  if (manualOnlySources.length) parts.push(`manual search only: ${manualOnlySources.map(s=>s.source).join(", ")}`);
   if (noUrlSources.length) parts.push(`no Search URL saved: ${noUrlSources.join(", ")}`);
   statusEl.textContent = parts.join(" · ") || "Nothing to search.";
 }
