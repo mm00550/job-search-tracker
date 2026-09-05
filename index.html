@@ -3094,16 +3094,27 @@ function deleteSearchSetup(id) {
   saveState(); renderSearchSetupTab();
 }
 function addStarterJobSites() {
-  const existing = new Set((state.searchSetup||[]).map(s=>s.source.toLowerCase().trim()));
-  let added = 0, skipped = 0;
+  const bySource = new Map((state.searchSetup||[]).map(s=>[s.source.toLowerCase().trim(), s]));
+  let added = 0, updated = 0;
   STARTER_JOB_SITES.forEach((s,i)=>{
-    if (existing.has(s.source.toLowerCase().trim())) { skipped++; return; }
+    const match = bySource.get(s.source.toLowerCase().trim());
+    if (match) {
+      // Already on your list — resync the fields we curate (manualOnly, URL)
+      // so fixes made to the starter list (e.g. a confirmed 403, a corrected
+      // URL) reach entries you added before that fix existed.
+      let changed = false;
+      if (!!match.manualOnly !== !!s.manualOnly) { match.manualOnly = !!s.manualOnly; changed = true; }
+      if (s.url && match.url !== s.url) { match.url = s.url; changed = true; }
+      if (changed) updated++;
+      return;
+    }
     state.searchSetup.push({
       id: "starter-" + Date.now() + "-" + i,
       source: s.source,
       category: s.category,
       channel: s.channel||"",
       url: s.url||"",
+      manualOnly: !!s.manualOnly,
       geography: s.geography||"",
       frequency: s.frequency||"Weekly",
       status: "Active",
@@ -3112,10 +3123,10 @@ function addStarterJobSites() {
     });
     added++;
   });
-  if (added) saveState();
+  if (added || updated) saveState();
   renderSearchSetupTab();
   document.getElementById("jsc-sites-status").textContent =
-    `Added ${added} starter source${added===1?"":"s"}` + (skipped?` · ${skipped} already in your list`:"");
+    `Added ${added} starter source${added===1?"":"s"}` + (updated?` · updated ${updated} existing`:"");
 }
 
 // Per-card search — runs regardless of the source's Status (Active/Paused/
