@@ -41,6 +41,7 @@ async function fetchWorkdayJobs(tenant, wd, site) {
       jobs.push({
         title: j.title,
         location,
+        workModel: j.remoteType || "", // "On-Site" / "Hybrid" / "Remote" — Workday's own field, not available from generic scraping
         url: `https://${tenant}.${wd}.myworkdayjobs.com/${site}${j.externalPath}`,
       });
     });
@@ -240,17 +241,40 @@ function keywordMatches(title, keyword) {
   return kwWords.every((kw) => titleWordList.some((tw) => wordMatches(tw, kw)));
 }
 
+// English/Swedish equivalents for search criteria — job ads on Swedish
+// company sites often use the Swedish term even when Candidate searches in
+// English (e.g. "Göteborg" instead of "Gothenburg"). Add more groups here as
+// needed. sameGroup() also still falls back to plain substring containment
+// for anything not listed, so this only adds matches, never removes any.
+const SYNONYM_GROUPS = [
+  ["gothenburg", "göteborg", "goteborg"],
+  ["remote", "distans"],
+  ["on-site", "onsite", "on site", "på plats", "pa plats", "på kontoret"],
+];
+function sameGroup(a, b) {
+  if (!a || !b) return false;
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  return SYNONYM_GROUPS.some((g) => g.some((x) => a.includes(x)) && g.some((x) => b.includes(x)));
+}
+
 function matchesCriteria(job, criteria) {
   const title = job.title || "";
   const location = (job.location || "").toLowerCase();
+  const workModel = (job.workModel || "").toLowerCase();
   const keywords = (criteria.keywords || []).map((k) => k.trim()).filter(Boolean);
   const locFilter = (criteria.location || "").toLowerCase().trim();
+  const workModelFilter = (criteria.workModel || "").toLowerCase().trim();
   // No keywords/role titles pinned at all → nothing to filter by title, so
   // every open role from the site is included (capped by offset/limit below,
   // same as any other search).
   const keywordMatch = !keywords.length || keywords.some((k) => keywordMatches(title, k));
-  const locationMatch = !locFilter || !location || location.includes(locFilter);
-  return keywordMatch && locationMatch;
+  const locationMatch = !locFilter || !location || sameGroup(location, locFilter);
+  // workModel (On-site/Hybrid/Remote) is only populated for Workday-sourced
+  // jobs today (see fetchWorkdayJobs) — generic scraping has no structured
+  // field for it. A job with no workModel data passes through regardless,
+  // same permissive rule as an unknown location.
+  const workModelMatch = !workModelFilter || !workModel || sameGroup(workModel, workModelFilter);
+  return keywordMatch && locationMatch && workModelMatch;
 }
 
 exports.scanWatchlist = onRequest({ cors: true, timeoutSeconds: 120, region: "us-central1" }, async (req, res) => {

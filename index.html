@@ -3713,6 +3713,11 @@ function addCriteriaTag(value, categoryKey) {
   if (!parts.includes(value)) parts.push(value);
   el.value = parts.join(", ");
   if (categoryKey === "location") document.getElementById("sg-location").value = value;
+  // Office policy (On-site/Hybrid/Remote) doubles as a real filter for
+  // Companies search — see workModel in matchesCriteria (functions/index.js).
+  // Only reliable for Workday-sourced postings today; harmless no-op filter
+  // elsewhere since a job with no workModel data always passes through.
+  if (categoryKey === "officePolicy") state.searchCriteria.workModel = value;
   saveCriteria();
 }
 function renderRoleTitles() {
@@ -4010,7 +4015,7 @@ async function runCompanySearch() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        companies, criteria: { keywords: terms, location: state.searchCriteria.location||"" },
+        companies, criteria: { keywords: terms, location: state.searchCriteria.location||"", workModel: state.searchCriteria.workModel||"" },
         offset: 0, limit: COMPANY_SEARCH_PAGE_SIZE,
       }),
     });
@@ -4053,7 +4058,7 @@ async function runSingleCompanySearch(id, loadMore) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        companies: [company], criteria: { keywords: terms, location: state.searchCriteria.location||"" },
+        companies: [company], criteria: { keywords: terms, location: state.searchCriteria.location||"", workModel: state.searchCriteria.workModel||"" },
         offset, limit: COMPANY_SEARCH_PAGE_SIZE,
       }),
     });
