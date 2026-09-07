@@ -10,6 +10,18 @@ const UA = "Mozilla/5.0 (compatible; JobScanner/1.0; +https://job-search-tracker
 const WORKDAY_URL_RE = /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Z]{2}\/)?([^/"'?#\s]+)/i;
 const WORKDAY_PAGE_SIZE = 20; // Workday's CXS API rejects a larger "limit" with HTTP 400
 const WORKDAY_MAX_PAGES = 20; // reasonable cap — up to 400 postings, well past a typical company's open reqs
+// Workday's search API only gives a vague "N Locations" summary for a
+// multi-location posting — the actual per-location breakdown isn't in this
+// endpoint's response. The posting's own URL does embed one real location
+// though (e.g. "/job/Gothenburg/Senior-Product-Manager..."), so that's used
+// as a fallback whenever locationsText is just a bare count like this —
+// otherwise a location-filtered search wrongly excludes postings that are
+// genuinely open in the requested city, just not the only one listed.
+const VAGUE_LOCATION_COUNT = /^\d+\s+Locations?$/i;
+function workdayLocationFromPath(externalPath) {
+  const m = (externalPath || "").match(/^\/job\/([^/]+)\//);
+  return m ? decodeURIComponent(m[1]).replace(/-/g, " ").trim() : "";
+}
 async function fetchWorkdayJobs(tenant, wd, site) {
   const jobs = [];
   for (let page = 0; page < WORKDAY_MAX_PAGES; page++) {
@@ -23,9 +35,12 @@ async function fetchWorkdayJobs(tenant, wd, site) {
     const postings = data.jobPostings || [];
     postings.forEach((j) => {
       if (!j.title) return;
+      const location = (j.locationsText && !VAGUE_LOCATION_COUNT.test(j.locationsText))
+        ? j.locationsText
+        : workdayLocationFromPath(j.externalPath) || j.locationsText || "";
       jobs.push({
         title: j.title,
-        location: j.locationsText || "",
+        location,
         url: `https://${tenant}.${wd}.myworkdayjobs.com/${site}${j.externalPath}`,
       });
     });
