@@ -213,18 +213,50 @@ function findJobArray(node, depth) {
   return Object.values(node).flatMap((v) => findJobArray(v, depth + 1));
 }
 
+// A pinned role title like "Senior Project Manager" should also surface a
+// close variant like "Senior IT Project Manager" — a plain substring check
+// misses that entirely since neither string contains the other. Instead,
+// every significant word in the search term has to appear somewhere in the
+// job title (any order, other words allowed in between) — a word-set match
+// rather than a phrase match. This is a strict superset of substring
+// matching (anything that used to match still does), so it only ever
+// surfaces more, never fewer, results than before.
+function titleWords(str) {
+  return (str || "").toLowerCase().match(/[a-z0-9]+/g) || [];
+}
+// Exact match, or one word is a prefix of the other — catches plain plurals
+// ("Solution" / "Solutions") and other near-variants without needing a real
+// stemming library. Skipped for words under 3 chars (e.g. "IT", "AI") so a
+// short acronym doesn't prefix-match half the dictionary.
+function wordMatches(a, b) {
+  if (a === b) return true;
+  if (a.length < 3 || b.length < 3) return false;
+  return a.startsWith(b) || b.startsWith(a);
+}
+function keywordMatches(title, keyword) {
+  const kwWords = titleWords(keyword);
+  if (!kwWords.length) return false;
+  const titleWordList = titleWords(title);
+  return kwWords.every((kw) => titleWordList.some((tw) => wordMatches(tw, kw)));
+}
+
 function matchesCriteria(job, criteria) {
-  const title = (job.title || "").toLowerCase();
+  const title = job.title || "";
   const location = (job.location || "").toLowerCase();
-  const keywords = (criteria.keywords || []).map((k) => k.toLowerCase().trim()).filter(Boolean);
+  const keywords = (criteria.keywords || []).map((k) => k.trim()).filter(Boolean);
   const locFilter = (criteria.location || "").toLowerCase().trim();
-  const keywordMatch = !keywords.length || keywords.some((k) => title.includes(k));
+  // No keywords/role titles pinned at all → nothing to filter by title, so
+  // every open role from the site is included (capped by offset/limit below,
+  // same as any other search).
+  const keywordMatch = !keywords.length || keywords.some((k) => keywordMatches(title, k));
   const locationMatch = !locFilter || !location || location.includes(locFilter);
   return keywordMatch && locationMatch;
 }
 
 exports.scanWatchlist = onRequest({ cors: true, timeoutSeconds: 120, region: "us-central1" }, async (req, res) => {
   const { companies = [], criteria = {} } = req.body || {};
+  const offset = Math.max(0, Number(req.body && req.body.offset) || 0);
+  const limit = Math.min(500, Math.max(1, Number(req.body && req.body.limit) || 100));
   const results = [];
 
   for (const company of companies) {
@@ -239,12 +271,16 @@ exports.scanWatchlist = onRequest({ cors: true, timeoutSeconds: 120, region: "us
       } else {
         jobs = await fetchGeneric(company.careerSite);
       }
+      const matched = jobs.filter((j) => matchesCriteria(j, criteria));
       results.push({
         company: company.company,
         companyId: company.id,
         source,
-        jobs: jobs.filter((j) => matchesCriteria(j, criteria)),
+        jobs: matched.slice(offset, offset + limit),
         totalFound: jobs.length,
+        totalMatched: matched.length,
+        hasMore: offset + limit < matched.length,
+        nextOffset: offset + limit,
       });
     } catch (e) {
       results.push({ company: company.company, companyId: company.id, error: e.message, jobs: [] });

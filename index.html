@@ -425,8 +425,8 @@
         <button class="btn btn-purple btn-sm" onclick="openWatchModal()">+ Add Company</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <button class="btn btn-primary btn-sm" id="jsc-companies-runbtn" onclick="runCompanySearch()">▶ Run Search</button>
-        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches real postings and files matches straight into Job Watchlist.</span>
+        <button class="btn btn-primary btn-sm" id="jsc-companies-runbtn" onclick="runCompanySearch()">▶ Run Search all</button>
+        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches real postings and files matches straight into Job Watchlist. Also matches close variants (e.g. "Senior Project Manager" catches "Senior IT Project Manager"). No Role Titles/Criteria set → returns every open role. Capped at 100 per company per click — use "Search" on a company to fetch just that one, or "+ Next 100" for more.</span>
       </div>
       <div id="watch-list"></div>
       <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
@@ -1794,6 +1794,9 @@ let trainCatFilter  = "All";
 let netStatusFilter = "All", netPriorityFilter = "All", netRelationFilter = "All";
 let coStatusFilter = "All", coPriorityFilter = "All";
 let showRec = false;
+// Per-company scan status (search-in-progress, last result message, pagination
+// offset/hasMore for "Load next 100") — transient UI state, not persisted.
+let companyScanState = {};
 
 // ═══════════════════════════ STORAGE ══════════════════════════════════════════
 const LS = "mm2026_";
@@ -3317,7 +3320,9 @@ function renderWatchlist() {
     list.innerHTML = `<div class="card"><div class="empty-state">No companies on your watchlist yet.</div></div>`;
     return;
   }
-  list.innerHTML = state.watchlist.map(w => `
+  list.innerHTML = state.watchlist.map(w => {
+    const cs = companyScanState[w.id] || {};
+    return `
     <div class="item-card">
       <div class="item-row">
         <div style="flex:1">
@@ -3330,14 +3335,18 @@ function renderWatchlist() {
             ${w.careerSite?`<span><a href="${w.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
           </div>
           ${w.description?`<div class="item-notes">${escHtml(w.description)}</div>`:""}
+          ${cs.message?`<div class="item-notes" style="color:var(--muted)">${escHtml(cs.message)}</div>`:""}
         </div>
         <div class="item-actions">
+          ${w.careerSite?`<button class="btn btn-purple btn-sm" ${cs.busy?"disabled":""} onclick="runSingleCompanySearch('${w.id}')">${cs.busy?"Searching…":"🔎 Search"}</button>`:""}
+          ${cs.hasMore?`<button class="btn btn-sky btn-sm" ${cs.busy?"disabled":""} onclick="runSingleCompanySearch('${w.id}', true)">+ Next 100</button>`:""}
           <button class="btn btn-sky btn-sm" onclick="openWatchModal('${w.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteWatch('${w.id}')">✕</button>
         </div>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 function openWatchModal(id) {
   editWatchId = id||null;
@@ -3951,6 +3960,40 @@ async function runJobSitesSearch() {
 // one actually fetches and filters postings, it doesn't just open a tab.
 // Every match becomes a real Job Watchlist ("Watching") entry directly —
 // no separate review-and-add step, matches are filed as opportunities.
+// No Role Titles/Search Criteria pinned at all → the Cloud Function's
+// matchesCriteria has nothing to filter by title, so it returns every open
+// role from the site — capped per company at COMPANY_SEARCH_PAGE_SIZE per
+// call, with "+ Next 100" fetching the next page via the per-company button.
+const COMPANY_SEARCH_PAGE_SIZE = 100;
+
+// Shared by the bulk and per-company search paths: files each returned job
+// into Job Watchlist (skipping ones already tracked), returns the counts.
+function addMatchedJobsToWatchlist(results) {
+  const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
+  let added = 0, dupes = 0;
+  for (const r of results) {
+    if (r.error) continue;
+    for (const job of r.jobs||[]) {
+      const key = (r.company+"::"+job.title).toLowerCase().trim();
+      if (existingKeys.has(key)) { dupes++; continue; }
+      existingKeys.add(key);
+      state.apps.push({
+        id: String(Date.now()) + Math.random().toString(36).slice(2,7),
+        company: r.company, role: job.title,
+        contact: "", careerSite: job.url||"",
+        dateApplied: "", dateResponded: "",
+        track: "Permanent", status: WATCH_STATUS,
+        source: "Company site", location: job.location||"", workModel: "Unknown", cvVersion: "",
+        deadline: "", roleFamily: "", stageMandate: "",
+        fit: { strategic:0, growth:0, culture:0, location:0 }, overallFit: null, concerns: "",
+        history: [], followUp: false, followUpDate: "",
+      });
+      added++;
+    }
+  }
+  return { added, dupes };
+}
+
 async function runCompanySearch() {
   const terms = buildSearchTerms();
   const companies = state.watchlist.filter(w=>w.careerSite);
@@ -3961,40 +4004,28 @@ async function runCompanySearch() {
     return;
   }
   btn.disabled = true; btn.textContent = "Searching…";
-  statusEl.textContent = `Scanning ${companies.length} compan${companies.length===1?"y":"ies"} for: ${terms.join(", ")||"(no criteria set)"}…`;
+  statusEl.textContent = `Scanning ${companies.length} compan${companies.length===1?"y":"ies"} for: ${terms.join(", ")||"all open roles (no criteria set)"}…`;
   try {
     const res = await fetch(SCAN_FUNCTION_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companies, criteria: { keywords: terms, location: state.searchCriteria.location||"" } }),
+      body: JSON.stringify({
+        companies, criteria: { keywords: terms, location: state.searchCriteria.location||"" },
+        offset: 0, limit: COMPANY_SEARCH_PAGE_SIZE,
+      }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
-    let added = 0, dupes = 0;
-    for (const r of data.results||[]) {
-      if (r.error) continue;
-      for (const job of r.jobs||[]) {
-        const key = (r.company+"::"+job.title).toLowerCase().trim();
-        if (existingKeys.has(key)) { dupes++; continue; }
-        existingKeys.add(key);
-        state.apps.push({
-          id: String(Date.now()) + Math.random().toString(36).slice(2,7),
-          company: r.company, role: job.title,
-          contact: "", careerSite: job.url||"",
-          dateApplied: "", dateResponded: "",
-          track: "Permanent", status: WATCH_STATUS,
-          source: "Company site", location: job.location||"", workModel: "Unknown", cvVersion: "",
-          deadline: "", roleFamily: "", stageMandate: "",
-          fit: { strategic:0, growth:0, culture:0, location:0 }, overallFit: null, concerns: "",
-          history: [], followUp: false, followUpDate: "",
-        });
-        added++;
-      }
-    }
+    const results = data.results||[];
+    const { added, dupes } = addMatchedJobsToWatchlist(results);
     saveState();
-    renderJobWatchlist(); renderApplications(); renderDashboard();
-    const errors = (data.results||[]).filter(r=>r.error);
+    results.forEach(r => {
+      companyScanState[r.companyId] = r.error
+        ? { message: `Failed: ${r.error}` }
+        : { message: `${r.jobs.length} of ${r.totalMatched} match${r.totalMatched===1?"":"es"} shown`, hasMore: r.hasMore, offset: r.nextOffset };
+    });
+    renderJobWatchlist(); renderApplications(); renderDashboard(); renderWatchlist();
+    const errors = results.filter(r=>r.error);
     statusEl.textContent =
       `Added ${added} new opportunit${added===1?"y":"ies"} to Job Watchlist` +
       (dupes?` · ${dupes} already tracked`:"") +
@@ -4003,6 +4034,47 @@ async function runCompanySearch() {
     statusEl.textContent = `Search failed: ${e.message}. Is the Cloud Function deployed?`;
   } finally {
     btn.disabled = false; btn.textContent = "▶ Run Search";
+  }
+}
+
+// Per-company search button — scans just this one company, independent of
+// the bulk "Run Search" above. loadMore=true continues from this company's
+// own saved pagination offset instead of starting over from 0.
+async function runSingleCompanySearch(id, loadMore) {
+  const company = state.watchlist.find(w=>w.id===id);
+  if (!company || !company.careerSite) return;
+  const terms = buildSearchTerms();
+  const prev = companyScanState[id] || {};
+  const offset = loadMore ? (prev.offset||0) : 0;
+  companyScanState[id] = { ...prev, busy: true, message: `Searching for: ${terms.join(", ")||"all open roles (no criteria set)"}…` };
+  renderWatchlist();
+  try {
+    const res = await fetch(SCAN_FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        companies: [company], criteria: { keywords: terms, location: state.searchCriteria.location||"" },
+        offset, limit: COMPANY_SEARCH_PAGE_SIZE,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const r = (data.results||[])[0];
+    if (!r) { companyScanState[id] = { message: "No response from scan." }; return; }
+    if (r.error) { companyScanState[id] = { message: `Failed: ${r.error}` }; return; }
+    const { added, dupes } = addMatchedJobsToWatchlist([r]);
+    saveState();
+    companyScanState[id] = {
+      hasMore: r.hasMore, offset: r.nextOffset,
+      message: `Added ${added} new opportunit${added===1?"y":"ies"}` +
+        (dupes?` · ${dupes} already tracked`:"") +
+        ` · showing ${offset+r.jobs.length} of ${r.totalMatched} match${r.totalMatched===1?"":"es"}`,
+    };
+    renderJobWatchlist(); renderApplications(); renderDashboard();
+  } catch (e) {
+    companyScanState[id] = { message: `Search failed: ${e.message}` };
+  } finally {
+    renderWatchlist();
   }
 }
 
