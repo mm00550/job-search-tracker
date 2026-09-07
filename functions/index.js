@@ -3,9 +3,52 @@ const cheerio = require("cheerio");
 
 const UA = "Mozilla/5.0 (compatible; JobScanner/1.0; +https://job-search-tracker-ddace.web.app)";
 
+// Workday-hosted career sites (myworkdayjobs.com) serve postings from a
+// client-side JSON API, same principle as the other KNOWN_ATS entries below —
+// just with a tenant/datacenter/site path to pull out of the URL first.
+// Matches both a direct Workday URL and one with a locale prefix (e.g. "/en-US/").
+const WORKDAY_URL_RE = /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Z]{2}\/)?([^/"'?#\s]+)/i;
+const WORKDAY_PAGE_SIZE = 20; // Workday's CXS API rejects a larger "limit" with HTTP 400
+const WORKDAY_MAX_PAGES = 20; // reasonable cap — up to 400 postings, well past a typical company's open reqs
+async function fetchWorkdayJobs(tenant, wd, site) {
+  const jobs = [];
+  for (let page = 0; page < WORKDAY_MAX_PAGES; page++) {
+    const r = await fetch(`https://${tenant}.${wd}.myworkdayjobs.com/wday/cxs/${tenant}/${site}/jobs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appliedFacets: {}, limit: WORKDAY_PAGE_SIZE, offset: page * WORKDAY_PAGE_SIZE, searchText: "" }),
+    });
+    if (!r.ok) break;
+    const data = await r.json();
+    const postings = data.jobPostings || [];
+    postings.forEach((j) => {
+      if (!j.title) return;
+      jobs.push({
+        title: j.title,
+        location: j.locationsText || "",
+        url: `https://${tenant}.${wd}.myworkdayjobs.com/${site}${j.externalPath}`,
+      });
+    });
+    // Workday's own "total" field is unreliable across pages (comes back 0
+    // on later pages even mid-list) — a short page is the only trustworthy
+    // end-of-list signal.
+    if (postings.length < WORKDAY_PAGE_SIZE) break;
+  }
+  return jobs;
+}
+
 // Known ATS platforms expose stable JSON APIs — far more reliable than scraping
 // the rendered HTML, so we try to match the career site URL against these first.
 const KNOWN_ATS = [
+  {
+    name: "workday",
+    test: (url) => WORKDAY_URL_RE.test(url),
+    fetchJobs: async (url) => {
+      const m = url.match(WORKDAY_URL_RE);
+      if (!m) return [];
+      return fetchWorkdayJobs(m[1], m[2], m[3]);
+    },
+  },
   {
     name: "greenhouse",
     test: (url) => /greenhouse\.io/.test(url),
@@ -78,6 +121,17 @@ async function fetchGeneric(url) {
   const r = await fetch(url, { headers: { "User-Agent": UA } });
   if (!r.ok) throw new Error(`Fetch failed: HTTP ${r.status}`);
   const html = await r.text();
+
+  // Some company career pages (e.g. essity.com/careers) are just a thin
+  // wrapper around a Workday-hosted job board — the wrapper's own HTML has
+  // no postings in it at all, but it does link out to the real
+  // myworkdayjobs.com site, so that's worth checking before falling back to
+  // <a>-tag scraping (which would find nothing on a page like that anyway).
+  const workdayMatch = html.match(WORKDAY_URL_RE);
+  if (workdayMatch) {
+    const jobs = await fetchWorkdayJobs(workdayMatch[1], workdayMatch[2], workdayMatch[3]);
+    if (jobs.length) return jobs;
+  }
 
   const embedded = extractEmbeddedJobs(html);
   if (embedded.length) return embedded;
