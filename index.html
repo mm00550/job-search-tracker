@@ -248,6 +248,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<!-- Job Match: client-side text extraction for uploaded/local CV and job-description
+     files. pdf.js 6.x ships ESM-only on cdnjs, so it's imported as a module and
+     exposed as window.pdfjsLib for the classic inline app script to use. -->
+<script type="module">
+  import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.min.mjs";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.worker.min.mjs";
+  window.pdfjsLib = pdfjsLib;
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.2/mammoth.browser.min.js"></script>
 </head>
 <body>
 
@@ -410,6 +419,10 @@
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Role title is free text — type it straight into the field above. Click a tag below to drop it in instead of typing it. Add or remove options in each row to fit your own search (e.g. swap in a different town).</div>
     <div id="jsc-qualifiers" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">Location contains</label>
+      <input class="form-input" id="sg-location" placeholder="e.g. Gothenburg, Remote" oninput="debounce(saveCriteria,600)()">
+    </div>
   </div>
 
   <div class="grid2">
@@ -446,17 +459,110 @@
 <!-- ════════════════════════════ SUGGESTIONS ════════════════════════════════ -->
 <div id="tab-suggestions" class="section">
   <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple);margin-bottom:10px">🔎 Scan Watchlist for Matching Roles</div>
-    <div class="form-grid2" style="margin-bottom:12px">
-      <div><label class="form-label">Title keywords (comma-separated)</label><input class="form-input" id="sg-keywords" placeholder="e.g. Project Manager, Program Manager" oninput="debounce(saveCriteria,600)()"></div>
-      <div><label class="form-label">Location contains</label><input class="form-input" id="sg-location" placeholder="e.g. Gothenburg, Remote" oninput="debounce(saveCriteria,600)()"></div>
+    <div style="font-size:14px;font-weight:700;color:var(--purple)">🎯 Job Match</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Compare a specific job description against one of your CVs and get an AI-generated match analysis — score, gaps, and tailoring suggestions.</div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="sec-label" style="margin-bottom:8px">💼 The role</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">Select target role</label>
+          <input class="form-input" id="jm-role" list="jm-role-options" placeholder="e.g. Senior Project Manager">
+          <datalist id="jm-role-options"></datalist>
+        </div>
+        <div class="form-group" style="margin-bottom:6px">
+          <label class="form-label">Job posting link</label>
+          <input class="form-input" id="jm-job-url" placeholder="https://…" oninput="jmClearJobFile()">
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">— or —</div>
+        <div class="form-group">
+          <label class="form-label">Upload a job description</label>
+          <input class="form-input" type="file" id="jm-job-file" accept=".pdf,.docx,.txt" onchange="jmOnJobFileChange(event)">
+          <div id="jm-job-file-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-label" style="margin-bottom:8px">📄 Your CV</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">Select CV</label>
+          <select class="form-input" id="jm-cv-select" onchange="jmOnCvSelectChange()">
+            <option value="">No CV folder connected yet</option>
+          </select>
+          <div style="margin-top:6px">
+            <button class="btn btn-sky btn-sm" onclick="jmConnectCvFolder()">📁 Connect CV folder</button>
+          </div>
+          <div id="jm-cv-folder-status" style="font-size:11px;color:var(--muted);margin-top:4px">Chrome/Edge only — lets you pick a local folder and choose from the CVs in it. Not supported in this browser? Use upload instead.</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">— or —</div>
+        <div class="form-group">
+          <label class="form-label">Upload a CV</label>
+          <input class="form-input" type="file" id="jm-cv-file" accept=".pdf,.docx" onchange="jmOnCvFileChange(event)">
+          <div id="jm-cv-file-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:12px;color:var(--muted)" id="sg-status">Scans your Watchlist companies' career sites for roles matching the keywords above.</span>
-      <button class="btn btn-purple" id="sg-scan-btn" onclick="scanWatchlist()">🔎 Scan Watchlist</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--muted)" id="jm-status">Add a job description and a CV, then run the analysis.</span>
+      <button class="btn btn-purple" id="jm-analyze-btn" onclick="runJobMatchAnalysis()">✨ Analyze Match</button>
     </div>
   </div>
-  <div id="suggestions-list"></div>
+
+  <style>
+    #jm-dashboard .hero{display:grid;grid-template-columns:150px 1fr;gap:28px;align-items:center;background:var(--navy);border-radius:16px;padding:28px 32px;margin-bottom:28px;color:#fff}
+    #jm-dashboard .ring-wrap{position:relative;width:130px;height:130px}
+    #jm-dashboard .ring-wrap svg{transform:rotate(-90deg)}
+    #jm-dashboard .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    #jm-dashboard .ring-num .n{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:32px;font-weight:700}
+    #jm-dashboard .ring-num .l{font-size:10.5px;letter-spacing:.08em;color:#D8C7D2;text-transform:uppercase}
+    #jm-dashboard .hero h2{font-size:19px;font-weight:600;margin:0 0 8px}
+    #jm-dashboard .hero p{color:#E6D9E1;font-size:13.5px;line-height:1.6;margin:0}
+    #jm-dashboard section{margin-bottom:28px}
+    #jm-dashboard .stitle{font-size:16px;font-weight:700;color:var(--navy);margin:0 0 4px}
+    #jm-dashboard .sdesc{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+    #jm-dashboard .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+    #jm-dashboard .score-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+    #jm-dashboard .score-card:hover{border-color:var(--purple)}
+    #jm-dashboard .score-card.active{border-color:var(--purple);box-shadow:0 0 0 2px var(--purpll)}
+    #jm-dashboard .score-card b{display:block;font-size:13px;color:var(--navy)}
+    #jm-dashboard .score-card small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+    #jm-dashboard .score-card .n{font-size:20px;font-weight:800;color:var(--green);float:right}
+    #jm-dashboard .bar{height:5px;background:var(--border);border-radius:4px;margin-top:10px;overflow:hidden;clear:both}
+    #jm-dashboard .bar i{display:block;height:100%;background:var(--green);border-radius:4px}
+    #jm-dashboard .detail{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-top:14px}
+    #jm-dashboard .detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    #jm-dashboard .gap,#jm-dashboard .fix{padding:14px 16px;border-radius:10px}
+    #jm-dashboard .gap{background:var(--redl,#FFE9EE)}
+    #jm-dashboard .fix{background:var(--mint)}
+    #jm-dashboard .gap b{color:var(--crimson);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+    #jm-dashboard .fix b{color:var(--green);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+    #jm-dashboard ul{padding-left:16px;margin:0;font-size:12.5px;line-height:1.6}
+    #jm-dashboard li{margin:4px 0}
+    #jm-dashboard .chips{display:flex;flex-wrap:wrap;gap:6px}
+    #jm-dashboard .chip{font-size:11.5px;padding:4px 10px;border-radius:20px}
+    #jm-dashboard .chip.matched{background:var(--mint);color:var(--green)}
+    #jm-dashboard .chip.missing{background:#FFE9EE;color:var(--crimson)}
+    #jm-dashboard .rw-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    #jm-dashboard .rw-block{padding:14px 16px;border-radius:10px;font-size:12.5px;line-height:1.6;white-space:pre-wrap}
+    #jm-dashboard .rw-before{background:#FFE9EE;color:#7C1C29}
+    #jm-dashboard .rw-after{background:var(--mint);color:#15694A}
+    #jm-dashboard .rw-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;font-weight:700}
+    #jm-dashboard .checklist{background:#fff;border:1px solid var(--border);border-radius:12px;padding:4px 20px}
+    #jm-dashboard .chk{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+    #jm-dashboard .chk:last-child{border-bottom:none}
+    #jm-dashboard .chk label{flex:1;font-size:13px}
+    #jm-dashboard .impact-pill{font-size:10px;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:10px;flex-shrink:0}
+    #jm-dashboard .impact-pill.high{background:#FFE9EE;color:var(--crimson)}
+    #jm-dashboard .impact-pill.medium{background:var(--amber);color:#8A5A00}
+    #jm-dashboard .impact-pill.low{background:var(--mint);color:var(--green)}
+    @media(max-width:680px){
+      #jm-dashboard .hero{grid-template-columns:1fr;text-align:center}
+      #jm-dashboard .ring-wrap{margin:0 auto}
+      #jm-dashboard .detail-cols,#jm-dashboard .rw-pair{grid-template-columns:1fr}
+    }
+  </style>
+  <div id="jm-results"></div>
 </div>
 
 <!-- ════════════════════════════ APPLICATIONS ════════════════════════════════ -->
@@ -847,7 +953,7 @@
       <label class="form-label">LinkedIn profile URL</label>
       <input class="form-input" id="li-url" placeholder="https://www.linkedin.com/in/…" oninput="debounce(saveLinkedInUrl,600)()">
     </div>
-    <div style="font-size:12px;color:var(--muted)">Job titles/keywords and location are shared with the Job Match tab — <a href="#" onclick="showTab('suggestions');return false;">edit them there</a>.</div>
+    <div style="font-size:12px;color:var(--muted)">Role titles pinned on the <a href="#" onclick="showTab('jobsites');return false;">Job Sites &amp; Companies tab</a> are suggested when picking a target role in Job Match.</div>
   </div>
   <div class="card" id="li-readiness-card" style="margin-bottom:16px">
     <h2 class="card-ttl" style="font-size:14px;margin:0 0 10px">Check recruiter-search readiness</h2>
@@ -1390,9 +1496,8 @@ let state = {
   kpis: { weeklyContacts:0, recruitersContacted:0, coffeChats:0, trainingMins:0 },
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
-  searchCriteria: { keywords: [], location: "", freeText: "", roleTitles: DEFAULT_ROLE_TITLES },
-  suggestions: [],
-  dismissedSuggestions: [],
+  searchCriteria: { location: "", freeText: "", roleTitles: DEFAULT_ROLE_TITLES },
+  jobMatch: { role: "", jobUrl: "", cvName: "", results: null },
   goals: null,
   linkedIn: { url: "" },
 };
@@ -1463,10 +1568,9 @@ async function loadState() {
         state.milestones      = d.milestones      || {};
         state.trainMilestones = d.trainMilestones || {};
         state.weeklyNote      = d.weeklyNote      || "";
-        state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(d.searchCriteria||{}) };
+        state.searchCriteria  = { location: "", freeText: "", ...(d.searchCriteria||{}) };
         if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
-        state.suggestions     = d.suggestions     || [];
-        state.dismissedSuggestions = d.dismissedSuggestions || [];
+        state.jobMatch         = { role: "", jobUrl: "", cvName: "", results: null, ...(d.jobMatch||{}) };
         state.goals           = d.goals           || null;
         state.linkedIn         = { url: "", ...(d.linkedIn||{}) };
         setSyncStatus("cloud");
@@ -1491,10 +1595,9 @@ async function loadState() {
   state.milestones      = lsGet("ms")        || {};
   state.trainMilestones = lsGet("tms")       || {};
   state.weeklyNote      = lsGet("note")      || "";
-  state.searchCriteria  = { keywords: [], location: "", freeText: "", ...(lsGet("criteria")||{}) };
+  state.searchCriteria  = { location: "", freeText: "", ...(lsGet("criteria")||{}) };
   if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
-  state.suggestions     = lsGet("suggestions") || [];
-  state.dismissedSuggestions = lsGet("dismissedSuggestions") || [];
+  state.jobMatch         = { role: "", jobUrl: "", cvName: "", results: null, ...(lsGet("jobMatch")||{}) };
   state.goals            = lsGet("goals") || null;
   state.linkedIn         = { url: "", ...(lsGet("linkedIn")||{}) };
 }
@@ -1506,8 +1609,7 @@ async function saveState() {
   lsSet("searchSetup", state.searchSetup);
   lsSet("ms", state.milestones); lsSet("tms", state.trainMilestones);
   lsSet("note", state.weeklyNote);
-  lsSet("criteria", state.searchCriteria); lsSet("suggestions", state.suggestions);
-  lsSet("dismissedSuggestions", state.dismissedSuggestions);
+  lsSet("criteria", state.searchCriteria); lsSet("jobMatch", state.jobMatch);
   lsSet("goals", state.goals); lsSet("linkedIn", state.linkedIn);
   const f = document.getElementById("saveFlash");
   if (f) { f.classList.add("show"); setTimeout(() => f.classList.remove("show"), 1800); }
@@ -1520,8 +1622,7 @@ async function saveState() {
         checkouts: state.checkouts, searchSetup: state.searchSetup,
         kpis: state.kpis, milestones: state.milestones,
         trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
-        searchCriteria: state.searchCriteria, suggestions: state.suggestions,
-        dismissedSuggestions: state.dismissedSuggestions,
+        searchCriteria: state.searchCriteria, jobMatch: state.jobMatch,
         goals: state.goals, linkedIn: state.linkedIn,
         lastSaved: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -3168,18 +3269,16 @@ const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfun
 const SCAN_JOBSITES_FUNCTION_URL = "https://scanjobsites-516931338723.europe-north2.run.app";
 
 function loadCriteriaInputs() {
-  document.getElementById("sg-keywords").value = (state.searchCriteria.keywords||[]).join(", ");
   document.getElementById("sg-location").value = state.searchCriteria.location||"";
   document.getElementById("jsc-freetext").value = state.searchCriteria.freeText||"";
 }
 function saveCriteria() {
-  const keywords = document.getElementById("sg-keywords").value.split(",").map(s=>s.trim()).filter(Boolean);
   const location = document.getElementById("sg-location").value.trim();
   const freeText = document.getElementById("jsc-freetext").value;
   // Spread the existing object rather than replacing it outright — this field
   // also carries roleTitles and qualifierOptions, which typing here or
   // clicking a criteria chip must not silently wipe out.
-  state.searchCriteria = { ...(state.searchCriteria||{}), keywords, location, freeText };
+  state.searchCriteria = { ...(state.searchCriteria||{}), location, freeText };
   saveState();
 }
 // Job Sites & Companies — Search Criteria quick-add tags. Each row (Type of
@@ -3723,85 +3822,267 @@ async function runSingleCompanySearch(id, loadMore) {
   }
 }
 
-async function scanWatchlist() {
-  const companies = state.watchlist.filter(w=>w.careerSite);
-  if (!companies.length) {
-    document.getElementById("sg-status").textContent = "Add companies with a career site link to your Watchlist first.";
-    return;
+// ═══════════════════════════ JOB MATCH ═════════════════════════════════════════
+const FETCH_JOB_DESCRIPTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/fetchJobDescription";
+const MATCH_JOB_TO_CV_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/matchJobToCV";
+
+let jmCvFileHandles = {};  // filename -> FileSystemFileHandle, from Connect CV folder (session-only, Chrome/Edge)
+let jmCvText = "";         // extracted text of the currently-selected/uploaded CV
+let jmCvSourceName = "";
+let jmJobFileText = "";    // extracted text if a job description file was uploaded (takes precedence over the URL field)
+
+function initJobMatchTab() {
+  document.getElementById("jm-role-options").innerHTML =
+    (state.searchCriteria.roleTitles||[]).map(t=>`<option value="${escHtml(t)}">`).join("");
+  document.getElementById("jm-role").value = state.jobMatch?.role || "";
+  document.getElementById("jm-job-url").value = state.jobMatch?.jobUrl || "";
+  if (state.jobMatch?.cvName) {
+    document.getElementById("jm-cv-file-status").textContent = `Last analysis used: ${state.jobMatch.cvName} — re-select or re-upload it to run a new analysis.`;
   }
-  const btn = document.getElementById("sg-scan-btn");
-  btn.disabled = true; btn.textContent = "Scanning…";
-  document.getElementById("sg-status").textContent = `Scanning ${companies.length} compan${companies.length===1?"y":"ies"}…`;
-  try {
-    const res = await fetch(SCAN_FUNCTION_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companies, criteria: state.searchCriteria }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const dismissed = new Set(state.dismissedSuggestions);
-    const found = [];
-    for (const r of data.results||[]) {
-      if (r.error) continue;
-      for (const job of r.jobs||[]) {
-        const key = job.url || `${r.company}::${job.title}`;
-        if (dismissed.has(key)) continue;
-        found.push({ key, company: r.company, title: job.title, location: job.location||"", url: job.url||"" });
-      }
+  if (state.jobMatch?.results) renderJobMatchResults(state.jobMatch.results);
+}
+
+// Text extraction — dispatches by file extension. pdf.js and mammoth.js are
+// loaded from CDN (see the <script> tags near the end of <body>).
+async function jmExtractText(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".txt")) return await file.text();
+  const buf = await file.arrayBuffer();
+  if (name.endsWith(".pdf")) {
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it=>it.str).join(" ") + "\n";
     }
-    state.suggestions = found;
-    saveState();
-    const errors = (data.results||[]).filter(r=>r.error);
-    document.getElementById("sg-status").textContent =
-      `Last scanned ${new Date().toLocaleString("en-GB")} · ${found.length} match${found.length===1?"":"es"} found` +
-      (errors.length?` · ${errors.length} site${errors.length===1?"":"s"} failed to load`:"");
-    renderSuggestions();
+    return text;
+  }
+  if (name.endsWith(".docx")) {
+    const result = await mammoth.extractRawText({ arrayBuffer: buf });
+    return result.value;
+  }
+  throw new Error("Unsupported file type — use .pdf, .docx, or .txt");
+}
+
+// ── Job description: link or upload ──────────────────────────────────────────
+function jmClearJobFile() {
+  jmJobFileText = "";
+  document.getElementById("jm-job-file").value = "";
+  document.getElementById("jm-job-file-status").textContent = "";
+}
+async function jmOnJobFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById("jm-job-url").value = "";
+  const statusEl = document.getElementById("jm-job-file-status");
+  statusEl.textContent = "Reading…";
+  try {
+    jmJobFileText = await jmExtractText(file);
+    statusEl.textContent = `✓ ${file.name} (${jmJobFileText.trim().length.toLocaleString()} characters)`;
   } catch (e) {
-    document.getElementById("sg-status").textContent = `Scan failed: ${e.message}. Is the Cloud Function deployed?`;
-  } finally {
-    btn.disabled = false; btn.textContent = "🔎 Scan Watchlist";
+    jmJobFileText = "";
+    statusEl.textContent = `Couldn't read this file: ${e.message}`;
   }
 }
-function renderSuggestions() {
-  const list = document.getElementById("suggestions-list");
-  if (!state.suggestions.length) {
-    list.innerHTML = `<div class="card"><div class="empty-state">No suggestions yet. Set your keywords above and click Scan Watchlist.</div></div>`;
+
+// ── CV: connect a local folder, pick from it, or upload one file ────────────
+async function jmConnectCvFolder() {
+  const statusEl = document.getElementById("jm-cv-folder-status");
+  if (!window.showDirectoryPicker) {
+    statusEl.textContent = "Your browser doesn't support folder access (Chrome/Edge only) — use upload instead.";
     return;
   }
-  list.innerHTML = state.suggestions.map(s => `
-    <div class="item-card">
-      <div class="item-row">
-        <div style="flex:1">
-          <div class="item-badges"><span class="item-name">${escHtml(s.title)}</span></div>
-          <div class="item-meta">
-            <span>${escHtml(s.company)}</span>
-            ${s.location?`<span>📍 ${escHtml(s.location)}</span>`:""}
-            ${s.url?`<span><a href="${escHtml(s.url)}" target="_blank" rel="noopener">🔗 View posting</a></span>`:""}
-          </div>
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    jmCvFileHandles = {};
+    for await (const [name, handle] of dirHandle.entries()) {
+      if (handle.kind === "file" && /\.(pdf|docx|txt)$/i.test(name)) jmCvFileHandles[name] = handle;
+    }
+    const names = Object.keys(jmCvFileHandles).sort();
+    const select = document.getElementById("jm-cv-select");
+    if (!names.length) {
+      select.innerHTML = `<option value="">No .pdf/.docx/.txt files found in that folder</option>`;
+      statusEl.textContent = `Connected "${dirHandle.name}" — no CV files found in it.`;
+      return;
+    }
+    select.innerHTML = `<option value="">Choose a CV…</option>` + names.map(n=>`<option value="${escHtml(n)}">${escHtml(n)}</option>`).join("");
+    statusEl.textContent = `Connected "${dirHandle.name}" — ${names.length} file${names.length===1?"":"s"} found.`;
+  } catch (e) {
+    if (e.name !== "AbortError") statusEl.textContent = `Couldn't open that folder: ${e.message}`;
+  }
+}
+async function jmOnCvSelectChange() {
+  const name = document.getElementById("jm-cv-select").value;
+  if (!name) return;
+  document.getElementById("jm-cv-file").value = "";
+  const fileStatusEl = document.getElementById("jm-cv-file-status");
+  fileStatusEl.textContent = "";
+  const handle = jmCvFileHandles[name];
+  if (!handle) return;
+  const folderStatusEl = document.getElementById("jm-cv-folder-status");
+  try {
+    const file = await handle.getFile();
+    jmCvText = await jmExtractText(file);
+    jmCvSourceName = name;
+    folderStatusEl.textContent = `✓ Using "${name}" (${jmCvText.trim().length.toLocaleString()} characters)`;
+  } catch (e) {
+    jmCvText = ""; jmCvSourceName = "";
+    folderStatusEl.textContent = `Couldn't read this file: ${e.message}`;
+  }
+}
+async function jmOnCvFileChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById("jm-cv-select").value = "";
+  const statusEl = document.getElementById("jm-cv-file-status");
+  statusEl.textContent = "Reading…";
+  try {
+    jmCvText = await jmExtractText(file);
+    jmCvSourceName = file.name;
+    statusEl.textContent = `✓ ${file.name} (${jmCvText.trim().length.toLocaleString()} characters)`;
+  } catch (e) {
+    jmCvText = ""; jmCvSourceName = "";
+    statusEl.textContent = `Couldn't read this file: ${e.message}`;
+  }
+}
+
+// ── Run the analysis ─────────────────────────────────────────────────────────
+async function runJobMatchAnalysis() {
+  const role = document.getElementById("jm-role").value.trim();
+  const jobUrl = document.getElementById("jm-job-url").value.trim();
+  const statusEl = document.getElementById("jm-status");
+  const btn = document.getElementById("jm-analyze-btn");
+
+  if (!jmJobFileText && !jobUrl) { statusEl.textContent = "Add a job posting link or upload a job description first."; return; }
+  if (!jmCvText) { statusEl.textContent = "Select or upload a CV first."; return; }
+
+  btn.disabled = true; btn.textContent = "Analyzing…";
+  try {
+    let jobDescription = jmJobFileText;
+    if (!jobDescription) {
+      statusEl.textContent = "Fetching job posting…";
+      const jdRes = await fetch(FETCH_JOB_DESCRIPTION_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: jobUrl }),
+      });
+      const jdData = await jdRes.json();
+      if (!jdRes.ok) throw new Error(jdData.error || `HTTP ${jdRes.status}`);
+      jobDescription = jdData.text;
+    }
+    statusEl.textContent = "Analyzing match with AI…";
+    const res = await fetch(MATCH_JOB_TO_CV_URL, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetRole: role, jobDescription, cvText: jmCvText }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    state.jobMatch = { role, jobUrl, cvName: jmCvSourceName, results: data };
+    saveState();
+    renderJobMatchResults(data);
+    statusEl.textContent = `Analysis complete — ${data.overallScore}/100 match.`;
+  } catch (e) {
+    statusEl.textContent = `Analysis failed: ${e.message}`;
+  } finally {
+    btn.disabled = false; btn.textContent = "✨ Analyze Match";
+  }
+}
+
+// ── Render results, LinkedIn-tab-style: hero score, section cards with a
+// gap/fix detail panel, matched/missing keyword chips, before/after rewrite
+// suggestions, and a ranked checklist. ───────────────────────────────────────
+let jmActiveSection = null;
+function renderJobMatchResults(data) {
+  const el = document.getElementById("jm-results");
+  const impactColor = { high:"var(--green)", medium:"var(--amber-d,#8A5A00)", low:"var(--muted)" };
+  const scoreColor = (s) => s>=7 ? "var(--green)" : s>=4 ? "#C97D3C" : "var(--crimson)";
+  jmActiveSection = data.sections?.[0]?.id || null;
+
+  el.innerHTML = `
+    <div id="jm-dashboard">
+      <div class="hero">
+        <div class="ring-wrap">
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12"/>
+            <circle id="jm-heroRing" cx="65" cy="65" r="55" fill="none" stroke="#C97D3C" stroke-width="12" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"/>
+          </svg>
+          <div class="ring-num"><span class="n">${data.overallScore}</span><span class="l">/ 100</span></div>
         </div>
-        <div class="item-actions">
-          <button class="btn btn-primary btn-sm" onclick="addSuggestionToApp('${s.key.replace(/'/g,"\\'")}')">+ Add to Applications</button>
-          <button class="btn btn-danger btn-sm" onclick="dismissSuggestion('${s.key.replace(/'/g,"\\'")}')">✕</button>
+        <div>
+          <h2>Match for ${escHtml(state.jobMatch?.role || "this role")}</h2>
+          <p>${escHtml(data.readinessSummary||"")}</p>
         </div>
       </div>
-    </div>
-  `).join("");
-}
-function dismissSuggestion(key) {
-  state.suggestions = state.suggestions.filter(s=>s.key!==key);
-  state.dismissedSuggestions = [...state.dismissedSuggestions, key];
-  saveState(); renderSuggestions();
-}
-function addSuggestionToApp(key) {
-  const s = state.suggestions.find(x=>x.key===key);
-  if (!s) return;
-  dismissSuggestion(key);
-  showTab("applications");
-  openAppModal();
-  document.getElementById("af-company").value = s.company;
-  document.getElementById("af-role").value = s.title;
-  document.getElementById("af-careersite").value = s.url;
+
+      <section>
+        <p class="stitle">Section scores</p>
+        <p class="sdesc">Click a card to see the specific gaps and fixes behind the score.</p>
+        <div class="cards" id="jm-cardGrid"></div>
+        <div class="detail" id="jm-detailPanel"></div>
+      </section>
+
+      <section>
+        <p class="stitle">Keyword coverage</p>
+        <p class="sdesc">Important terms from the job description, and whether your CV covers them.</p>
+        <div class="detail">
+          <div class="chips" style="margin-bottom:10px">${(data.matchedKeywords||[]).map(k=>`<span class="chip matched">${escHtml(k)}</span>`).join("")||`<span style="font-size:12px;color:var(--muted)">None found</span>`}</div>
+          <div class="chips">${(data.missingKeywords||[]).map(k=>`<span class="chip missing">${escHtml(k)}</span>`).join("")}</div>
+        </div>
+      </section>
+
+      <section>
+        <p class="stitle">Tailoring suggestions</p>
+        <p class="sdesc">Drop-in rewrites to better mirror the job description's language.</p>
+        ${(data.tailoringSuggestions||[]).map(s=>`
+          <div class="rw-pair">
+            <div class="rw-block rw-before"><span class="rw-label">${escHtml(s.section)} — current</span>${escHtml(s.before)}</div>
+            <div class="rw-block rw-after"><span class="rw-label">${escHtml(s.section)} — suggested</span>${escHtml(s.after)}</div>
+          </div>`).join("") || `<div class="detail" style="font-size:12.5px;color:var(--muted)">No suggestions.</div>`}
+      </section>
+
+      <section>
+        <p class="stitle">Quick-win checklist</p>
+        <p class="sdesc">Ordered by impact on your match for this role.</p>
+        <div class="checklist">
+          ${(data.checklist||[]).map(c=>`
+            <div class="chk">
+              <label>${escHtml(c.label)}</label>
+              <span class="impact-pill ${c.impact}">${escHtml(c.impact)}</span>
+            </div>`).join("")}
+        </div>
+      </section>
+    </div>`;
+
+  const cardGrid = document.getElementById("jm-cardGrid");
+  function renderCards() {
+    cardGrid.innerHTML = (data.sections||[]).map(s => `
+      <div class="score-card ${s.id===jmActiveSection?"active":""}" data-id="${s.id}">
+        <span class="n" style="color:${scoreColor(s.score)}">${s.score}</span>
+        <b>${escHtml(s.name)}</b>
+        <small>${escHtml(s.tag)}</small>
+        <div class="bar"><i style="width:${s.score*10}%;background:${scoreColor(s.score)}"></i></div>
+      </div>`).join("");
+    cardGrid.querySelectorAll(".score-card").forEach(c=>{
+      c.addEventListener("click", ()=>{ jmActiveSection = c.dataset.id; renderCards(); renderDetail(); });
+    });
+  }
+  function renderDetail() {
+    const s = (data.sections||[]).find(x=>x.id===jmActiveSection);
+    const panel = document.getElementById("jm-detailPanel");
+    if (!s) { panel.innerHTML = ""; return; }
+    panel.innerHTML = `
+      <div class="detail-cols">
+        <div class="gap"><b>Gaps</b><ul>${s.gaps.map(g=>`<li>${escHtml(g)}</li>`).join("")||"<li>None</li>"}</ul></div>
+        <div class="fix"><b>Fixes</b><ul>${s.fixes.map(f=>`<li>${escHtml(f)}</li>`).join("")||"<li>None</li>"}</ul></div>
+      </div>`;
+  }
+  renderCards();
+  renderDetail();
+
+  const circumference = 345.6;
+  const offset = circumference - (Math.max(0,Math.min(100,data.overallScore))/100)*circumference;
+  document.getElementById("jm-heroRing").style.strokeDashoffset = offset;
 }
 
 // ═══════════════════════════ KPI / MILESTONE ═══════════════════════════════════
@@ -4026,7 +4307,7 @@ async function renderAll() {
   loadLinkedInInputs();
   renderDashboard();
   renderWatchlist();
-  renderSuggestions();
+  initJobMatchTab();
   renderApplications();
   renderJobWatchlist();
   renderSearchSetupTab();

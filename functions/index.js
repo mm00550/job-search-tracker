@@ -1,5 +1,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const cheerio = require("cheerio");
+const Anthropic = require("@anthropic-ai/sdk");
+const { zodOutputFormat } = require("@anthropic-ai/sdk/helpers/zod");
+const { z } = require("zod");
 
 const UA = "Mozilla/5.0 (compatible; JobScanner/1.0; +https://job-search-tracker-ddace.web.app)";
 
@@ -351,4 +354,97 @@ exports.scanJobSites = onRequest({ cors: true, timeoutSeconds: 120, region: "us-
   }
 
   res.json({ results, scannedAt: new Date().toISOString() });
+});
+
+// Fetches a single job-posting page server-side (avoids the CORS wall the
+// browser would hit calling the job site directly) and reduces it to plain
+// visible text for the AI matching function below. Deliberately just strips
+// markup rather than trying to isolate "the job description" specifically —
+// nav/footer noise mostly doesn't hurt the model's read, and heuristics to
+// remove it reliably across arbitrary career sites aren't worth the fragility.
+const JOB_DESCRIPTION_TEXT_CAP = 15000;
+exports.fetchJobDescription = onRequest({ cors: true, timeoutSeconds: 60, region: "us-central1" }, async (req, res) => {
+  const { url } = req.body || {};
+  if (!url) { res.status(400).json({ error: "A job posting URL is required." }); return; }
+  try {
+    const r = await fetch(url, { headers: { "User-Agent": UA } });
+    if (!r.ok) throw new Error(`Fetch failed: HTTP ${r.status}`);
+    const html = await r.text();
+    const $ = cheerio.load(html);
+    $("script, style, nav, header, footer, noscript, svg").remove();
+    const text = $("body").text().replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim();
+    if (!text) throw new Error("No readable text found on that page.");
+    res.json({ text: text.slice(0, JOB_DESCRIPTION_TEXT_CAP) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// AI-based job-description-vs-CV match analysis, shaped like the LinkedIn
+// dashboard's own score/sections/gaps-fixes format so the two features read
+// consistently in the UI. Requires an ANTHROPIC_API_KEY secret — until one is
+// configured (Console: this function's Edit page -> Variables & Secrets, or
+// `firebase functions:secrets:set ANTHROPIC_API_KEY` via CLI), this returns a
+// clear "not configured" error instead of failing opaquely.
+const MatchSectionSchema = z.object({
+  id: z.string().describe("short slug, e.g. 'skills', 'experience', 'keywords', 'seniority'"),
+  name: z.string().describe("display name, e.g. 'Skills Match'"),
+  tag: z.string().describe("short descriptor shown under the name, e.g. 'tools & technical skills'"),
+  score: z.number().describe("0-10"),
+  gaps: z.array(z.string()),
+  fixes: z.array(z.string()),
+});
+const TailoringSuggestionSchema = z.object({
+  section: z.string().describe("which part of the CV this applies to, e.g. 'Summary' or 'Most recent role'"),
+  before: z.string().describe("the relevant current CV wording, or '(not currently present)' if it's missing entirely"),
+  after: z.string().describe("a concrete rewritten version that better mirrors the job description's language"),
+});
+const ChecklistItemSchema = z.object({
+  label: z.string(),
+  impact: z.enum(["high", "medium", "low"]),
+});
+const MatchAnalysisSchema = z.object({
+  overallScore: z.number().describe("0-100 overall match score"),
+  readinessSummary: z.string().describe("2-3 sentence honest summary of how strong this match is and why"),
+  sections: z.array(MatchSectionSchema).describe("4-6 sections, e.g. Skills, Experience, Keywords, Seniority Fit"),
+  matchedKeywords: z.array(z.string()).describe("important terms/skills from the job description that the CV already covers"),
+  missingKeywords: z.array(z.string()).describe("important terms/skills from the job description the CV does not cover"),
+  tailoringSuggestions: z.array(TailoringSuggestionSchema).describe("2-4 concrete before/after rewrites"),
+  checklist: z.array(ChecklistItemSchema).describe("4-6 ranked action items"),
+});
+
+const MATCH_TEXT_CAP = 20000; // per input — keeps the request well within budget on very long CVs/postings
+
+exports.matchJobToCV = onRequest({ cors: true, timeoutSeconds: 120, region: "us-central1", secrets: ["ANTHROPIC_API_KEY"] }, async (req, res) => {
+  const { targetRole = "", jobDescription = "", cvText = "" } = req.body || {};
+  if (!jobDescription.trim() || !cvText.trim()) {
+    res.status(400).json({ error: "Both a job description and a CV are required." });
+    return;
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    res.status(500).json({ error: "AI matching isn't configured yet — add an ANTHROPIC_API_KEY secret to this function." });
+    return;
+  }
+  try {
+    const client = new Anthropic();
+    const response = await client.messages.parse({
+      model: "claude-opus-5",
+      max_tokens: 8000,
+      system: "You are an expert technical recruiter and CV coach. Compare the candidate's CV against the job description and target role, and produce an honest, specific, actionable match analysis. Be concrete — quote real phrases from the CV and job description rather than generic advice. If the CV is a strong match, say so; don't manufacture gaps that aren't there.",
+      messages: [{
+        role: "user",
+        content: `Target role: ${targetRole || "(not specified)"}\n\n` +
+          `--- JOB DESCRIPTION ---\n${jobDescription.slice(0, MATCH_TEXT_CAP)}\n\n` +
+          `--- CANDIDATE'S CV ---\n${cvText.slice(0, MATCH_TEXT_CAP)}`,
+      }],
+      output_config: { format: zodOutputFormat(MatchAnalysisSchema) },
+    });
+    if (!response.parsed_output) {
+      res.status(502).json({ error: "The AI response could not be parsed. Try again." });
+      return;
+    }
+    res.json(response.parsed_output);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
