@@ -50,8 +50,8 @@
   .tabs { display: flex; gap: 4px; margin-top: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
   .tab-btn { padding: 8px 16px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); flex-shrink: 0; white-space: nowrap; }
   .tab-btn.active { background: var(--white); color: var(--navy); }
-  .tab-btn.tab-amber { background: rgba(241,109,7,.25); color: #FFDCB8; }
-  .tab-btn.tab-amber.active { background: var(--orangeB); color: #fff; }
+  .tab-btn.tab-amber { background: rgba(255,192,0,.25); color: #FFE9AD; }
+  .tab-btn.tab-amber.active { background: #FFC000; color: var(--navy); }
   .save-flash { font-size: 12px; background: rgba(255,255,255,.2); border-radius: 8px; padding: 4px 12px; color: #fff; font-weight: 600; opacity: 0; transition: opacity .3s; }
   .save-flash.show { opacity: 1; }
 
@@ -311,9 +311,9 @@
     <button class="tab-btn" onclick="showTab('linkedin')">LinkedIn</button>
     <button class="tab-btn tab-amber" onclick="showTab('network')">Network</button>
     <button class="tab-btn tab-amber" onclick="showTab('training')">Training</button>
-    <button class="tab-btn" onclick="showTab('checkout')">Notes</button>
+    <button class="tab-btn tab-amber" onclick="showTab('checkout')">Notes</button>
     <button class="tab-btn tab-amber" onclick="showTab('strategy')">Strategy</button>
-    <button class="tab-btn tab-amber" onclick="showTab('brokers')">Konsultmäklare</button>
+    <button class="tab-btn tab-amber" onclick="showTab('brokers')">Consultancies</button>
   </div>
 </div>
 
@@ -781,7 +781,7 @@
     state.watchlist.push({
       id: String(Date.now()), company, industry,
       careerSite: website,
-      description: 'Konsultmäklare — added from Konsultmäklare tab',
+      description: 'Konsultmäklare — added from Consultancies tab',
       shared: false,
     });
     saveState();
