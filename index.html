@@ -561,7 +561,19 @@
       #jm-dashboard .ring-wrap{margin:0 auto}
       #jm-dashboard .detail-cols,#jm-dashboard .rw-pair{grid-template-columns:1fr}
     }
+    @media print{
+      body *{visibility:hidden}
+      #jm-dashboard,#jm-dashboard *{visibility:visible}
+      #jm-dashboard{position:absolute;left:0;top:0;width:100%}
+      #jm-dashboard .jm-no-print{display:none!important}
+      #jm-dashboard .score-card{cursor:default}
+      #jm-dashboard .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    }
   </style>
+  <div id="jm-history-wrap" class="card" style="margin-bottom:16px;display:none">
+    <label class="form-label" for="jm-history-select">📁 Previous matches</label>
+    <select class="form-input" id="jm-history-select" onchange="jmSelectHistoryEntry(this.value)"></select>
+  </div>
   <div id="jm-results"></div>
 </div>
 
@@ -1497,7 +1509,8 @@ let state = {
   milestones: {}, trainMilestones: {},
   weeklyNote: "",
   searchCriteria: { location: "", freeText: "", roleTitles: DEFAULT_ROLE_TITLES },
-  jobMatch: { role: "", jobUrl: "", cvName: "", results: null },
+  jobMatch: { role: "", jobUrl: "" },
+  jobMatchHistory: [], // [{ id, timestamp, role, cvName, jobUrl, results }], newest first, capped at 20
   goals: null,
   linkedIn: { url: "" },
 };
@@ -1570,7 +1583,9 @@ async function loadState() {
         state.weeklyNote      = d.weeklyNote      || "";
         state.searchCriteria  = { location: "", freeText: "", ...(d.searchCriteria||{}) };
         if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
-        state.jobMatch         = { role: "", jobUrl: "", cvName: "", results: null, ...(d.jobMatch||{}) };
+        state.jobMatch         = { role: d.jobMatch?.role||"", jobUrl: d.jobMatch?.jobUrl||"" };
+        state.jobMatchHistory  = d.jobMatchHistory || [];
+        migrateLegacyJobMatch(d.jobMatch);
         state.goals           = d.goals           || null;
         state.linkedIn         = { url: "", ...(d.linkedIn||{}) };
         setSyncStatus("cloud");
@@ -1597,7 +1612,10 @@ async function loadState() {
   state.weeklyNote      = lsGet("note")      || "";
   state.searchCriteria  = { location: "", freeText: "", ...(lsGet("criteria")||{}) };
   if (state.searchCriteria.roleTitles === undefined) state.searchCriteria.roleTitles = DEFAULT_ROLE_TITLES;
-  state.jobMatch         = { role: "", jobUrl: "", cvName: "", results: null, ...(lsGet("jobMatch")||{}) };
+  const lsJobMatch = lsGet("jobMatch");
+  state.jobMatch         = { role: lsJobMatch?.role||"", jobUrl: lsJobMatch?.jobUrl||"" };
+  state.jobMatchHistory  = lsGet("jobMatchHistory") || [];
+  migrateLegacyJobMatch(lsJobMatch);
   state.goals            = lsGet("goals") || null;
   state.linkedIn         = { url: "", ...(lsGet("linkedIn")||{}) };
 }
@@ -1610,6 +1628,7 @@ async function saveState() {
   lsSet("ms", state.milestones); lsSet("tms", state.trainMilestones);
   lsSet("note", state.weeklyNote);
   lsSet("criteria", state.searchCriteria); lsSet("jobMatch", state.jobMatch);
+  lsSet("jobMatchHistory", state.jobMatchHistory);
   lsSet("goals", state.goals); lsSet("linkedIn", state.linkedIn);
   const f = document.getElementById("saveFlash");
   if (f) { f.classList.add("show"); setTimeout(() => f.classList.remove("show"), 1800); }
@@ -1623,6 +1642,7 @@ async function saveState() {
         kpis: state.kpis, milestones: state.milestones,
         trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
         searchCriteria: state.searchCriteria, jobMatch: state.jobMatch,
+        jobMatchHistory: state.jobMatchHistory,
         goals: state.goals, linkedIn: state.linkedIn,
         lastSaved: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -3833,16 +3853,57 @@ let jmCvFileHandles = {};  // filename -> FileSystemFileHandle, from Connect CV 
 let jmCvText = "";         // extracted text of the currently-selected/uploaded CV
 let jmCvSourceName = "";
 let jmJobFileText = "";    // extracted text if a job description file was uploaded (takes precedence over the URL field)
+let jmCurrentEntry = null; // the history entry currently shown in #jm-results (drives the PDF filename/header)
+
+// One-time migration: an earlier version stored a single result directly on
+// state.jobMatch (role/jobUrl/cvName/results) instead of a history list.
+function migrateLegacyJobMatch(legacy) {
+  if (legacy && legacy.results && (!state.jobMatchHistory || !state.jobMatchHistory.length)) {
+    state.jobMatchHistory = [{
+      id: String(Date.now()), timestamp: new Date().toISOString(),
+      role: legacy.role||"", cvName: legacy.cvName||"", jobUrl: legacy.jobUrl||"",
+      results: legacy.results,
+    }];
+  }
+}
 
 function initJobMatchTab() {
   document.getElementById("jm-role-options").innerHTML =
     (state.searchCriteria.roleTitles||[]).map(t=>`<option value="${escHtml(t)}">`).join("");
   document.getElementById("jm-role").value = state.jobMatch?.role || "";
   document.getElementById("jm-job-url").value = state.jobMatch?.jobUrl || "";
-  if (state.jobMatch?.cvName) {
-    document.getElementById("jm-cv-file-status").textContent = `Last analysis used: ${state.jobMatch.cvName} — re-select or re-upload it to run a new analysis.`;
-  }
-  if (state.jobMatch?.results) renderJobMatchResults(state.jobMatch.results);
+  renderJobMatchHistorySelect();
+  const hist = state.jobMatchHistory||[];
+  if (hist.length) renderJobMatchResults(hist[0].results, hist[0]);
+}
+
+function renderJobMatchHistorySelect() {
+  const wrap = document.getElementById("jm-history-wrap");
+  const hist = state.jobMatchHistory||[];
+  if (!hist.length) { wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  const select = document.getElementById("jm-history-select");
+  const current = jmCurrentEntry?.id || hist[0].id;
+  select.innerHTML = hist.map(h => {
+    const d = new Date(h.timestamp);
+    const label = `${h.role || "Untitled role"} — ${d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}${h.cvName?` (${h.cvName})`:""}`;
+    return `<option value="${h.id}" ${h.id===current?"selected":""}>${escHtml(label)}</option>`;
+  }).join("");
+}
+function jmSelectHistoryEntry(id) {
+  const entry = (state.jobMatchHistory||[]).find(h=>h.id===id);
+  if (entry) renderJobMatchResults(entry.results, entry);
+}
+function jmDeleteHistoryEntry() {
+  if (!jmCurrentEntry) return;
+  if (!confirm("Remove this saved match analysis? This can't be undone.")) return;
+  state.jobMatchHistory = (state.jobMatchHistory||[]).filter(h=>h.id!==jmCurrentEntry.id);
+  saveState();
+  jmCurrentEntry = null;
+  renderJobMatchHistorySelect();
+  const hist = state.jobMatchHistory||[];
+  document.getElementById("jm-results").innerHTML = "";
+  if (hist.length) renderJobMatchResults(hist[0].results, hist[0]);
 }
 
 // Text extraction — dispatches by file extension. pdf.js and mammoth.js are
@@ -3981,9 +4042,16 @@ async function runJobMatchAnalysis() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    state.jobMatch = { role, jobUrl, cvName: jmCvSourceName, results: data };
+    const entry = {
+      id: String(Date.now()) + Math.random().toString(36).slice(2,7),
+      timestamp: new Date().toISOString(),
+      role, cvName: jmCvSourceName, jobUrl, results: data,
+    };
+    state.jobMatch = { role, jobUrl };
+    state.jobMatchHistory = [entry, ...(state.jobMatchHistory||[])].slice(0, 20); // reasonable cap on saved history
     saveState();
-    renderJobMatchResults(data);
+    renderJobMatchHistorySelect();
+    renderJobMatchResults(data, entry);
     statusEl.textContent = `Analysis complete — ${data.overallScore}/100 match.`;
   } catch (e) {
     statusEl.textContent = `Analysis failed: ${e.message}`;
@@ -3996,14 +4064,23 @@ async function runJobMatchAnalysis() {
 // gap/fix detail panel, matched/missing keyword chips, before/after rewrite
 // suggestions, and a ranked checklist. ───────────────────────────────────────
 let jmActiveSection = null;
-function renderJobMatchResults(data) {
+function renderJobMatchResults(data, entry) {
+  jmCurrentEntry = entry || null;
   const el = document.getElementById("jm-results");
   const impactColor = { high:"var(--green)", medium:"var(--amber-d,#8A5A00)", low:"var(--muted)" };
   const scoreColor = (s) => s>=7 ? "var(--green)" : s>=4 ? "#C97D3C" : "var(--crimson)";
   jmActiveSection = data.sections?.[0]?.id || null;
 
+  const role = entry?.role || state.jobMatch?.role || "this role";
+  const dateStr = entry?.timestamp ? new Date(entry.timestamp).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  const metaLine = [entry?.cvName ? `CV: ${entry.cvName}` : null, `Generated ${dateStr}`].filter(Boolean).join(" · ");
+
   el.innerHTML = `
     <div id="jm-dashboard">
+      <div class="jm-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+        <button class="btn btn-sky btn-sm" onclick="jmDownloadPdf()">⬇️ Download PDF</button>
+        ${entry?.id?`<button class="btn btn-danger btn-sm" onclick="jmDeleteHistoryEntry()">✕ Delete this match</button>`:""}
+      </div>
       <div class="hero">
         <div class="ring-wrap">
           <svg width="130" height="130" viewBox="0 0 130 130">
@@ -4013,7 +4090,8 @@ function renderJobMatchResults(data) {
           <div class="ring-num"><span class="n">${data.overallScore}</span><span class="l">/ 100</span></div>
         </div>
         <div>
-          <h2>Match for ${escHtml(state.jobMatch?.role || "this role")}</h2>
+          <h2>Match for ${escHtml(role)}</h2>
+          <p style="font-size:11.5px;color:#D8C7D2;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px">${escHtml(metaLine)}</p>
           <p>${escHtml(data.readinessSummary||"")}</p>
         </div>
       </div>
@@ -4086,6 +4164,22 @@ function renderJobMatchResults(data) {
   const circumference = 345.6;
   const offset = circumference - (Math.max(0,Math.min(100,data.overallScore))/100)*circumference;
   document.getElementById("jm-heroRing").style.strokeDashoffset = offset;
+}
+
+// Uses the browser's native print-to-PDF rather than a client-side PDF
+// library — produces a real, text-selectable PDF with zero new dependencies.
+// Print CSS (see the @media print block near the top of <head>) hides
+// everything except #jm-dashboard. Setting document.title first means the
+// browser's "Save as PDF" dialog defaults to a sensible filename.
+function jmDownloadPdf() {
+  if (!document.getElementById("jm-dashboard")) return;
+  const prevTitle = document.title;
+  const roleSlug = (jmCurrentEntry?.role || "job-match").replace(/[\\/:*?"<>|]/g, "").trim() || "job-match";
+  const dateSlug = jmCurrentEntry?.timestamp ? new Date(jmCurrentEntry.timestamp).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  document.title = `Job Match - ${roleSlug} - ${dateSlug}`;
+  const restore = () => { document.title = prevTitle; window.removeEventListener("afterprint", restore); };
+  window.addEventListener("afterprint", restore);
+  window.print();
 }
 
 // ═══════════════════════════ KPI / MILESTONE ═══════════════════════════════════
