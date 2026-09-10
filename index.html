@@ -569,10 +569,16 @@
       #jm-dashboard .score-card{cursor:default}
       #jm-dashboard .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
+    #jm-history-wrap .jm-history-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid transparent}
+    #jm-history-wrap .jm-history-row:hover{background:var(--off)}
+    #jm-history-wrap .jm-history-row.active{background:var(--sky);border-color:var(--purple);font-weight:600}
+    #jm-history-wrap .jm-history-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #jm-history-wrap .jm-history-delete{color:var(--crimson);font-weight:800;padding:2px 6px;flex-shrink:0}
+    #jm-history-wrap .jm-history-delete:hover{background:var(--red);border-radius:6px}
   </style>
   <div id="jm-history-wrap" class="card" style="margin-bottom:16px;display:none">
-    <label class="form-label" for="jm-history-select">📁 Previous matches</label>
-    <select class="form-input" id="jm-history-select" onchange="jmSelectHistoryEntry(this.value)"></select>
+    <div class="form-label" style="margin-bottom:8px">📁 Previous matches</div>
+    <div id="jm-history-list"></div>
   </div>
   <div id="jm-results"></div>
 </div>
@@ -3882,28 +3888,34 @@ function renderJobMatchHistorySelect() {
   const hist = state.jobMatchHistory||[];
   if (!hist.length) { wrap.style.display = "none"; return; }
   wrap.style.display = "";
-  const select = document.getElementById("jm-history-select");
+  const list = document.getElementById("jm-history-list");
   const current = jmCurrentEntry?.id || hist[0].id;
-  select.innerHTML = hist.map(h => {
+  list.innerHTML = hist.map(h => {
     const d = new Date(h.timestamp);
     const label = `${h.role || "Untitled role"} — ${d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}${h.cvName?` (${h.cvName})`:""}`;
-    return `<option value="${h.id}" ${h.id===current?"selected":""}>${escHtml(label)}</option>`;
+    return `
+      <div class="jm-history-row ${h.id===current?"active":""}">
+        <span class="jm-history-label" onclick="jmSelectHistoryEntry('${h.id}')" title="${escHtml(label)}">${escHtml(label)}</span>
+        <span class="jm-history-delete" onclick="jmDeleteHistoryEntryById('${h.id}')" title="Remove this match">✕</span>
+      </div>`;
   }).join("");
 }
 function jmSelectHistoryEntry(id) {
   const entry = (state.jobMatchHistory||[]).find(h=>h.id===id);
-  if (entry) renderJobMatchResults(entry.results, entry);
+  if (entry) { renderJobMatchResults(entry.results, entry); renderJobMatchHistorySelect(); }
 }
-function jmDeleteHistoryEntry() {
-  if (!jmCurrentEntry) return;
+function jmDeleteHistoryEntryById(id) {
   if (!confirm("Remove this saved match analysis? This can't be undone.")) return;
-  state.jobMatchHistory = (state.jobMatchHistory||[]).filter(h=>h.id!==jmCurrentEntry.id);
+  const wasShowingDeleted = jmCurrentEntry?.id === id;
+  state.jobMatchHistory = (state.jobMatchHistory||[]).filter(h=>h.id!==id);
   saveState();
-  jmCurrentEntry = null;
-  renderJobMatchHistorySelect();
   const hist = state.jobMatchHistory||[];
-  document.getElementById("jm-results").innerHTML = "";
-  if (hist.length) renderJobMatchResults(hist[0].results, hist[0]);
+  if (wasShowingDeleted) {
+    jmCurrentEntry = null;
+    document.getElementById("jm-results").innerHTML = "";
+    if (hist.length) renderJobMatchResults(hist[0].results, hist[0]);
+  }
+  renderJobMatchHistorySelect();
 }
 
 // Text extraction — dispatches by file extension. pdf.js and mammoth.js are
@@ -4077,9 +4089,8 @@ function renderJobMatchResults(data, entry) {
 
   el.innerHTML = `
     <div id="jm-dashboard">
-      <div class="jm-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+      <div class="jm-no-print" style="display:flex;justify-content:flex-end;margin-bottom:10px">
         <button class="btn btn-sky btn-sm" onclick="jmDownloadPdf()">⬇️ Download PDF</button>
-        ${entry?.id?`<button class="btn btn-danger btn-sm" onclick="jmDeleteHistoryEntry()">✕ Delete this match</button>`:""}
       </div>
       <div class="hero">
         <div class="ring-wrap">
