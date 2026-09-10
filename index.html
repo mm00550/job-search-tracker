@@ -3823,8 +3823,11 @@ async function runSingleCompanySearch(id, loadMore) {
 }
 
 // ═══════════════════════════ JOB MATCH ═════════════════════════════════════════
-const FETCH_JOB_DESCRIPTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/fetchJobDescription";
-const MATCH_JOB_TO_CV_URL = "https://us-central1-job-search-tracker-ddace.cloudfunctions.net/matchJobToCV";
+// These two were created directly as Cloud Run services (not via `firebase
+// deploy`), so they get native run.app URLs instead of the legacy
+// us-central1-PROJECT.cloudfunctions.net alias the other functions have.
+const FETCH_JOB_DESCRIPTION_URL = "https://fetchjobdescription-516931338723.europe-north2.run.app";
+const MATCH_JOB_TO_CV_URL = "https://matchjobtocv-516931338723.europe-north2.run.app";
 
 let jmCvFileHandles = {};  // filename -> FileSystemFileHandle, from Connect CV folder (session-only, Chrome/Edge)
 let jmCvText = "";         // extracted text of the currently-selected/uploaded CV
