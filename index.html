@@ -599,10 +599,7 @@
     <button class="btn btn-primary" onclick="openAppModal()">+ Add Application</button>
   </div>
   <div class="filters" id="app-track-filters"></div>
-  <div class="net-section-hdr reach" style="background:var(--sky);color:var(--navy)">📋 Active applications <span class="net-section-count" id="app-active-count" style="background:rgba(0,0,0,.1)">0</span></div>
-  <div id="app-active-list"></div>
-  <div class="net-section-hdr contacted" style="background:#F1ECEF;color:var(--muted)">🏁 Closed / Withdrawn <span class="net-section-count" id="app-closed-count" style="background:rgba(0,0,0,.1)">0</span></div>
-  <div id="app-closed-list"></div>
+  <div id="app-list"></div>
 </div>
 
 <!-- ══════════════════════════════ JOB WATCHLIST ══════════════════════════════ -->
@@ -642,10 +639,7 @@
   <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
     <input class="search-input" id="netSearch" placeholder="Search contacts…" oninput="renderNetwork()">
   </div>
-  <div class="net-section-hdr reach" id="net-reach-hdr">📋 Network contacts to reach out to <span class="net-section-count" id="net-reach-count">0</span></div>
-  <div id="net-reach-list"></div>
-  <div class="net-section-hdr contacted" id="net-contacted-hdr">✅ Network contacts already contacted <span class="net-section-count" id="net-contacted-count">0</span></div>
-  <div id="net-contacted-list"></div>
+  <div id="net-list"></div>
   <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
   <div id="net-shared-list"></div>
 </div>
@@ -668,10 +662,8 @@
   <div id="recommended-panel" style="display:none"></div>
 
   <div class="filters" id="train-cat-filters" style="margin:12px 0"></div>
-  <div class="net-section-hdr reach" style="background:var(--purpll);color:var(--purple)">📚 In progress / Not started <span class="net-section-count" id="train-active-count" style="background:rgba(0,0,0,.1)">0</span></div>
-  <div id="train-active-list"></div>
-  <div class="net-section-hdr contacted" style="background:var(--mint);color:var(--green)">✅ Completed <span class="net-section-count" id="train-completed-count" style="background:rgba(0,0,0,.1)">0</span></div>
-  <div id="train-completed-list"></div>
+  <div class="filters" id="train-status-filters" style="margin-bottom:12px"></div>
+  <div id="train-list"></div>
 
   <div class="card card-dashed" style="margin-top:8px">
     <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">📅 Daily Training Routine (30–45 min)</div>
@@ -696,10 +688,7 @@
   <div style="display:flex;justify-content:flex-end;margin-bottom:12px;margin-top:6px">
     <input class="search-input" id="coSearch" placeholder="Search…" oninput="renderCheckout()">
   </div>
-  <div class="net-section-hdr reach" id="co-open-hdr">📋 Open <span class="net-section-count" id="co-open-count">0</span></div>
-  <div id="co-open-list"></div>
-  <div class="net-section-hdr contacted" id="co-done-hdr">✅ Done <span class="net-section-count" id="co-done-count">0</span></div>
-  <div id="co-done-list"></div>
+  <div id="co-list"></div>
   <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
   <div id="co-shared-list"></div>
 </div>
@@ -1533,6 +1522,7 @@ let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null, 
 let appStatusFilter = "All", appTrackFilter = "All";
 let jwSort = "fit";
 let trainCatFilter  = "All";
+let trainStatusFilter = "All";
 let netStatusFilter = "All", netPriorityFilter = "All", netRelationFilter = "All";
 let coStatusFilter = "All", coPriorityFilter = "All";
 let showRec = false;
@@ -1880,8 +1870,6 @@ function renderDashboard() {
 }
 
 // ═══════════════════════════ RENDER APPLICATIONS ═══════════════════════════════
-const APP_CLOSED_STATUSES = new Set(["Rejected","Withdrawn"]);
-
 function renderApplications() {
   // Watching (not yet applied) lives in Job Watchlist / Job Sites & Companies, not here.
   const statuses = ["All", ...Object.keys(APP_STATUS).filter(s=>s!==WATCH_STATUS)];
@@ -1896,7 +1884,7 @@ function renderApplications() {
     a.status!==WATCH_STATUS &&
     (appStatusFilter==="All"||a.status===appStatusFilter) &&
     (appTrackFilter==="All"||a.track===appTrackFilter)
-  );
+  ).sort((a,b)=>(b.dateApplied||"").localeCompare(a.dateApplied||"")); // latest application first; undated ones sink last
 
   function renderAppCard(app) {
     const sc = APP_STATUS[app.status]||{};
@@ -1929,19 +1917,9 @@ function renderApplications() {
     </div>`;
   }
 
-  const active = filtered.filter(a=>!APP_CLOSED_STATUSES.has(a.status));
-  const closed = filtered.filter(a=>APP_CLOSED_STATUSES.has(a.status));
-
-  document.getElementById("app-active-count").textContent  = active.length;
-  document.getElementById("app-closed-count").textContent  = closed.length;
-
-  document.getElementById("app-active-list").innerHTML = active.length === 0
-    ? `<div class="card"><div class="empty-state">No active applications. Hit "+ Add Application" to log your first one.</div></div>`
-    : active.map(renderAppCard).join("");
-
-  document.getElementById("app-closed-list").innerHTML = closed.length === 0
-    ? `<div class="card"><div class="empty-state">No closed applications yet.</div></div>`
-    : closed.map(renderAppCard).join("");
+  document.getElementById("app-list").innerHTML = filtered.length === 0
+    ? `<div class="card"><div class="empty-state">No applications match this filter. Hit "+ Add Application" to log your first one.</div></div>`
+    : filtered.map(renderAppCard).join("");
 }
 
 function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
@@ -2063,7 +2041,6 @@ function renderNetwork() {
     `<button class="filter-btn${r===netRelationFilter?" active-dark":""}" onclick="setNetRelFilter('${r}')">${r==="All"?r:NET_RELATION[r].icon+" "+r}</button>`).join("");
 
   const search = (document.getElementById("netSearch")||{}).value||"";
-  const statusOrder = Object.keys(NET_STATUS);
   let filtered = state.contacts.filter(c=>{
     const ms = netStatusFilter==="All"||c.status===netStatusFilter;
     const mp = netPriorityFilter==="All"||c.priority===netPriorityFilter;
@@ -2071,19 +2048,7 @@ function renderNetwork() {
     const notes = (c.history||[]).map(h=>h.text).join(" ") + (c.notes||"");
     const mq = !search||[c.name,c.company,c.role,notes].join(" ").toLowerCase().includes(search.toLowerCase());
     return ms&&mp&&mr&&mq;
-  }).sort((a,b)=>{
-    if(a.priority==="High"&&b.priority!=="High") return -1;
-    if(b.priority==="High"&&a.priority!=="High") return 1;
-    const tsA = (a.history||[]).length ? a.history[a.history.length-1].ts : "";
-    const tsB = (b.history||[]).length ? b.history[b.history.length-1].ts : "";
-    if(tsA && tsB) return tsB.localeCompare(tsA);
-    if(tsA) return -1;
-    if(tsB) return 1;
-    return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
-  });
-
-  const toReach    = filtered.filter(c=>!c.contactDate);
-  const contacted  = filtered.filter(c=>!!c.contactDate);
+  }).sort((a,b)=>(b.contactDate||"").localeCompare(a.contactDate||"")); // latest contact first; never-contacted ones sink last
 
   function renderContactCard(c) {
     const rc = NET_RELATION[c.relation]||NET_RELATION["LinkedIn"];
@@ -2119,16 +2084,9 @@ function renderNetwork() {
     </div>`;
   }
 
-  document.getElementById("net-reach-count").textContent     = toReach.length;
-  document.getElementById("net-contacted-count").textContent  = contacted.length;
-
-  document.getElementById("net-reach-list").innerHTML = toReach.length === 0
-    ? `<div class="card"><div class="empty-state">No contacts pending outreach.</div></div>`
-    : toReach.map(renderContactCard).join("");
-
-  document.getElementById("net-contacted-list").innerHTML = contacted.length === 0
-    ? `<div class="card"><div class="empty-state">No contacts with a recorded contact date yet.</div></div>`
-    : contacted.map(renderContactCard).join("");
+  document.getElementById("net-list").innerHTML = filtered.length === 0
+    ? `<div class="card"><div class="empty-state">No contacts match this filter.</div></div>`
+    : filtered.map(renderContactCard).join("");
 }
 
 // ═══════════════════════════ SHARED DATA MIRRORING ═════════════════════════════
@@ -2260,7 +2218,6 @@ function renderCheckout() {
     `<button class="filter-btn${p===coPriorityFilter?" active-dark":""}" onclick="setCoPriFilter('${p}')">${p==="All"?p:p+" priority"}</button>`).join("");
 
   const search = (document.getElementById("coSearch")||{}).value||"";
-  const statusOrder = Object.keys(CO_STATUS);
   let filtered = state.checkouts.filter(c=>{
     const ms = coStatusFilter==="All"||c.status===coStatusFilter;
     const mp = coPriorityFilter==="All"||c.priority===coPriorityFilter;
@@ -2268,13 +2225,11 @@ function renderCheckout() {
     const mq = !search||[c.title,notes].join(" ").toLowerCase().includes(search.toLowerCase());
     return ms&&mp&&mq;
   }).sort((a,b)=>{
-    if(a.priority==="High"&&b.priority!=="High") return -1;
-    if(b.priority==="High"&&a.priority!=="High") return 1;
-    return statusOrder.indexOf(a.status)-statusOrder.indexOf(b.status);
+    // Done items sink to the bottom regardless of recency; otherwise latest note first.
+    const aDone = a.status==="Done", bDone = b.status==="Done";
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    return parseInt(b.id)-parseInt(a.id);
   });
-
-  const open = filtered.filter(c=>c.status!=="Done");
-  const done = filtered.filter(c=>c.status==="Done");
 
   function renderCoCard(c) {
     const sc = CO_STATUS[c.status]||CO_STATUS["To Do"];
@@ -2304,16 +2259,9 @@ function renderCheckout() {
     </div>`;
   }
 
-  document.getElementById("co-open-count").textContent = open.length;
-  document.getElementById("co-done-count").textContent = done.length;
-
-  document.getElementById("co-open-list").innerHTML = open.length === 0
-    ? `<div class="card"><div class="empty-state">Nothing open right now.</div></div>`
-    : open.map(renderCoCard).join("");
-
-  document.getElementById("co-done-list").innerHTML = done.length === 0
-    ? `<div class="card"><div class="empty-state">No completed items yet.</div></div>`
-    : done.map(renderCoCard).join("");
+  document.getElementById("co-list").innerHTML = filtered.length === 0
+    ? `<div class="card"><div class="empty-state">Nothing here yet. Hit "+ Add Item" to log one.</div></div>`
+    : filtered.map(renderCoCard).join("");
 }
 function setCoStatusFilter(s) { coStatusFilter=s;   renderCheckout(); }
 function setCoPriFilter(p)    { coPriorityFilter=p; renderCheckout(); }
@@ -2323,6 +2271,10 @@ function renderTraining() {
   // Cat filters
   document.getElementById("train-cat-filters").innerHTML = ["All",...Object.keys(TRAIN_CAT)].map(c=>
     `<button class="filter-btn${c===trainCatFilter?" active-purple":""}" onclick="setTrainCatFilter('${c}')">${c}</button>`).join("");
+
+  // Status filters
+  document.getElementById("train-status-filters").innerHTML = ["All",...Object.keys(TRAIN_STATUS)].map(s=>
+    `<button class="filter-btn${s===trainStatusFilter?" active-purple":""}" onclick="setTrainStatusFilter('${s}')">${s}</button>`).join("");
 
   // Recommended panel
   if (showRec) {
@@ -2349,7 +2301,15 @@ function renderTraining() {
   }
 
   // Course list
-  const filtered = state.trainings.filter(t=>trainCatFilter==="All"||t.category===trainCatFilter);
+  const filtered = state.trainings.filter(t=>
+    (trainCatFilter==="All"||t.category===trainCatFilter) &&
+    (trainStatusFilter==="All"||t.status===trainStatusFilter)
+  ).sort((a,b)=>{
+    // Completed courses sink to the bottom regardless of recency; otherwise most recently added first.
+    const aDone = a.status==="Completed", bDone = b.status==="Completed";
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    return parseInt(b.id)-parseInt(a.id);
+  });
 
   function renderTrainCard(t) {
     const cc = TRAIN_CAT[t.category]||TRAIN_CAT["Other"];
@@ -2380,19 +2340,9 @@ function renderTraining() {
     </div>`;
   }
 
-  const active    = filtered.filter(t=>t.status!=="Completed");
-  const completed = filtered.filter(t=>t.status==="Completed");
-
-  document.getElementById("train-active-count").textContent    = active.length;
-  document.getElementById("train-completed-count").textContent = completed.length;
-
-  document.getElementById("train-active-list").innerHTML = active.length === 0
-    ? `<div class="card"><div class="empty-state">No active courses. Browse recommended above or add your own.</div></div>`
-    : active.map(renderTrainCard).join("");
-
-  document.getElementById("train-completed-list").innerHTML = completed.length === 0
-    ? `<div class="card"><div class="empty-state">No completed courses yet.</div></div>`
-    : completed.map(renderTrainCard).join("");
+  document.getElementById("train-list").innerHTML = filtered.length === 0
+    ? `<div class="card"><div class="empty-state">No courses match this filter. Browse recommended above or add your own.</div></div>`
+    : filtered.map(renderTrainCard).join("");
 
   // Routine
   const routine = [["Mon/Wed","AI & Technology — focused 30-min block on current course"],["Tue/Thu","Leadership & Management — articles, videos, or course modules"],["Friday","Certification prep or weekly review. Update tracker."],["Weekend","Optional: longer session if course deadline approaching"]];
@@ -2401,6 +2351,7 @@ function renderTraining() {
 }
 
 function setTrainCatFilter(c) { trainCatFilter=c; renderTraining(); }
+function setTrainStatusFilter(s) { trainStatusFilter=s; renderTraining(); }
 function toggleRecommended() {
   showRec=!showRec;
   document.getElementById("recBtn").textContent = showRec?"Hide":"📋 Recommended Courses";
