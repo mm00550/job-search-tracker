@@ -1474,7 +1474,7 @@ function msDate(weekNum) {
 function buildJobMilestones() {
   const totalWeeks = goalWeeks();
   const target = state.goals?.weeklyAppTarget || 3;
-  const role = (state.searchCriteria?.keywords||[]).join("/") || "your target roles";
+  const role = (state.searchCriteria?.roleTitles||[]).join("/") || "your target roles";
   const tmpl = [
     { frac:0.05, label:`LinkedIn + CV polished for ${role}, tracker live` },
     { frac:0.10, label:`Recruiters briefed, first ${Math.max(3,target)}+ applications submitted` },
@@ -2360,7 +2360,7 @@ function toggleRecommended() {
 
 // ═══════════════════════════ RENDER STRATEGY ═══════════════════════════════════
 function renderStrategy() {
-  const role = (state.searchCriteria?.keywords||[]).join(" / ") || "your target role";
+  const role = (state.searchCriteria?.roleTitles||[]).join(" / ") || "your target role";
   const location = state.searchCriteria?.location || "your target market";
   const weeklyTarget = state.goals?.weeklyAppTarget || 3;
   const topics = (state.goals?.trainingTopics||[]).length ? state.goals.trainingTopics : ["your training plan"];
@@ -4322,14 +4322,20 @@ function openOnboarding() {
   document.getElementById("onboardingOverlay").style.display = "flex";
 }
 function submitOnboarding() {
-  const keywords = document.getElementById("ob-keywords").value.split(",").map(s=>s.trim()).filter(Boolean);
+  // Feeds roleTitles (pinned on Job Sites & Companies, suggested in Job Match) —
+  // the old dedicated "keywords" field this used to populate was retired
+  // along with the Suggestions-tab keyword scan it was built for.
+  const typedRoleTitles = document.getElementById("ob-keywords").value.split(",").map(s=>s.trim()).filter(Boolean);
   const location = document.getElementById("ob-location").value.trim();
   const startDate = document.getElementById("ob-startdate").value || today();
   const targetDate = document.getElementById("ob-targetdate").value;
   const weeklyAppTarget = parseInt(document.getElementById("ob-weeklytarget").value,10) || 3;
   const trainingTopics = document.getElementById("ob-training").value.split(",").map(s=>s.trim()).filter(Boolean);
   state.goals = { startDate, targetDate, weeklyAppTarget, trainingTopics };
-  state.searchCriteria = { ...(state.searchCriteria||{}), keywords, location };
+  state.searchCriteria = {
+    ...(state.searchCriteria||{}), location,
+    ...(typedRoleTitles.length ? { roleTitles: typedRoleTitles } : {}),
+  };
   state.milestones = {};
   state.trainMilestones = {};
   saveState();
