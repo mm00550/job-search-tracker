@@ -415,15 +415,10 @@
   <div class="card" style="margin-bottom:16px">
     <div class="sec-label" style="margin-bottom:8px">🔎 Search Criteria</div>
     <div class="form-group" style="margin-bottom:8px">
-      <textarea class="form-textarea" id="jsc-freetext" rows="2" placeholder="e.g. Senior Project Manager, Full-time, Life science, Gothenburg, Hybrid" oninput="debounce(saveCriteria,600)()"></textarea>
+      <textarea class="form-textarea" id="jsc-freetext" rows="2" placeholder="e.g. Senior Project Manager, extra keywords not already pinned above" oninput="debounce(saveCriteria,600)()"></textarea>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Role title is free text — type it straight into the field above. Click a tag below to drop it in instead of typing it. Add or remove options in each row to fit your own search (e.g. swap in a different town).</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Extra role-title keywords are free text — type them straight into the field above. Location and Office policy below are live filters: type a value and click "+ Add" to apply it immediately, click a chip's ✕ to remove it.</div>
     <div id="jsc-qualifiers" style="display:flex;flex-direction:column;gap:10px"></div>
-    <div class="form-group" style="margin-top:10px">
-      <label class="form-label">Location contains</label>
-      <input class="form-input" id="sg-location" placeholder="e.g. Gothenburg, Remote" oninput="debounce(saveCriteria,600)();renderLocationFilterStatus()">
-      <div id="sg-location-status" style="font-size:11px;margin-top:4px"></div>
-    </div>
   </div>
 
   <div class="grid2">
@@ -2367,7 +2362,7 @@ function toggleRecommended() {
 // ═══════════════════════════ RENDER STRATEGY ═══════════════════════════════════
 function renderStrategy() {
   const role = (state.searchCriteria?.roleTitles||[]).join(" / ") || "your target role";
-  const location = state.searchCriteria?.location || "your target market";
+  const location = activeLocationFilter() || "your target market";
   const weeklyTarget = state.goals?.weeklyAppTarget || 3;
   const topics = (state.goals?.trainingTopics||[]).length ? state.goals.trainingTopics : ["your training plan"];
   const totalWeeks = goalWeeks();
@@ -3079,7 +3074,7 @@ function isManualOnly(s) { return !!s.manualOnly || /linkedin/i.test(s.source); 
 function renderSearchSetupCard(s) {
   const sc = SS_STATUS[s.status]||{};
   const terms = buildSearchTerms();
-  const location = state.searchCriteria.location||"";
+  const location = primaryLocationTag();
   const resolvedUrl = s.url ? resolveSearchUrl(s, terms, location) : null;
   const manualOnly = isManualOnly(s);
   return `<div class="item-card" style="border-left-color:${sc.dot}">
@@ -3202,7 +3197,8 @@ async function runSingleJobSite(id) {
   const s = (state.searchSetup||[]).find(x=>x.id===id);
   if (!s) return;
   const terms = buildSearchTerms();
-  const location = state.searchCriteria.location||"";
+  const location = activeLocationFilter();
+  const urlLocation = primaryLocationTag();
   const statusEl = document.getElementById("jsc-sites-status");
   const btn = document.getElementById("jsc-site-btn-"+id);
   if (!terms.length) {
@@ -3233,7 +3229,7 @@ async function runSingleJobSite(id) {
   }
 
   if (isManualOnly(s)) {
-    window.open(resolveSearchUrl(s, terms, location), "_blank");
+    window.open(resolveSearchUrl(s, terms, urlLocation), "_blank");
     s.lastRun = today();
     saveState();
     renderSearchSetupTab();
@@ -3245,7 +3241,7 @@ async function runSingleJobSite(id) {
   btn.disabled = true; btn.textContent = "Searching…";
   statusEl.textContent = `Searching ${s.source} for: ${terms.join(", ")}…`;
   try {
-    const r = await searchOtherJobSites(buildJobSiteScanTargets([s], terms, location, AF_TERM_CAP), { keywords: terms, location });
+    const r = await searchOtherJobSites(buildJobSiteScanTargets([s], terms, urlLocation, AF_TERM_CAP), { keywords: terms, location });
     s.lastRun = today();
     saveState();
     renderJobWatchlist(); renderApplications(); renderDashboard(); renderSearchSetupTab();
@@ -3264,40 +3260,24 @@ const SCAN_FUNCTION_URL = "https://us-central1-job-search-tracker-ddace.cloudfun
 const SCAN_JOBSITES_FUNCTION_URL = "https://scanjobsites-516931338723.europe-north2.run.app";
 
 function loadCriteriaInputs() {
-  document.getElementById("sg-location").value = state.searchCriteria.location||"";
   document.getElementById("jsc-freetext").value = state.searchCriteria.freeText||"";
-  renderLocationFilterStatus();
-}
-// Makes it unmissable whether a location filter is actually active — the
-// chips above this field are only a quick-insert picker, not a filter on
-// their own, which is easy to mistake for "already applied" (see Role
-// Titles, which really is pinned = active). An empty field here means
-// Companies/Job Sites searches return every location, US postings included.
-function renderLocationFilterStatus() {
-  const el = document.getElementById("sg-location-status");
-  if (!el) return;
-  const value = document.getElementById("sg-location").value.trim();
-  el.textContent = value
-    ? `✓ Filtering to: ${value}`
-    : "⚠ No location filter applied — searches will return jobs from any location. Click a chip above or type here to filter.";
-  el.style.color = value ? "var(--muted)" : "var(--crimson)";
 }
 function saveCriteria() {
-  const location = document.getElementById("sg-location").value.trim();
   const freeText = document.getElementById("jsc-freetext").value;
   // Spread the existing object rather than replacing it outright — this field
-  // also carries roleTitles and qualifierOptions, which typing here or
-  // clicking a criteria chip must not silently wipe out.
-  state.searchCriteria = { ...(state.searchCriteria||{}), location, freeText };
+  // also carries roleTitles and qualifierOptions, which typing here must not
+  // silently wipe out.
+  state.searchCriteria = { ...(state.searchCriteria||{}), freeText };
   saveState();
 }
-// Job Sites & Companies — Search Criteria quick-add tags. Each row (Type of
-// role, Type of company, Location, Office policy) is a user-configurable
-// list rather than a fixed one, so Candidate can add/remove options — e.g.
-// swap "Gothenburg" for a different town — without needing code changes.
+// Job Sites & Companies — Location and Office policy are live filters, not a
+// picker: whatever's currently listed here IS what gets sent to the backend
+// (same "pinned = active" model as Role Titles above), no separate text
+// field or extra click needed. Typing a value and clicking "+ Add" applies
+// it immediately; clicking a chip's ✕ removes it immediately. Type of
+// role/Type of company were removed — matchesCriteria (functions/index.js)
+// has no concept of either, so they never actually filtered anything.
 const QUALIFIER_CATEGORIES = [
-  { key:"roleType", label:"Type of role", seed:["Full-time","Consultancy","Interim"] },
-  { key:"companyType", label:"Type of company", seed:["Tech","Financial services","Public services","Life science","MedTech","Pharma","Automotive"] },
   { key:"location", label:"Location", seed:["Gothenburg"] },
   { key:"officePolicy", label:"Office policy", seed:["Hybrid","On-site","Remote"] },
 ];
@@ -3310,16 +3290,34 @@ function ensureQualifierOptions() {
     if (!state.searchCriteria.qualifierOptions[c.key]) state.searchCriteria.qualifierOptions[c.key] = [];
   });
 }
-// Every configured qualifier value (across all four categories) is excluded
-// from becoming a search term in its own right — these are filters, not job
-// titles, and a value like a town name would otherwise get sent to job
-// boards as if it were a role to search for.
+// Every configured qualifier value is excluded from becoming a search term
+// in its own right — these are filters, not job titles, and a value like a
+// town name would otherwise get sent to job boards as if it were a role to
+// search for.
 function allQualifierTerms() {
   ensureQualifierOptions();
   const set = new Set();
   QUALIFIER_CATEGORIES.forEach(c => (state.searchCriteria.qualifierOptions[c.key]||[]).forEach(v => set.add(v.toLowerCase())));
   return set;
 }
+// Active location tags, e.g. ["Göteborg","Mölndal"] — the live filter set,
+// straight from what's pinned in the Location row.
+function activeLocationTags() {
+  ensureQualifierOptions();
+  return state.searchCriteria.qualifierOptions.location||[];
+}
+// Comma-joined, for criteria sent to the backend — matchesCriteria's
+// sameGroup() does a bidirectional substring check, so "any pinned tag
+// matches" works correctly against a joined string with no backend change.
+function activeLocationFilter() { return activeLocationTags().join(", "); }
+// A Search URL template only has room for one {location} — first pinned tag
+// is the best single representative for that purpose.
+function primaryLocationTag() { return activeLocationTags()[0]||""; }
+function activeWorkModelTags() {
+  ensureQualifierOptions();
+  return state.searchCriteria.qualifierOptions.officePolicy||[];
+}
+function activeWorkModelFilter() { return activeWorkModelTags().join(", "); }
 function renderQualifierCriteria() {
   ensureQualifierOptions();
   const el = document.getElementById("jsc-qualifiers");
@@ -3328,15 +3326,18 @@ function renderQualifierCriteria() {
     const opts = state.searchCriteria.qualifierOptions[c.key]||[];
     const chips = opts.map(v => `
       <span style="padding:4px 5px 4px 10px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--border);background:var(--white);color:var(--dark);display:inline-flex;align-items:center;gap:5px">
-        <span style="cursor:pointer" onclick="addCriteriaTag('${v.replace(/'/g,"\\'")}','${c.key}')" title="Add to search field">${escHtml(v)}</span>
-        <span style="cursor:pointer;color:var(--crimson);font-weight:800;padding:0 2px" onclick="removeQualifierOption('${c.key}','${v.replace(/'/g,"\\'")}')" title="Remove from this list">✕</span>
+        ${escHtml(v)}
+        <span style="cursor:pointer;color:var(--crimson);font-weight:800;padding:0 2px" onclick="removeQualifierOption('${c.key}','${v.replace(/'/g,"\\'")}')" title="Remove — stops filtering on this">✕</span>
       </span>`).join("");
+    const warn = c.key==="location" && !opts.length
+      ? `<span style="font-size:11px;color:var(--crimson)">⚠ No location filter — searches return jobs from any location</span>` : "";
     return `
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
         <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">${escHtml(c.label)}</span>
         ${chips}
         <input class="form-input" id="jsc-qual-new-${c.key}" placeholder="Add…" style="width:110px;font-size:12px;padding:4px 8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addQualifierOption('${c.key}');}">
         <button class="btn btn-sky btn-sm" style="padding:4px 10px;font-size:11px" onclick="addQualifierOption('${c.key}')">+ Add</button>
+        ${warn}
       </div>`;
   }).join("");
 }
@@ -3357,28 +3358,12 @@ function removeQualifierOption(key, value) {
   saveState();
   renderQualifierCriteria();
 }
-function addCriteriaTag(value, categoryKey) {
+function addCriteriaTag(value) {
   const el = document.getElementById("jsc-freetext");
   const parts = el.value.trim() ? el.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
   if (!parts.includes(value)) parts.push(value);
   el.value = parts.join(", ");
-  // Location chips ADD to the field (comma-separated, matched as OR by
-  // sameGroup's substring check on the backend) rather than replacing its
-  // value — clicking Göteborg then Mölndal should filter to either, not
-  // silently drop Göteborg the moment a second chip is clicked.
-  if (categoryKey === "location") {
-    const locEl = document.getElementById("sg-location");
-    const locParts = locEl.value.trim() ? locEl.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
-    if (!locParts.includes(value)) locParts.push(value);
-    locEl.value = locParts.join(", ");
-  }
-  // Office policy (On-site/Hybrid/Remote) doubles as a real filter for
-  // Companies search — see workModel in matchesCriteria (functions/index.js).
-  // Only reliable for Workday-sourced postings today; harmless no-op filter
-  // elsewhere since a job with no workModel data always passes through.
-  if (categoryKey === "officePolicy") state.searchCriteria.workModel = value;
   saveCriteria();
-  renderLocationFilterStatus();
 }
 function renderRoleTitles() {
   const titles = state.searchCriteria.roleTitles||[];
@@ -3544,6 +3529,12 @@ const AF_SEARCH_URL = "https://jobsearch.api.jobtechdev.se/search";
 const AF_TERM_CAP = 15; // be a reasonable citizen of a free public API
 
 async function searchArbetsformedlingen(terms, location) {
+  // location may be several comma-joined tags (e.g. "Göteborg, Mölndal") —
+  // matches if the posting's place contains ANY one of them, same
+  // bidirectional-substring, any-of-multiple rule as sameGroup() on the
+  // backend (functions/index.js), so a multi-tag Location filter behaves
+  // consistently across every search path.
+  const locationTags = (location||"").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
   const existingKeys = new Set(state.apps.map(a=>(a.company+"::"+a.role).toLowerCase().trim()));
   const seenIds = new Set();
   let added = 0, dupes = 0;
@@ -3558,7 +3549,8 @@ async function searchArbetsformedlingen(terms, location) {
       const company = (hit.employer && hit.employer.name) || "Unknown employer";
       if (!role) continue;
       const loc = [hit.workplace_address && hit.workplace_address.municipality, hit.workplace_address && hit.workplace_address.region].filter(Boolean).join(", ");
-      if (location && loc && !loc.toLowerCase().includes(location.toLowerCase())) continue;
+      const locLower = loc.toLowerCase();
+      if (locationTags.length && loc && !locationTags.some(t=>locLower.includes(t)||t.includes(locLower))) continue;
       const key = (company+"::"+role).toLowerCase().trim();
       if (existingKeys.has(key)) { dupes++; continue; }
       existingKeys.add(key);
@@ -3666,7 +3658,8 @@ async function searchOtherJobSites(sitesToScan, criteria) {
 // sent to either path — it stays available only via its own card's "Open".
 async function runJobSitesSearch() {
   const terms = buildSearchTerms();
-  const location = state.searchCriteria.location||"";
+  const location = activeLocationFilter();
+  const urlLocation = primaryLocationTag();
   const active = (state.searchSetup||[]).filter(s=>s.status==="Active");
   const statusEl = document.getElementById("jsc-sites-status");
   const btn = document.getElementById("jsc-sites-runbtn");
@@ -3683,7 +3676,7 @@ async function runJobSitesSearch() {
   const manualOnlySources = active.filter(s=>s!==afSource && isManualOnly(s));
   const otherSources = active.filter(s=>s!==afSource && !isManualOnly(s));
   const otherSourcesWithUrl = otherSources.filter(s=>s.url);
-  const scanTargets = buildJobSiteScanTargets(otherSourcesWithUrl, terms, location);
+  const scanTargets = buildJobSiteScanTargets(otherSourcesWithUrl, terms, urlLocation);
   const noUrlSources = otherSources.filter(s=>!s.url).map(s=>s.source);
 
   btn.disabled = true; btn.textContent = "Searching…";
@@ -3772,8 +3765,8 @@ function companyScanTarget(w, terms, location) {
 }
 async function runCompanySearch() {
   const terms = buildSearchTerms();
-  const location = state.searchCriteria.location||"";
-  const companies = state.watchlist.filter(w=>w.careerSite).map(w=>companyScanTarget(w, terms, location));
+  const location = activeLocationFilter();
+  const companies = state.watchlist.filter(w=>w.careerSite).map(w=>companyScanTarget(w, terms, primaryLocationTag()));
   const statusEl = document.getElementById("jsc-companies-status");
   const btn = document.getElementById("jsc-companies-runbtn");
   if (!companies.length) {
@@ -3787,7 +3780,7 @@ async function runCompanySearch() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        companies, criteria: { keywords: terms, location: state.searchCriteria.location||"", workModel: state.searchCriteria.workModel||"" },
+        companies, criteria: { keywords: terms, location, workModel: activeWorkModelFilter() },
         offset: 0, limit: COMPANY_SEARCH_PAGE_SIZE,
       }),
     });
@@ -3821,7 +3814,7 @@ async function runSingleCompanySearch(id, loadMore) {
   const company = state.watchlist.find(w=>w.id===id);
   if (!company || !company.careerSite) return;
   const terms = buildSearchTerms();
-  const location = state.searchCriteria.location||"";
+  const location = activeLocationFilter();
   const prev = companyScanState[id] || {};
   const offset = loadMore ? (prev.offset||0) : 0;
   companyScanState[id] = { ...prev, busy: true, message: `Searching for: ${terms.join(", ")||"all open roles (no criteria set)"}…` };
@@ -3831,7 +3824,7 @@ async function runSingleCompanySearch(id, loadMore) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        companies: [companyScanTarget(company, terms, location)], criteria: { keywords: terms, location, workModel: state.searchCriteria.workModel||"" },
+        companies: [companyScanTarget(company, terms, primaryLocationTag())], criteria: { keywords: terms, location, workModel: activeWorkModelFilter() },
         offset, limit: COMPANY_SEARCH_PAGE_SIZE,
       }),
     });
