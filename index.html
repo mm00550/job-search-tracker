@@ -421,7 +421,8 @@
     <div id="jsc-qualifiers" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="form-group" style="margin-top:10px">
       <label class="form-label">Location contains</label>
-      <input class="form-input" id="sg-location" placeholder="e.g. Gothenburg, Remote" oninput="debounce(saveCriteria,600)()">
+      <input class="form-input" id="sg-location" placeholder="e.g. Gothenburg, Remote" oninput="debounce(saveCriteria,600)();renderLocationFilterStatus()">
+      <div id="sg-location-status" style="font-size:11px;margin-top:4px"></div>
     </div>
   </div>
 
@@ -1225,6 +1226,11 @@
     <div class="form-group"><label class="form-label">Company Name *</label><input class="form-input" id="wf-company" placeholder="e.g. Volvo Cars"></div>
     <div class="form-group"><label class="form-label">Industry</label><input class="form-input" id="wf-industry" placeholder="e.g. Automotive, Fintech, Healthcare"></div>
     <div class="form-group"><label class="form-label">Link to Career Site</label><input class="form-input" id="wf-careersite" placeholder="https://…"></div>
+    <div class="form-group">
+      <label class="form-label">Search URL (optional)</label>
+      <input class="form-input" id="wf-searchurl" placeholder="https://…?q={q}&l={location} — do one search on the site, copy the resulting URL, replace your search words with {q}">
+      <div style="font-size:11.5px;color:var(--muted);margin-top:4px">Companies with a known job-board platform (Workday, Greenhouse, Lever, SmartRecruiters) or a built-in integration already get a real search automatically — this is for everyone else. When set, pinned Role Titles are substituted into {q} (and {location}/{q-slug}/{location-slug} where supported) and sent as an actual query to the site's own search, instead of just scanning whatever the plain Career Site link happens to show.</div>
+    </div>
     <div class="form-group"><label class="form-label">Company Description</label><textarea class="form-textarea" id="wf-description" rows="3" placeholder="What they do, why they're interesting…"></textarea></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <input type="checkbox" id="wf-shared" style="width:16px;height:16px;cursor:pointer">
@@ -2958,6 +2964,7 @@ function renderWatchlist() {
             <span class="item-name">${w.company}</span>
             ${w.industry?badge(w.industry,"#3B0030","#F3E6EF"):""}
             ${w.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
+            ${w.searchUrl?badge("🔎 Real search","#2F7A86","#E3F7F3"):""}
           </div>
           <div class="item-meta">
             ${w.careerSite?`<span><a href="${w.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
@@ -2983,6 +2990,7 @@ function openWatchModal(id) {
   document.getElementById("wf-company").value    = w?.company||"";
   document.getElementById("wf-industry").value   = w?.industry||"";
   document.getElementById("wf-careersite").value = w?.careerSite||"";
+  document.getElementById("wf-searchurl").value = w?.searchUrl||"";
   document.getElementById("wf-description").value = w?.description||"";
   document.getElementById("wf-shared").checked = w?.shared||false;
   document.getElementById("watchModal").style.display="flex";
@@ -2996,6 +3004,7 @@ function submitWatch() {
     company,
     industry:   document.getElementById("wf-industry").value.trim(),
     careerSite: document.getElementById("wf-careersite").value.trim(),
+    searchUrl:  document.getElementById("wf-searchurl").value.trim(),
     description:document.getElementById("wf-description").value.trim(),
     shared:     document.getElementById("wf-shared").checked,
   };
@@ -3257,6 +3266,21 @@ const SCAN_JOBSITES_FUNCTION_URL = "https://scanjobsites-516931338723.europe-nor
 function loadCriteriaInputs() {
   document.getElementById("sg-location").value = state.searchCriteria.location||"";
   document.getElementById("jsc-freetext").value = state.searchCriteria.freeText||"";
+  renderLocationFilterStatus();
+}
+// Makes it unmissable whether a location filter is actually active — the
+// chips above this field are only a quick-insert picker, not a filter on
+// their own, which is easy to mistake for "already applied" (see Role
+// Titles, which really is pinned = active). An empty field here means
+// Companies/Job Sites searches return every location, US postings included.
+function renderLocationFilterStatus() {
+  const el = document.getElementById("sg-location-status");
+  if (!el) return;
+  const value = document.getElementById("sg-location").value.trim();
+  el.textContent = value
+    ? `✓ Filtering to: ${value}`
+    : "⚠ No location filter applied — searches will return jobs from any location. Click a chip above or type here to filter.";
+  el.style.color = value ? "var(--muted)" : "var(--crimson)";
 }
 function saveCriteria() {
   const location = document.getElementById("sg-location").value.trim();
@@ -3338,13 +3362,23 @@ function addCriteriaTag(value, categoryKey) {
   const parts = el.value.trim() ? el.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
   if (!parts.includes(value)) parts.push(value);
   el.value = parts.join(", ");
-  if (categoryKey === "location") document.getElementById("sg-location").value = value;
+  // Location chips ADD to the field (comma-separated, matched as OR by
+  // sameGroup's substring check on the backend) rather than replacing its
+  // value — clicking Göteborg then Mölndal should filter to either, not
+  // silently drop Göteborg the moment a second chip is clicked.
+  if (categoryKey === "location") {
+    const locEl = document.getElementById("sg-location");
+    const locParts = locEl.value.trim() ? locEl.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
+    if (!locParts.includes(value)) locParts.push(value);
+    locEl.value = locParts.join(", ");
+  }
   // Office policy (On-site/Hybrid/Remote) doubles as a real filter for
   // Companies search — see workModel in matchesCriteria (functions/index.js).
   // Only reliable for Workday-sourced postings today; harmless no-op filter
   // elsewhere since a job with no workModel data always passes through.
   if (categoryKey === "officePolicy") state.searchCriteria.workModel = value;
   saveCriteria();
+  renderLocationFilterStatus();
 }
 function renderRoleTitles() {
   const titles = state.searchCriteria.roleTitles||[];
@@ -3724,9 +3758,22 @@ function addMatchedJobsToWatchlist(results) {
   return { added, dupes };
 }
 
+// When a company has a confirmed Search URL template (see the watchlist
+// form), pinned Role Titles get substituted into it the same way they do for
+// Job Sites (resolveSearchUrl) — the resolved query URL is sent to the scan
+// function INSTEAD of the plain careerSite link for that one request, so a
+// real search actually runs against the site rather than just scanning
+// whatever a fixed URL happens to show. The stored careerSite/searchUrl on
+// the watchlist entry itself are left untouched.
+function companyScanTarget(w, terms, location) {
+  if (!w.searchUrl) return w;
+  const resolved = resolveSearchUrl({ url: w.searchUrl }, terms, location);
+  return resolved ? { ...w, careerSite: resolved } : w;
+}
 async function runCompanySearch() {
   const terms = buildSearchTerms();
-  const companies = state.watchlist.filter(w=>w.careerSite);
+  const location = state.searchCriteria.location||"";
+  const companies = state.watchlist.filter(w=>w.careerSite).map(w=>companyScanTarget(w, terms, location));
   const statusEl = document.getElementById("jsc-companies-status");
   const btn = document.getElementById("jsc-companies-runbtn");
   if (!companies.length) {
@@ -3774,6 +3821,7 @@ async function runSingleCompanySearch(id, loadMore) {
   const company = state.watchlist.find(w=>w.id===id);
   if (!company || !company.careerSite) return;
   const terms = buildSearchTerms();
+  const location = state.searchCriteria.location||"";
   const prev = companyScanState[id] || {};
   const offset = loadMore ? (prev.offset||0) : 0;
   companyScanState[id] = { ...prev, busy: true, message: `Searching for: ${terms.join(", ")||"all open roles (no criteria set)"}…` };
@@ -3783,7 +3831,7 @@ async function runSingleCompanySearch(id, loadMore) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        companies: [company], criteria: { keywords: terms, location: state.searchCriteria.location||"", workModel: state.searchCriteria.workModel||"" },
+        companies: [companyScanTarget(company, terms, location)], criteria: { keywords: terms, location, workModel: state.searchCriteria.workModel||"" },
         offset, limit: COMPANY_SEARCH_PAGE_SIZE,
       }),
     });
@@ -4347,7 +4395,7 @@ function exportCSV() {
   const sections = [
     { name:"Applications", data:state.apps,     fields:["company","role","track","status","dateApplied","contact","notes"] },
     { name:"Contacts",     data:state.contacts, fields:["name","company","role","relation","status","priority","contactDate","notes"] },
-    { name:"Watchlist",    data:state.watchlist,fields:["company","industry","careerSite","description"] },
+    { name:"Watchlist",    data:state.watchlist,fields:["company","industry","careerSite","searchUrl","description"] },
     { name:"Notes, Tasks & Reminders", data:state.checkouts,fields:["title","description","status","priority","link"] },
     { name:"Training",     data:state.trainings,fields:["title","category","status","provider","duration","notes"] },
   ];

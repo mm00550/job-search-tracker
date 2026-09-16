@@ -56,6 +56,66 @@ async function fetchWorkdayJobs(tenant, wd, site) {
   return jobs;
 }
 
+// Capgemini's own career-site widget (a custom "cg-jobs" WordPress plugin,
+// not a third-party ATS) renders entirely client-side from a bespoke Azure
+// API — reverse-engineered from its bundled widget JS
+// (cg-jobs-search-frontend.build.js): GET .../api/job-search accepts
+// search/country_code/page/size and returns real, indexed job postings.
+// Unlike every other KNOWN_ATS entry below (which fetch everything and let
+// matchesCriteria filter afterwards), this API supports genuine server-side
+// full-text search, so pinned Role Titles are sent as real "search" queries
+// here rather than only filtering the full list after the fact.
+const CAPGEMINI_API = "https://cg-jobstream-api.azurewebsites.net/api/job-search";
+const CAPGEMINI_PAGE_SIZE = 100;
+const CAPGEMINI_MAX_PAGES = 5; // up to 500 postings per query, well past what one country/keyword returns
+function capgeminiCountryCode(url) {
+  try {
+    const u = new URL(url);
+    const qp = u.searchParams.get("country_code");
+    if (qp) return qp;
+    // Capgemini locale paths look like /se-en/careers/... — fall back to
+    // pulling the code from there when the URL wasn't copied with the query
+    // string intact.
+    const seg = u.pathname.split("/").find((s) => /^[a-z]{2}-[a-z]{2}$/i.test(s));
+    return seg || "";
+  } catch {
+    return "";
+  }
+}
+async function fetchCapgeminiPage(countryCode, search, page) {
+  const params = new URLSearchParams({ page: String(page), size: String(CAPGEMINI_PAGE_SIZE) });
+  if (countryCode) params.set("country_code", countryCode);
+  if (search) params.set("search", search);
+  const r = await fetch(`${CAPGEMINI_API}?${params.toString()}`, { headers: { "User-Agent": UA } });
+  if (!r.ok) return { data: [], count: 0 };
+  return r.json();
+}
+async function fetchCapgeminiJobs(url, criteria) {
+  const countryCode = capgeminiCountryCode(url);
+  const keywords = ((criteria && criteria.keywords) || []).map((k) => k.trim()).filter(Boolean);
+  // No pinned Role Titles → nothing to search for, just page through every
+  // open role for that country (same "no filter = show everything" rule
+  // matchesCriteria applies everywhere else).
+  const searches = keywords.length ? keywords : [""];
+  const byId = new Map();
+  for (const search of searches) {
+    for (let page = 1; page <= CAPGEMINI_MAX_PAGES; page++) {
+      const data = await fetchCapgeminiPage(countryCode, search, page);
+      const postings = data.data || [];
+      postings.forEach((j) => {
+        if (!j.title || byId.has(j.id)) return;
+        byId.set(j.id, {
+          title: j.title,
+          location: j.location || "",
+          url: j.apply_job_url || j.wp_url || url,
+        });
+      });
+      if (postings.length < CAPGEMINI_PAGE_SIZE || page * CAPGEMINI_PAGE_SIZE >= (data.count || 0)) break;
+    }
+  }
+  return Array.from(byId.values());
+}
+
 // Known ATS platforms expose stable JSON APIs — far more reliable than scraping
 // the rendered HTML, so we try to match the career site URL against these first.
 const KNOWN_ATS = [
@@ -99,6 +159,11 @@ const KNOWN_ATS = [
         url: j.hostedUrl,
       }));
     },
+  },
+  {
+    name: "capgemini",
+    test: (url) => /capgemini\.com/i.test(url),
+    fetchJobs: fetchCapgeminiJobs,
   },
   {
     name: "smartrecruiters",
@@ -293,7 +358,7 @@ exports.scanWatchlist = onRequest({ cors: true, timeoutSeconds: 120, region: "us
     try {
       const ats = KNOWN_ATS.find((a) => a.test(company.careerSite));
       if (ats) {
-        jobs = await ats.fetchJobs(company.careerSite);
+        jobs = await ats.fetchJobs(company.careerSite, criteria);
         source = ats.name;
       } else {
         jobs = await fetchGeneric(company.careerSite);
@@ -336,7 +401,7 @@ exports.scanJobSites = onRequest({ cors: true, timeoutSeconds: 120, region: "us-
     try {
       const ats = KNOWN_ATS.find((a) => a.test(site.url));
       if (ats) {
-        jobs = await ats.fetchJobs(site.url);
+        jobs = await ats.fetchJobs(site.url, criteria);
         matchedVia = ats.name;
       } else {
         jobs = await fetchGeneric(site.url);
