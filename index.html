@@ -992,6 +992,10 @@
   .iq-section-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; background:var(--sky); color:var(--navy); }
   .iq-filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
   .iq-count { font-size:12px; color:var(--muted); margin-left:auto; }
+  .iq-pin-btn { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--white); color:var(--muted); white-space:nowrap; transition:all .15s; }
+  .iq-pin-btn:hover { border-color:#FFCD00; color:var(--dark); }
+  .iq-pin-btn.pinned { background:#FFF6CF; border-color:#FFCD00; color:#8A6500; }
+  .iq-card.is-pinned { border-left:3px solid #FFCD00; }
   .iq-chevron { font-size:12px; color:var(--muted); transition:transform .2s; flex-shrink:0; }
   .iq-card-body.open ~ .iq-chevron-ref { transform:rotate(180deg); }
   .iq-chevron.open { transform:rotate(180deg); }
@@ -1017,6 +1021,7 @@
   <button class="filter-btn" id="iq-filter-pitch" onclick="iqFilter('pitch')">Pitch</button>
   <button class="filter-btn" id="iq-filter-common" onclick="iqFilter('common')">Common Questions</button>
   <button class="filter-btn" id="iq-filter-ask" onclick="iqFilter('ask')">Ask the Employer</button>
+  <button class="filter-btn" id="iq-filter-pinned" onclick="iqFilter('pinned')" style="border-color:#FFCD00">📌 Pinned</button>
   <span class="iq-count" id="iq-count"></span>
 </div>
 
@@ -1078,14 +1083,32 @@ let iqEditId = null;
 let iqDragId = null;
 const iqOpenSet = new Set();
 
-function iqLoad() {
+async function iqLoad() {
+  // Try Firestore first (db and currentUid come from the outer app scope)
+  if(typeof db !== 'undefined' && db && typeof currentUid !== 'undefined' && currentUid) {
+    try {
+      const doc = await db.collection('users').doc(currentUid).collection('iq').doc('cards').get();
+      if(doc.exists && Array.isArray(doc.data().cards) && doc.data().cards.length) {
+        iqCards = doc.data().cards;
+        iqRender(); return;
+      }
+    } catch(e){ console.warn('IQ Firestore load failed, falling back to localStorage', e); }
+  }
+  // localStorage fallback
   try { iqCards = JSON.parse(localStorage.getItem(IQ_KEY)) || []; } catch(e){ iqCards=[]; }
   if(!iqCards.length) iqCards = iqDefaultData();
   iqRender();
 }
 
-function iqSave() {
+async function iqSave() {
+  // localStorage always
   try { localStorage.setItem(IQ_KEY, JSON.stringify(iqCards)); } catch(e){}
+  // Firestore when available
+  if(typeof db !== 'undefined' && db && typeof currentUid !== 'undefined' && currentUid) {
+    try {
+      await db.collection('users').doc(currentUid).collection('iq').doc('cards').set({ cards: iqCards });
+    } catch(e){ console.warn('IQ Firestore save failed', e); }
+  }
 }
 
 function iqId() { return 'iq_'+ Date.now() +'_'+ Math.random().toString(36).slice(2,7); }
@@ -1227,7 +1250,9 @@ const SECTION_LABELS = { pitch:'Pitch', common:'Common Questions', ask:'Ask the 
 function iqRender() {
   const list = document.getElementById('iq-list');
   if(!list) return;
-  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqFilter_==='all' ? iqCards
+    : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned)
+    : iqCards.filter(c=>c.section===iqFilter_);
   document.getElementById('iq-count').textContent = visible.length + ' card' + (visible.length!==1?'s':'');
 
   let lastSec = null;
@@ -1242,7 +1267,7 @@ function iqRender() {
     const aEnHtml = c.aEn ? `<div class="iq-a">${escHtml(c.aEn)}</div>` : `<div class="iq-a-empty">No answer yet — click Edit to add one.</div>`;
     const aSwHtml = c.aSv ? `<div class="iq-a">${escHtml(c.aSv)}</div>` : `<div class="iq-a-empty">Inget svar ännu — klicka Edit för att lägga till.</div>`;
     html += `
-    <div class="iq-card" id="iqcard-${c.id}" draggable="true"
+    <div class="iq-card${c.pinned?' is-pinned':''}" id="iqcard-${c.id}" draggable="true"
       ondragstart="iqDragStart('${c.id}')" ondragover="iqDragOver(event,'${c.id}')"
       ondragleave="iqDragLeave('${c.id}')" ondrop="iqDrop(event,'${c.id}')">
       <div class="iq-card-header" onclick="iqToggle('${c.id}')">
@@ -1251,6 +1276,7 @@ function iqRender() {
         <span class="iq-card-title">${escHtml(c.qEn)}</span>
         <span class="iq-section-pill">${SECTION_LABELS[c.section]||c.section}</span>
         <div class="iq-card-actions" onclick="event.stopPropagation()">
+          <button class="iq-pin-btn${c.pinned?' pinned':''}" onclick="iqTogglePin('${c.id}')">${c.pinned?'📌 Pinned':'Pin Question'}</button>
           <button class="btn btn-ghost btn-xs" onclick="iqOpenEdit('${c.id}')">Edit</button>
           <button class="btn btn-danger btn-xs" onclick="iqDelete('${c.id}')">✕</button>
         </div>
@@ -1291,7 +1317,7 @@ window.iqToggle = function iqToggle(id){
   if(chev) chev.style.transform = opening ? 'rotate(180deg)' : '';
   if(opening) iqOpenSet.add(id); else iqOpenSet.delete(id);
   // update button label without full re-render
-  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqFilter_==='all' ? iqCards : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned) : iqCards.filter(c=>c.section===iqFilter_);
   const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
   const btn = document.getElementById('iq-expand-all-btn');
   if(btn) btn.textContent = allOpen ? 'Collapse All' : 'Expand All';
@@ -1299,19 +1325,35 @@ window.iqToggle = function iqToggle(id){
 
 // ── Expand / Collapse all ─────────────────────────────────────────────────────
 window.iqExpandAll = function(){
-  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqFilter_==='all' ? iqCards : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned) : iqCards.filter(c=>c.section===iqFilter_);
   const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
   if(allOpen){ visible.forEach(c => iqOpenSet.delete(c.id)); }
   else { visible.forEach(c => iqOpenSet.add(c.id)); }
   iqRender();
 };
 
+// ── Pin toggle ────────────────────────────────────────────────────────────────
+window.iqTogglePin = function(id){
+  const c = iqCards.find(x=>x.id===id);
+  if(!c) return;
+  c.pinned = !c.pinned;
+  iqSave();
+  iqRender();
+};
+
 // ── Filter ────────────────────────────────────────────────────────────────────
 window.iqFilter = function(f){
   iqFilter_ = f;
-  ['all','pitch','common','ask'].forEach(k=>{
+  ['all','pitch','common','ask','pinned'].forEach(k=>{
     const el = document.getElementById('iq-filter-'+k);
-    if(el) el.className = 'filter-btn' + (k===f?' active-blue':'');
+    if(!el) return;
+    if(k==='pinned'){
+      el.className = 'filter-btn' + (k===f?' active-dark':'');
+      if(k===f) el.style.background='#FFC000', el.style.color='var(--navy)', el.style.borderColor='#FFC000';
+      else el.style.background='', el.style.color='', el.style.borderColor='#FFCD00';
+    } else {
+      el.className = 'filter-btn' + (k===f?' active-blue':'');
+    }
   });
   iqRender();
 };
@@ -1424,7 +1466,10 @@ window.iqDrop      = function(e,targetId){
   iqSave(); iqRender();
 };
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Expose for renderAll hook ─────────────────────────────────────────────────
+window.iqLoad = iqLoad;
+
+// ── Init (runs immediately; renderAll will re-run once auth is ready) ─────────
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iqLoad); else iqLoad();
 })();
 </script>
@@ -4906,6 +4951,7 @@ async function init() {
 }
 async function renderAll() {
   document.getElementById("headerUserName").textContent = "👤 " + currentDisplayName();
+  if(typeof iqLoad === 'function') iqLoad();
   populateSelects();
   loadCriteriaInputs();
   renderRoleTitles();
