@@ -323,6 +323,7 @@
     <button class="tab-btn tab-amber" onclick="showTab('checkout')">Notes</button>
     <button class="tab-btn tab-amber" onclick="showTab('strategy')">Strategy</button>
     <button class="tab-btn tab-amber" onclick="showTab('brokers')">Consultancies</button>
+    <button class="tab-btn tab-amber" onclick="showTab('interview')">Interview Prep</button>
   </div>
 </div>
 
@@ -955,6 +956,478 @@
     </ul>
   </div>
 
+</div>
+
+<!-- ════════════════════════════ INTERVIEW PREP ═════════════════════════════ -->
+<div id="tab-interview" class="section">
+<style>
+  .iq-section-hdr { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px; }
+  .iq-card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  .iq-card-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border); }
+  .iq-card-header:hover { background:var(--off); }
+  .iq-card-number { width:26px; height:26px; border-radius:50%; background:var(--navy); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .iq-card-title { font-size:13px; font-weight:700; color:var(--dark); flex:1; margin:0 10px; }
+  .iq-card-actions { display:flex; gap:6px; align-items:center; }
+  .iq-card-body { display:none; }
+  .iq-card-body.open { display:block; }
+  .iq-lang-block { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .iq-lang-block:last-child { border-bottom:none; }
+  .iq-lang-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .iq-lang-flag { font-size:14px; }
+  .iq-q { font-size:13px; font-weight:600; color:var(--dark); margin-bottom:6px; line-height:1.5; }
+  .iq-a { font-size:13px; color:var(--dark); line-height:1.6; white-space:pre-wrap; }
+  .iq-a-empty { font-size:12px; color:var(--muted); font-style:italic; }
+  .iq-edit-area { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; line-height:1.6; resize:vertical; outline:none; min-height:80px; }
+  .iq-edit-area:focus { border-color:var(--blue); }
+  .iq-edit-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:center; }
+  .iq-drag-handle { cursor:grab; color:var(--muted); font-size:16px; flex-shrink:0; padding:2px 4px; }
+  .iq-drag-handle:active { cursor:grabbing; }
+  .iq-card.drag-over { border:2px dashed var(--tealB); background:var(--teall); }
+  .iq-card.dragging { opacity:.4; }
+  .iq-add-form { background:var(--white); border:1px dashed var(--border); border-radius:12px; padding:18px 20px; margin-bottom:12px; }
+  .iq-add-form .form-label { margin-top:10px; }
+  .iq-translate-btn { background:var(--sky); color:var(--navy); border:none; border-radius:999px; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .iq-translate-btn:hover { opacity:.85; }
+  .iq-translate-btn:disabled { opacity:.5; cursor:default; }
+  .iq-section-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; background:var(--sky); color:var(--navy); }
+  .iq-filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .iq-count { font-size:12px; color:var(--muted); margin-left:auto; }
+  .iq-chevron { font-size:12px; color:var(--muted); transition:transform .2s; flex-shrink:0; }
+  .iq-card-body.open ~ .iq-chevron-ref { transform:rotate(180deg); }
+  .iq-chevron.open { transform:rotate(180deg); }
+</style>
+
+<!-- Top bar -->
+<div class="card" style="margin-bottom:16px;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="card-ttl" style="font-size:15px;margin-bottom:4px">Interview Preparation Library</div>
+      <div style="font-size:12px;color:var(--muted)">Cards are stored in your browser. Add your answers, translate, re-order, and extract before each interview.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="iqOpenAddForm()">+ Add Question</button>
+      <button class="btn btn-ghost" id="iq-expand-all-btn" onclick="iqExpandAll()">Expand All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="iq-filter-bar">
+  <button class="filter-btn active-blue" id="iq-filter-all" onclick="iqFilter('all')">All</button>
+  <button class="filter-btn" id="iq-filter-pitch" onclick="iqFilter('pitch')">Pitch</button>
+  <button class="filter-btn" id="iq-filter-common" onclick="iqFilter('common')">Common Questions</button>
+  <button class="filter-btn" id="iq-filter-ask" onclick="iqFilter('ask')">Ask the Employer</button>
+  <span class="iq-count" id="iq-count"></span>
+</div>
+
+<!-- Add form (hidden by default) -->
+<div class="iq-add-form" id="iq-add-form" style="display:none">
+  <div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:14px" id="iq-form-title">Add New Question</div>
+  <div class="form-group">
+    <label class="form-label">Section</label>
+    <select class="form-input" id="iq-form-section" style="width:auto">
+      <option value="pitch">Pitch</option>
+      <option value="common" selected>Common Questions</option>
+      <option value="ask">Ask the Employer</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Question (English) 🇬🇧</label>
+    <input class="form-input" id="iq-form-q-en" placeholder="e.g. What is your proudest achievement?">
+    <div class="iq-edit-row">
+      <button class="iq-translate-btn" id="iq-trans-q-en" onclick="iqTranslate('q','en','sv')">Translate → Swedish</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Question (Svenska) 🇸🇪</label>
+    <input class="form-input" id="iq-form-q-sv" placeholder="t.ex. Vad är du mest stolt över att ha åstadkommit?">
+    <div class="iq-edit-row">
+      <button class="iq-translate-btn" id="iq-trans-q-sv" onclick="iqTranslate('q','sv','en')">Translate → English</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Answer / Notes (English) 🇬🇧</label>
+    <textarea class="iq-edit-area" id="iq-form-a-en" rows="4" placeholder="Key points, STAR story, bullet notes…"></textarea>
+    <div class="iq-edit-row">
+      <button class="iq-translate-btn" id="iq-trans-a-en" onclick="iqTranslate('a','en','sv')">Translate → Swedish</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Answer / Notes (Svenska) 🇸🇪</label>
+    <textarea class="iq-edit-area" id="iq-form-a-sv" rows="4" placeholder="Nyckelpunkter, STAR-berättelse, anteckningar…"></textarea>
+    <div class="iq-edit-row">
+      <button class="iq-translate-btn" id="iq-trans-a-sv" onclick="iqTranslate('a','sv','en')">Translate → English</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-primary" onclick="iqSaveForm()">Save</button>
+    <button class="btn btn-ghost" onclick="iqCloseAddForm()">Cancel</button>
+  </div>
+</div>
+
+<!-- Card list -->
+<div id="iq-list"></div>
+
+<script>
+(function(){
+// ── Data ──────────────────────────────────────────────────────────────────────
+const IQ_KEY = 'iq_cards_v2';
+let iqCards = [];
+let iqFilter_ = 'all';
+let iqEditId = null;
+let iqDragId = null;
+const iqOpenSet = new Set();
+
+function iqLoad() {
+  try { iqCards = JSON.parse(localStorage.getItem(IQ_KEY)) || []; } catch(e){ iqCards=[]; }
+  if(!iqCards.length) iqCards = iqDefaultData();
+  iqRender();
+}
+
+function iqSave() {
+  try { localStorage.setItem(IQ_KEY, JSON.stringify(iqCards)); } catch(e){}
+}
+
+function iqId() { return 'iq_'+ Date.now() +'_'+ Math.random().toString(36).slice(2,7); }
+
+// ── Default seed data (pre-populated from Knowit Insight interview prep) ──────
+function iqDefaultData(){
+  return [
+  {id:iqId(),section:'pitch',
+   qEn:'30-second pitch',qSv:'30-sekunders pitch',
+   aEn:'I have over 20 years of experience leading complex change in regulated environments: banking in London, the Swedish public sector as a consultant, and for the last stretch Life Science. At AstraZeneca and Evinova I led the Unify platform from programme to a global delivery organisation of about 130 people that delivered 30+ clinical trial deployments, while Unify grew into a standalone company. Last year AI and automation use cases I identified and implemented saved about four million dollars. What I bring to clients is the same pattern each time: the right people pulling in one direction, honest delivery, and an organisation that can run the change without me. I want to do that here, in transformation and AI adoption, especially in regulated industries.',
+   aSv:'Jag har över 20 års erfarenhet av att leda komplexa förändringar i reglerade miljöer: bankteknik i London, offentlig sektor i Sverige som konsult och de senaste åren Life Science. På AstraZeneca och Evinova ledde jag plattformen Unify från program till en global leveransorganisation med ungefär 130 specialister som genomförde över 30 driftsättningar i kliniska studier, samtidigt som Unify växte till ett eget bolag. Förra året sparade AI- och automatiseringslösningar som jag identifierade och införde omkring fyra miljoner dollar i driftskostnader. Det jag tar med mig till kunder är att jag får rätt människor att dra åt samma håll, håller leveransen ärlig och lämnar en organisation som klarar av att driva förändringen själv.'},
+
+  {id:iqId(),section:'pitch',
+   qEn:'2-minute pitch',qSv:'2-minuterspitch',
+   aEn:'I lead complex change where mistakes are expensive. I started in banking technology in London, at Citigroup, J.P. Morgan and Lloyds, moved to Sweden and worked as a consultant, and for the last eight years I have been in Life Science at AstraZeneca and Evinova. The pattern is the same each time: a good idea or a hard mandate, a cautious global organisation, and my job is to turn it into something that works and keeps working.\n\nThe clearest example is Unify. I joined in 2018 to mobilise the programme and from 2019 I led the platform programme at AstraZeneca, about $50M a year and more than 15 major releases. As Unify grew into Evinova I built and led the global delivery organisation, about 130 specialists in more than ten teams, which delivered more than 30 clinical trial deployments. I also sit on the board of Evinova AB, responsible for its financial obligations and its safety, health and environment compliance.\n\nMost recently, as Senior Director for Delivery Acceleration, I identified and implemented AI and automation use cases for Global Customer Delivery that saved about $4 million in 2025. I build tactical AI tools myself, so I know what works, and we tracked adoption with KPIs rather than opinions.\n\nBefore AstraZeneca I was a consultant at Sigma IT Consulting, where I delivered and ran minpension.se, Sweden\'s national pension platform, with government authorities and pension institutions as partners. So I know what it is to work as a consultant inside a client\'s constraints.\n\nI have an MSc from the LSE, IPMA Level B, Certified Scrum Master and SAFe training. What I am looking for is a role where I can lead larger transformation work, particularly where regulation, data and technology meet.',
+   aSv:'Jag leder komplexa förändringar där misstag blir dyra. Jag började inom banktekniken i London, på Citigroup, J.P. Morgan och Lloyds, flyttade till Sverige och arbetade som konsult, och de senaste åtta åren har jag verkat inom Life Science på AstraZeneca och Evinova. Mönstret är detsamma varje gång: en bra idé eller ett svårt uppdrag, en försiktig global organisation, och min uppgift är att göra det till något som fungerar och fortsätter att fungera.\n\nDet tydligaste exemplet är Unify. Jag kom in 2018 för att starta upp programmet, och från 2019 ledde jag plattformsprogrammet på AstraZeneca, med en budget på omkring 50 miljoner dollar per år och fler än 15 större releaser. När Unify växte till Evinova byggde och ledde jag den globala leveransorganisationen, omkring 130 specialister i fler än tio team, som genomförde över 30 driftsättningar i kliniska studier. Jag sitter också i styrelsen för Evinova AB och ansvarar för bolagets ekonomiska åtaganden och för efterlevnaden av säkerhet, hälsa och miljö.\n\nPå senare tid, som Senior Director för Delivery Acceleration, har jag identifierat och infört AI- och automatiseringslösningar för Global Customer Delivery som sparade omkring 4 miljoner dollar under 2025. Jag bygger själv enklare AI-verktyg, så jag vet vad som fungerar, och vi följde upp användningen med KPI:er i stället för tyckanden.\n\nFöre AstraZeneca var jag konsult på Sigma IT Consulting, där jag ledde leveransen och driften av minpension.se, Sveriges nationella pensionsplattform, tillsammans med myndigheter och pensionsaktörer.\n\nJag har en MSc från LSE, IPMA nivå B, är Certified Scrum Master och har SAFe-utbildning.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Tell us about yourself.',qSv:'Berätta om dig själv.',
+   aEn:'Use the 2-minute pitch. Stop after the Unify paragraph if you sense they want to interrupt with questions.',
+   aSv:'Använd 2-minuterspitchen. Sluta efter stycket om Unify om du märker att de vill avbryta med frågor.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Why this role / why management consulting, and why now?',qSv:'Varför den här rollen / varför managementkonsult, och varför nu?',
+   aEn:'The part of change I enjoy most is the beginning: working out what the real problem is, getting decision-makers behind it and getting it moving. I have been a consultant before, at Sigma IT Consulting and Altran, and consulting lets me do that more often and across more industries. The timing is also right, because my role at Evinova is being made redundant in a reorganisation, so I get to choose deliberately. What I do not want to lose is the outcome focus. I want to work with a firm that judges itself on what changes for the client.\n\n[Add what you enjoyed most about consulting the first time.]',
+   aSv:'Det jag tycker mest om i förändringsarbete är början: att ta reda på vad det verkliga problemet är, få beslutsfattarna med sig och få saker att börja röra sig. Jag har varit konsult förut, på Sigma IT Consulting och Altran, och som konsult får jag göra det oftare och i fler branscher. Tidpunkten passar också, eftersom min tjänst på Evinova dras in i en omorganisation, så jag kan välja medvetet. Det jag inte vill tappa är resultatfokuset. Jag vill arbeta i ett bolag som mäter sig på vad som förändras för kunden.\n\n[Lägg till vad du uppskattade mest med konsultrollen förra gången.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'What happened at your last role, and when can you start?',qSv:'Vad hände på din förra tjänst, och när kan du börja?',
+   aEn:'Evinova has reorganised and my role is being made redundant. I am on notice until the end of November [confirm exact date], so I can start in December [confirm]. I am proud of what we achieved, in particular the AI and automation work that saved about $4 million in 2025. I would rather spend the time on what comes next, which is why I am talking to you.',
+   aSv:'Evinova har omorganiserats och min tjänst dras in. Jag har uppsägningstid till slutet av november [bekräfta exakt datum], så jag kan börja i december [bekräfta]. Jag är stolt över vad vi åstadkom, särskilt AI- och automatiseringsarbetet som sparade omkring 4 miljoner dollar under 2025. Jag vill hellre lägga tiden på det som kommer härnäst, och det är därför jag pratar med er.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Why this company?',qSv:'Varför det här bolaget?',
+   aEn:'Three reasons. First, [the firm] is a management consultancy [inside / with close ties to] a technology group, so you can advise on the change and connect to data and AI delivery. That fits how I work. Second, [reference their recent report or stated direction] talks about [e.g. building competence for larger transformation projects], which is the scale I have worked at. Third, I live in Gothenburg and [describe the office/team size] feels like a place where I would be known and could contribute quickly.\n\n[Add one client case, article or person that caught your attention — make it specific.]',
+   aSv:'Tre skäl. För det första är [bolaget] ett managementkonsultbolag [i / med nära koppling till] en teknikkoncern, så ni kan både ge råd om förändringen och koppla in data- och AI-leverans. Det passar hur jag arbetar. För det andra talar [referera deras senaste rapport eller uttalade inriktning] om [t.ex. att bygga kompetens för större transformationsprojekt], vilket är den skala jag har arbetat i. För det tredje bor jag i Göteborg och [beskriv kontorets/teamets storlek] känns som en plats där jag snabbt skulle bli känd och kunna bidra.\n\n[Lägg till ett kundcase, en artikel eller en person som väckte ditt intresse — gör det specifikt.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'What is your proudest achievement?',qSv:'Vad är du mest stolt över att ha åstadkommit?',
+   aEn:'Situation: Unify was a strategic digital health programme at AstraZeneca to improve the participant experience in clinical trials. I joined in 2018 to mobilise it and from 2019 I led the platform programme.\n\nTask: Take it from a start-up phase to a platform that trials could run on, at scale.\n\nAction: I set up the programme office, governance and financial planning for a budget of $50M+ a year, put a SAFe demand and delivery model across several vendors and cross-functional teams, and built GxP-compliant validation into delivery from the start. [Add one decision only you would describe: something you stopped, escalated or changed.]\n\nResult: More than 15 major releases, then a global delivery organisation of about 130 specialists that delivered 30+ trial deployments. Unify grew into an enterprise platform, then a multi-customer product and the standalone company Evinova, and I now sit on the board of Evinova AB.',
+   aSv:'Situation: Unify var ett strategiskt digitalt hälsoprogram på AstraZeneca för att förbättra deltagarupplevelsen i kliniska studier. Jag kom in 2018 för att starta upp det, och från 2019 ledde jag plattformsprogrammet.\n\nUppgift: Ta det från uppstartsfas till en plattform som studier kunde köras på, i stor skala.\n\nÅtgärd: Jag byggde upp programkontoret, styrningen och den ekonomiska planeringen för en budget på över 50 miljoner dollar per år, införde en SAFe-modell för efterfrågan och leverans över flera leverantörer och tvärfunktionella team, och byggde in GxP-kompatibel validering i leveransen från början. [Lägg till ett beslut som bara du kan beskriva: något du stoppade, eskalerade eller ändrade.]\n\nResultat: Fler än 15 större releaser, därefter en global leveransorganisation med omkring 130 specialister som genomförde över 30 driftsättningar i kliniska studier. Unify växte till en företagsplattform, sedan en produkt för flera kunder och det fristående bolaget Evinova, och jag sitter nu i styrelsen för Evinova AB.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Tell us about leading change when people were not aligned.',qSv:'Berätta om ett tillfälle då du ledde förändring när människor inte var överens.',
+   aEn:'At the start of Unify there were several vendors and many cross-functional teams, each with its own way of working. I set up one end-to-end demand and delivery model in SAFe, plus governance, risk management and stakeholder reporting, so everyone worked from the same picture. [Add a specific moment of resistance and what you did about it.] The result was a programme that could release predictably, more than 15 major releases. The lesson I use with clients is that alignment is built one conversation at a time, well before the meeting where it is supposed to happen.',
+   aSv:'I början av Unify fanns flera leverantörer och många tvärfunktionella team, och alla hade sitt eget arbetssätt. Jag införde en gemensam modell för efterfrågan och leverans i SAFe, tillsammans med styrning, riskhantering och intressentrapportering, så att alla utgick från samma lägesbild. [Lägg till ett konkret tillfälle av motstånd och vad du gjorde åt det.] Resultatet blev ett program som kunde leverera förutsägbart, fler än 15 större releaser. Lärdomen jag tar med till kunder är att samsyn byggs samtal för samtal, långt innan mötet där den förväntas uppstå.'},
+
+  {id:iqId(),section:'common',
+   qEn:'How do you deliver in a regulated environment without slowing everything down?',qSv:'Hur levererar du i en reglerad miljö utan att sakta ner allt?',
+   aEn:'I treat regulation as a design constraint rather than a checkpoint at the end. On Unify I implemented GxP-compliant validation and quality frameworks as part of the delivery model, which supported 15+ major releases and kept us audit-ready. In practice it means agreeing with quality colleagues at the start what evidence each release needs, so nobody rediscovers it late. [Add a concrete example or an audit result.] In banking the same idea applied: know the control requirements first and plan around them.',
+   aSv:'Jag ser reglering som en designförutsättning, inte en kontrollpunkt i slutet. På Unify införde jag GxP-kompatibla ramverk för validering och kvalitet som en del av leveransmodellen, vilket bidrog till över 15 större releaser och till att vi hela tiden var redo för revision. I praktiken handlar det om att i början komma överens med kvalitetskollegorna om vilket underlag varje release behöver, så att ingen upptäcker det sent. [Lägg till ett konkret exempel eller ett revisionsresultat.] Inom bank gällde samma princip: ta reda på kontrollkraven först och planera utifrån dem.'},
+
+  {id:iqId(),section:'common',
+   qEn:'How are you using AI in your own work?',qSv:'Hur använder du AI i ditt eget arbete?',
+   aEn:'Hands-on, and with a number attached. In 2025 I identified and implemented AI and automation use cases for Global Customer Delivery that generated around $4M in operational savings. I build tactical AI tools myself, so I know their limits, and I set KPIs for adoption, efficiency and maturity so we could see whether people actually used them. I also coached the delivery squad towards more autonomous, outcome-based ways of working.\n\nOn the technical side my team uses Claude Code, and I explored Copilot Studio and Azure AI Search for document Q&A on SharePoint, with permissions designed up front, because the wrong person seeing the wrong document is the risk that matters.\n\n[Add one specific tool you built and what it changed for its users.]',
+   aSv:'Praktiskt, och med en siffra. Under 2025 identifierade och införde jag AI- och automatiseringslösningar för Global Customer Delivery som gav omkring 4 miljoner dollar i sparade driftskostnader. Jag bygger själv enklare AI-verktyg, så jag känner till deras begränsningar, och jag satte KPI:er för användning, effektivitet och mognad så att vi kunde se om folk faktiskt använde dem. Jag har också coachat leveranssquaden mot mer självstyrande och resultatinriktade arbetssätt.\n\nTekniskt sett använder mitt team Claude Code, och jag har utforskat Copilot Studio och Azure AI Search för frågor och svar över dokument i SharePoint, med behörigheter utformade från början, eftersom risken som spelar roll är att fel person ser fel dokument.\n\n[Lägg till ett konkret verktyg du byggt och vad det förändrade för användarna.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'What is your experience of the public sector?',qSv:'Vilken erfarenhet har du av offentlig sektor?',
+   aEn:'At Sigma IT Consulting from 2012 to 2018 I was Senior Project and Delivery Manager and Scrum Master for minpension.se, the Swedish national pension platform, a collaboration between the government and pension institutions. I led a team of about 15 covering design, development and operation, managed platform evolutions and integrations with partners and authorities, and reported to internal and external steering committees. [Add an outcome: users, a major release or a regulatory milestone.] It taught me how authorities and partners decide, which is slower and more consensus-driven than a company, and I think that helps on assignments for municipalities and agencies.',
+   aSv:'På Sigma IT Consulting 2012–2018 var jag Senior Project and Delivery Manager och Scrum Master för minpension.se, Sveriges nationella pensionsplattform, ett samarbete mellan staten och pensionsaktörerna. Jag ledde ett team på omkring 15 personer som arbetade med design, utveckling och drift, ansvarade för plattformens vidareutveckling och integrationer med partner och myndigheter, och rapporterade till interna och externa styrgrupper. [Lägg till ett resultat: antal användare, en större release eller en regulatorisk milstolpe.] Det lärde mig hur myndigheter och partner fattar beslut, vilket går långsammare och är mer konsensusdrivet än i ett företag, och jag tror att det hjälper i uppdrag för kommuner och myndigheter.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Where would you add most value, and why should we choose you?',qSv:'Var tillför du mest värde, och varför ska vi välja dig?',
+   aEn:'In programme and transformation leadership where technology, regulation and many stakeholders meet, particularly in Life Science, healthcare and the public sector. I have been a consultant, at Sigma IT Consulting and Altran, and I have been accountable for results in-house at scale, so I know both sides of the table. I would expect to lead work as a senior consultant [or the level you are aiming for], and I am comfortable at sponsor level and in the detail.',
+   aSv:'Inom program- och transformationsledning där teknik, reglering och många intressenter möts, särskilt inom Life Science, hälso- och sjukvård och offentlig sektor. Jag har varit konsult, på Sigma IT Consulting och Altran, och jag har haft ansvar för resultat internt i stor skala, så jag känner till båda sidor av bordet. Jag skulle förvänta mig att leda arbete som senior konsult [eller den nivå du siktar på], och jag är trygg både på sponsornivå och i detaljerna.'},
+
+  {id:iqId(),section:'common',
+   qEn:'How would you help win and grow work?',qSv:'Hur skulle du hjälpa oss att vinna och utveckla affärer?',
+   aEn:'Consulting revenue comes from trust, so I would start with relationships I already have. In Gothenburg\'s life-science and health-tech environment I know [organisations or contacts you can honestly name]. I would also treat every assignment as a chance to see the next problem and raise it with the client early. I have read that [the firm] is investing in sales and in larger transformation projects, and I would want to be part of that, not only billable.',
+   aSv:'Konsultintäkter bygger på förtroende, så jag skulle börja med de relationer jag redan har. I Göteborgs life science- och healthtech-miljö känner jag [organisationer eller kontakter du ärligt kan nämna]. Jag skulle också se varje uppdrag som ett tillfälle att upptäcka nästa problem och ta upp det med kunden tidigt. Jag har läst att [bolaget] satsar på försäljning och på större transformationsprojekt, och jag vill vara med i det, inte bara vara debiterbar.'},
+
+  {id:iqId(),section:'common',
+   qEn:'What do you do between assignments?',qSv:'Vad gör du mellan uppdrag?',
+   aEn:'I use the time. That could mean supporting proposals, building reusable material, developing an offer for regulated industries, or keeping warm contact with past clients for what comes next. At Evinova I led an acceleration team working on internal improvements that made delivery faster, so I am used to turning time outside customer work into something useful.',
+   aSv:'Jag använder tiden. Det kan handla om att stödja anbud, bygga återanvändbart material, utveckla ett erbjudande för reglerade branscher eller hålla kontakten med tidigare kunder inför nästa uppdrag. På Evinova ledde jag ett accelerationsteam som arbetade med interna förbättringar som gjorde leveransen snabbare, så jag är van vid att göra tid utanför kunduppdrag till något användbart.'},
+
+  {id:iqId(),section:'common',
+   qEn:'Tell us about something that did not go to plan.',qSv:'Berätta om något som inte gick enligt plan.',
+   aEn:'In the Delivery Acceleration team we were using Claude Code across several repositories, but we had no deployment environment and the proposal for repository strategy and architecture was overdue. Everyone owned it, so nobody did. I drafted a template, asked one named person to write the first version and set a date. It started moving. The lesson I carry into client work is that a shared ask without a name and a date stalls. [Add what happened after.]',
+   aSv:'I Delivery Acceleration-teamet använde vi Claude Code i flera repositorier, men vi saknade en driftmiljö och förslaget om repositoriestrategi och arkitektur var försenat. Alla ägde det, så ingen gjorde det. Jag skrev en mall, bad en namngiven person skriva den första versionen och satte ett datum. Då började det röra sig. Lärdomen jag tar med till kunduppdrag är att en gemensam uppgift utan namn och datum blir stående. [Lägg till vad som hände sedan.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'What is your biggest development area?',qSv:'Vad är ditt främsta utvecklingsområde?',
+   aEn:'My Swedish is fluent in speech and works well at work, but polished written Swedish for a client-facing document takes me an extra review pass. I have made that part of how I work: I write the draft myself and ask for a targeted check.',
+   aSv:'Min svenska är flytande i tal och fungerar bra i arbetet, men ett kundriktat dokument på polerad svenska kräver ett extra granskningssteg. Jag har gjort det till en del av mitt arbetssätt: jag skriver utkastet själv och ber om en riktad kontroll.'},
+
+  {id:iqId(),section:'common',
+   qEn:'You have looked at starting your own consulting company. How does that fit?',qSv:'Du har funderat på att starta eget konsultbolag. Hur går det ihop?',
+   aEn:'I have looked at it, and I will be direct about that. It made me clearer about what I want from a firm: a strong brand, colleagues to learn from and a flow of assignments I do not have to sell alone. That is what a role here could give me. [Adapt to what is true for you. If you would consider both, say so plainly.]',
+   aSv:'Jag har tittat på det och är öppen med det. Det gjorde mig tydligare med vad jag vill ha av ett bolag: ett starkt varumärke, kollegor att lära av och ett flöde av uppdrag som jag inte behöver sälja in ensam. Det kan en roll här ge mig. [Anpassa efter vad som stämmer för dig. Om du skulle överväga båda vägarna, säg det öppet.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'What are your expectations on terms?',qSv:'Vilka är dina förväntningar på villkor?',
+   aEn:'I would like to understand how the model works first: fixed salary, any variable part, and how utilisation and business development are counted. I am flexible on structure and want it to be fair for both sides. [Have your range ready from your own research, and give it only if asked directly.]',
+   aSv:'Jag vill först förstå hur modellen fungerar: fast lön, eventuell rörlig del och hur debiteringsgrad och affärsutveckling räknas. Jag är flexibel kring upplägget och vill att det ska vara rimligt för båda parter. [Ha ditt spann redo utifrån din egen research, och nämn det bara om du får en direkt fråga.]'},
+
+  {id:iqId(),section:'common',
+   qEn:'Where do you want to be in three years?',qSv:'Var vill du vara om tre år?',
+   aEn:'Leading larger transformation programmes for clients in Life Science, the public sector and other regulated industries, trusted by a few clients as a long-term adviser, and helping newer consultants learn to deliver outcomes rather than documents. [Adjust to the career path they describe.]',
+   aSv:'Leda större transformationsprogram för kunder inom Life Science, offentlig sektor och andra reglerade branscher, vara en långsiktig rådgivare för några få kunder och hjälpa nyare konsulter att leverera resultat i stället för dokument. [Anpassa efter den karriärväg de beskriver.]'},
+
+  {id:iqId(),section:'ask',
+   qEn:'What do typical assignments look like right now, and which types are growing?',qSv:'Hur ser typiska uppdrag ut just nu, och vilka typer växer?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'Where do you see Life Science, health tech and other regulated industries fitting into your offer?',qSv:'Var ser ni att Life Science, healthtech och andra reglerade branscher passar in i erbjudandet?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'What does a senior consultant do here beyond delivery, and how is business development expected to work?',qSv:'Vad gör en senior konsult här utöver leverans, och hur förväntas affärsutveckling fungera?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How do consultants get matched to assignments, and how is time between assignments used?',qSv:'Hur matchas konsulter mot uppdrag, och hur används tiden mellan uppdrag?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How do you work with data, AI and technology partners on joint client offers?',qSv:'Hur samarbetar ni med data-, AI- och teknikpartners kring gemensamma erbjudanden?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'What would the first 90 days look like, and what would make someone clearly successful after a year?',qSv:'Hur ser de första 90 dagarna ut, och vad skulle göra att någon tydligt lyckas efter ett år?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How do people grow here into leading larger transformation programmes?',qSv:'Hur utvecklas man här till att leda större transformationsprogram?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How does the pipeline look over the coming months?',qSv:'Hur ser uppdragsläget ut de kommande månaderna?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'What are the next steps and timeline, and who else should I meet?',qSv:'Vad är nästa steg och tidplan, och vilka fler borde jag träffa?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'Is there a collective agreement, and how is the occupational pension set up?',qSv:'Finns det kollektivavtal, och hur är tjänstepensionen upplagd?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'Is there a wellness allowance or health insurance?',qSv:'Finns det friskvårdsbidrag eller sjukvårdsförsäkring?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'Is there a variable or bonus component, and what is it tied to?',qSv:'Finns det en rörlig del, och vad är den kopplad till?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'Is there a set budget or time for training and certifications?',qSv:'Finns det en fast budget eller avsatt tid för kompetensutveckling och certifieringar?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How does remote and hybrid work function here?',qSv:'Hur fungerar distans- och hybridarbete här?',aEn:'',aSv:''},
+  {id:iqId(),section:'ask',
+   qEn:'How is the fixed salary set, and how often is it reviewed?',qSv:'Hur sätts den fasta lönen, och hur ofta ses den över?',aEn:'',aSv:''},
+  ];
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+const SECTION_LABELS = { pitch:'Pitch', common:'Common Questions', ask:'Ask the Employer' };
+
+function iqRender() {
+  const list = document.getElementById('iq-list');
+  if(!list) return;
+  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  document.getElementById('iq-count').textContent = visible.length + ' card' + (visible.length!==1?'s':'');
+
+  let lastSec = null;
+  let html = '';
+  for(const c of visible){
+    if(c.section !== lastSec){
+      html += `<div class="iq-section-hdr">${SECTION_LABELS[c.section]||c.section}</div>`;
+      lastSec = c.section;
+    }
+    const n = iqCards.indexOf(c)+1;
+    const isOpen = iqOpenSet.has(c.id);
+    const aEnHtml = c.aEn ? `<div class="iq-a">${escHtml(c.aEn)}</div>` : `<div class="iq-a-empty">No answer yet — click Edit to add one.</div>`;
+    const aSwHtml = c.aSv ? `<div class="iq-a">${escHtml(c.aSv)}</div>` : `<div class="iq-a-empty">Inget svar ännu — klicka Edit för att lägga till.</div>`;
+    html += `
+    <div class="iq-card" id="iqcard-${c.id}" draggable="true"
+      ondragstart="iqDragStart('${c.id}')" ondragover="iqDragOver(event,'${c.id}')"
+      ondragleave="iqDragLeave('${c.id}')" ondrop="iqDrop(event,'${c.id}')">
+      <div class="iq-card-header" onclick="iqToggle('${c.id}')">
+        <span class="iq-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">⠿</span>
+        <span class="iq-card-number">${n}</span>
+        <span class="iq-card-title">${escHtml(c.qEn)}</span>
+        <span class="iq-section-pill">${SECTION_LABELS[c.section]||c.section}</span>
+        <div class="iq-card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-xs" onclick="iqOpenEdit('${c.id}')">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="iqDelete('${c.id}')">✕</button>
+        </div>
+        <span class="iq-chevron" id="iqchev-${c.id}" style="${isOpen?'transform:rotate(180deg)':''}">▾</span>
+      </div>
+      <div class="iq-card-body${isOpen?' open':''}" id="iqbody-${c.id}">
+        <div class="iq-lang-block">
+          <div class="iq-lang-label"><span class="iq-lang-flag">🇬🇧</span> English</div>
+          <div class="iq-q">${escHtml(c.qEn)}</div>
+          ${aEnHtml}
+        </div>
+        <div class="iq-lang-block">
+          <div class="iq-lang-label"><span class="iq-lang-flag">🇸🇪</span> Svenska</div>
+          <div class="iq-q">${escHtml(c.qSv)}</div>
+          ${aSwHtml}
+        </div>
+      </div>
+    </div>`;
+  }
+  if(!visible.length) html = '<div class="empty-state">No cards in this section yet.</div>';
+  list.innerHTML = html;
+
+  // sync expand-all button label
+  const allVisible = visible.map(c=>c.id);
+  const allOpen = allVisible.length > 0 && allVisible.every(id => iqOpenSet.has(id));
+  const btn = document.getElementById('iq-expand-all-btn');
+  if(btn) btn.textContent = allOpen ? 'Collapse All' : 'Expand All';
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.iqToggle = function iqToggle(id){
+  const body = document.getElementById('iqbody-'+id);
+  const chev = document.getElementById('iqchev-'+id);
+  if(!body) return;
+  const opening = !body.classList.contains('open');
+  body.classList.toggle('open');
+  if(chev) chev.style.transform = opening ? 'rotate(180deg)' : '';
+  if(opening) iqOpenSet.add(id); else iqOpenSet.delete(id);
+  // update button label without full re-render
+  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
+  const btn = document.getElementById('iq-expand-all-btn');
+  if(btn) btn.textContent = allOpen ? 'Collapse All' : 'Expand All';
+}
+
+// ── Expand / Collapse all ─────────────────────────────────────────────────────
+window.iqExpandAll = function(){
+  const visible = iqFilter_==='all' ? iqCards : iqCards.filter(c=>c.section===iqFilter_);
+  const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
+  if(allOpen){ visible.forEach(c => iqOpenSet.delete(c.id)); }
+  else { visible.forEach(c => iqOpenSet.add(c.id)); }
+  iqRender();
+};
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+window.iqFilter = function(f){
+  iqFilter_ = f;
+  ['all','pitch','common','ask'].forEach(k=>{
+    const el = document.getElementById('iq-filter-'+k);
+    if(el) el.className = 'filter-btn' + (k===f?' active-blue':'');
+  });
+  iqRender();
+};
+
+// ── Add / Edit form ───────────────────────────────────────────────────────────
+window.iqOpenAddForm = function(){
+  iqEditId = null;
+  document.getElementById('iq-form-title').textContent = 'Add New Question';
+  document.getElementById('iq-form-q-en').value='';
+  document.getElementById('iq-form-q-sv').value='';
+  document.getElementById('iq-form-a-en').value='';
+  document.getElementById('iq-form-a-sv').value='';
+  document.getElementById('iq-form-section').value='common';
+  document.getElementById('iq-add-form').style.display='block';
+  document.getElementById('iq-form-q-en').focus();
+  document.getElementById('iq-add-form').scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+window.iqCloseAddForm = function(){
+  document.getElementById('iq-add-form').style.display='none';
+  iqEditId = null;
+};
+
+window.iqOpenEdit = function(id){
+  const c = iqCards.find(x=>x.id===id);
+  if(!c) return;
+  iqEditId = id;
+  document.getElementById('iq-form-title').textContent = 'Edit Question';
+  document.getElementById('iq-form-q-en').value = c.qEn||'';
+  document.getElementById('iq-form-q-sv').value = c.qSv||'';
+  document.getElementById('iq-form-a-en').value = c.aEn||'';
+  document.getElementById('iq-form-a-sv').value = c.aSv||'';
+  document.getElementById('iq-form-section').value = c.section||'common';
+  document.getElementById('iq-add-form').style.display='block';
+  document.getElementById('iq-add-form').scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+window.iqSaveForm = function(){
+  const qEn = document.getElementById('iq-form-q-en').value.trim();
+  const qSv = document.getElementById('iq-form-q-sv').value.trim();
+  const aEn = document.getElementById('iq-form-a-en').value.trim();
+  const aSv = document.getElementById('iq-form-a-sv').value.trim();
+  const section = document.getElementById('iq-form-section').value;
+  if(!qEn && !qSv){ alert('Please enter at least one question.'); return; }
+  if(iqEditId){
+    const c = iqCards.find(x=>x.id===iqEditId);
+    if(c){ c.qEn=qEn; c.qSv=qSv; c.aEn=aEn; c.aSv=aSv; c.section=section; }
+  } else {
+    iqCards.push({id:iqId(),section,qEn,qSv,aEn,aSv});
+  }
+  iqSave();
+  iqCloseAddForm();
+  iqRender();
+};
+
+window.iqDelete = function(id){
+  if(!confirm('Remove this question card?')) return;
+  iqCards = iqCards.filter(c=>c.id!==id);
+  iqSave();
+  iqRender();
+};
+
+// ── Translate (MyMemory free API, no key needed) ──────────────────────────────
+window.iqTranslate = async function(field, fromLang, toLang){
+  const srcId = field==='q' ? 'iq-form-q-'+fromLang : 'iq-form-a-'+fromLang;
+  const dstId = field==='q' ? 'iq-form-q-'+toLang   : 'iq-form-a-'+toLang;
+  const btnId = 'iq-trans-'+field+'-'+fromLang;
+  const srcEl = document.getElementById(srcId);
+  const dstEl = document.getElementById(dstId);
+  const btnEl = document.getElementById(btnId);
+  const text = srcEl ? srcEl.value.trim() : '';
+  if(!text){ alert('Nothing to translate — fill in the source field first.'); return; }
+  const toName = toLang==='en' ? 'English' : 'Swedish';
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='Translating…'; }
+  try {
+    const langpair = fromLang+'|'+toLang;
+    // MyMemory has a 500-char limit per request; split on double-newline and rejoin
+    const chunks = text.split(/\n\n+/);
+    const translated = [];
+    for(const chunk of chunks){
+      if(!chunk.trim()){ translated.push(''); continue; }
+      const url = 'https://api.mymemory.translated.net/get?q='+encodeURIComponent(chunk)+'&langpair='+langpair;
+      const res = await fetch(url);
+      const json = await res.json();
+      if(json.responseStatus !== 200) throw new Error(json.responseDetails || 'Translation API error');
+      translated.push(json.responseData.translatedText);
+    }
+    if(dstEl) dstEl.value = translated.join('\n\n');
+  } catch(e){
+    alert('Translation failed: '+e.message+'\n\nCheck your internet connection and try again.');
+  }
+  if(btnEl){ btnEl.disabled=false; btnEl.textContent='Translate → '+toName; }
+};
+
+// ── Drag & drop reorder ───────────────────────────────────────────────────────
+window.iqDragStart = function(id){ iqDragId=id; document.getElementById('iqcard-'+id).classList.add('dragging'); };
+window.iqDragOver  = function(e,id){ e.preventDefault(); if(id!==iqDragId) document.getElementById('iqcard-'+id).classList.add('drag-over'); };
+window.iqDragLeave = function(id){ document.getElementById('iqcard-'+id).classList.remove('drag-over'); };
+window.iqDrop      = function(e,targetId){
+  e.preventDefault();
+  document.getElementById('iqcard-'+targetId).classList.remove('drag-over');
+  if(!iqDragId||iqDragId===targetId) return;
+  const from = iqCards.findIndex(c=>c.id===iqDragId);
+  const to   = iqCards.findIndex(c=>c.id===targetId);
+  if(from<0||to<0) return;
+  const [moved] = iqCards.splice(from,1);
+  iqCards.splice(to,0,moved);
+  document.getElementById('iqcard-'+iqDragId).classList.remove('dragging');
+  iqDragId=null;
+  iqSave(); iqRender();
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iqLoad); else iqLoad();
+})();
+</script>
 </div>
 
 <!-- ════════════════════════════ LINKEDIN ════════════════════════════════════ -->
