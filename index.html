@@ -6,53 +6,67 @@
 <title>Job Search &amp; Training Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Evinova-inspired palette: Rich Purple + Chalk primary, warm secondary accents */
-    --navy:   #3B0030;  /* Rich Purple — primary */
-    --blue:   #6B1052;  /* lighter plum, for gradients/links */
-    --sky:    #F5E7EF;  /* light purple-pink tint */
-    --mint:   #E1FAF0;  /* light green tint */
-    --amber:  #FFF6CF;  /* light saffron tint */
-    --red:    #FFE9EE;  /* light pink-red tint */
-    --white:  #FFFFFF;
-    --off:    #F9F8F6;  /* Chalk */
-    --border: #E9DEE5;
-    --muted:  #7C6470;
-    --dark:   #2B0A23;
-    --green:  #1F9C6E;  /* darkened Active Green, AA on white */
-    --orange: #D9600A;  /* darkened brand orange, AA on white */
-    --crimson:#A8293A;
-    --purple: #8A2F55;  /* deep pink/plum — Training accent */
-    --purpll: #FDEAF0;
-    --teal:   #2F7A86;  /* darkened teal — Network accent */
-    --teall:  #E3F7F3;
-    --rose:   #8A2F55;
-    --rosel:  #FDEAF0;
-    /* Raw brand colours, for high-impact fills (pair with dark text per brand guide) */
-    --pinkB:    #FA7AAB;
-    --greenB:   #36E09E;
-    --saffronB: #FFCD00;
-    --orangeB:  #F16D07;
-    --tealB:    #4F9EB0;
+    /* "Cool Ice Slate & Pearl" — Executive Career OS design system (Stitch Option B2) */
+    /* Canvas & backgrounds */
+    --bg-canvas: #EBF1F6;
+    --bg-surface: #FFFFFF;
+    --bg-surface-subtle: #F8FAFC;
+    --bg-surface-hover: #F1F5F9;
+    --bg-nav-track: #EEF2F6;
+    /* Borders & dividers */
+    --border-subtle: #E2E8F0;
+    --border-default: #D9E2EC;
+    --border-strong: #94A3B8;
+    /* Primary brand & interactive */
+    --color-primary: #2563EB;
+    --color-primary-hover: #1D4ED8;
+    --color-primary-active: #1E40AF;
+    --color-primary-light: #EFF6FF;
+    --color-primary-text: #FFFFFF;
+    --color-secondary: #4F46E5;
+    /* Typography / content hierarchy */
+    --text-primary: #0F172A;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+    --text-subtle: #94A3B8;
+    /* Semantic status tokens */
+    --status-success-bg: #ECFDF5;      --status-success-text: #059669;      --status-success-border: #A7F3D0;      --status-success-accent: #10B981;
+    --status-progress-bg: #F0F9FF;     --status-progress-text: #0284C7;     --status-progress-border: #BAE6FD;     --status-progress-accent: #0EA5E9;
+    --status-urgent-bg: #FFF1F2;       --status-urgent-text: #E11D48;       --status-urgent-border: #FECDD3;       --status-urgent-accent: #E11D48;
+    --status-warning-bg: #FEF3C7;      --status-warning-text: #D97706;      --status-warning-border: #FDE68A;      --status-warning-accent: #F59E0B;
+    --status-neutral-bg: #F1F5F9;      --status-neutral-text: #64748B;      --status-neutral-border: #CBD5E1;      --status-neutral-accent: #94A3B8;
+    /* Shadows */
+    --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+    --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+    --shadow-card-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+    --shadow-active-tab: 0 1px 2px rgba(37, 99, 235, 0.2);
+    --shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    /* Corner radii */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    /* Fonts */
+    --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--off); color: var(--dark); min-height: 100vh; }
-  .header h1, .card-ttl, .modal-title, .sec-label, .item-name, .stat-val, .login-logo, .rec-title {
-    font-family: 'Century Gothic', 'Poppins', 'Inter', sans-serif;
-  }
+  body { font-family: var(--font-sans); background: var(--bg-canvas); color: var(--text-primary); min-height: 100vh; }
 
   /* Header */
-  .header { background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%); color: #fff; padding: 20px 28px 0; }
+  .header { background: var(--bg-surface); color: var(--text-primary); padding: 20px 28px 0; border-bottom: 1px solid var(--border-subtle); box-shadow: var(--shadow-xs); }
   .header h1 { font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
-  .header p  { font-size: 12px; opacity: .75; margin-top: 3px; margin-bottom: 14px; }
-  .tabs { display: flex; gap: 4px; margin-top: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-  .tab-btn { padding: 8px 16px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); flex-shrink: 0; white-space: nowrap; }
-  .tab-btn.active { background: var(--white); color: var(--navy); }
-  .tab-btn.tab-amber { background: rgba(255,192,0,.25); color: #FFE9AD; }
-  .tab-btn.tab-amber.active { background: #FFC000; color: var(--navy); }
-  .save-flash { font-size: 12px; background: rgba(255,255,255,.2); border-radius: 8px; padding: 4px 12px; color: #fff; font-weight: 600; opacity: 0; transition: opacity .3s; }
+  .header p  { font-size: 12px; color: var(--text-muted); margin-top: 3px; margin-bottom: 14px; }
+  .tabs { display: flex; gap: 2px; margin-top: 8px; padding: 4px; background: var(--bg-nav-track); border-radius: var(--radius-pill); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  .tab-btn { padding: 6px 16px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; background: transparent; color: var(--text-secondary); flex-shrink: 0; white-space: nowrap; }
+  .tab-btn:hover:not(.active) { color: var(--text-primary); background: rgba(255,255,255,.6); }
+  .tab-btn.active, .tab-btn.tab-amber.active { background: var(--color-primary); color: var(--color-primary-text); font-weight: 600; box-shadow: var(--shadow-active-tab); }
+  .tab-btn.tab-amber { background: transparent; color: var(--text-secondary); }
+  .save-flash { font-size: 12px; background: var(--status-success-bg); border: 1px solid var(--status-success-border); border-radius: var(--radius-pill); padding: 4px 12px; color: var(--status-success-text); font-weight: 600; opacity: 0; transition: opacity .3s; }
   .save-flash.show { opacity: 1; }
 
   /* Body */
@@ -61,10 +75,10 @@
   .section.active { display: block; }
 
   /* Cards */
-  .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-  .card-teal { background: linear-gradient(135deg, rgba(17,122,101,.08), var(--teall)); border: 1px solid rgba(17,122,101,.25); }
-  .card-purple { background: linear-gradient(135deg, rgba(108,52,131,.08), var(--purpll)); border: 1px solid rgba(108,52,131,.25); }
-  .card-dashed { background: var(--off); border: 1px dashed var(--border); }
+  .card { background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-default); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+  .card-teal { background: var(--status-progress-bg); border: 1px solid var(--status-progress-border); }
+  .card-purple { background: var(--color-primary-light); border: 1px solid var(--status-progress-border); }
+  .card-dashed { background: var(--bg-surface-subtle); border: 1px dashed var(--border-default); }
 
   /* Grid */
   .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
@@ -74,86 +88,89 @@
   /* Stat */
   .stat { text-align: center; padding: 16px 8px; }
   .stat-val { font-size: 30px; font-weight: 800; line-height: 1; }
-  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+  .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
 
   /* Section label */
-  .sec-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .sec-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
 
   /* Badges */
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: .3px; }
   .badge.clickable { cursor: pointer; }
   .badge.clickable:hover { opacity: .8; }
 
   /* Buttons */
-  .btn { padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
-  .btn:hover { opacity: .88; }
-  .btn-primary  { background: var(--greenB);  color: var(--dark); }
-  .btn-teal     { background: var(--tealB);   color: var(--dark); }
-  .btn-purple   { background: var(--pinkB);   color: var(--dark); }
-  .btn-ghost    { background: var(--white);  color: var(--muted); border: 1px solid var(--border) !important; }
-  .btn-sky      { background: var(--sky);    color: var(--navy); }
-  .btn-danger   { background: var(--red);     color: var(--crimson); }
+  .btn { padding: 8px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, box-shadow .15s; }
+  .btn:hover { opacity: .9; }
+  .btn-primary  { background: var(--status-success-accent);  color: #fff; }
+  .btn-teal     { background: var(--status-progress-accent);   color: #fff; }
+  .btn-purple   { background: var(--color-primary);   color: #fff; }
+  .btn-ghost    { background: var(--bg-surface);  color: var(--text-secondary); border: 1px solid var(--border-default) !important; }
+  .btn-ghost:hover { background: var(--bg-surface-hover); }
+  .btn-sky      { background: var(--color-primary-light);    color: var(--color-primary); }
+  .btn-danger   { background: var(--status-urgent-bg);     color: var(--status-urgent-text); }
   .btn-sm       { padding: 5px 11px; font-size: 12px; }
   .btn-xs       { padding: 3px 8px;  font-size: 11px; }
 
   /* Filter bar */
   .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .filter-btn { padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--muted); transition: all .12s; }
-  .filter-btn.active-blue   { background: var(--navy);   color: #fff; border-color: var(--navy); }
-  .filter-btn.active-teal   { background: var(--teal);   color: #fff; border-color: var(--teal); }
-  .filter-btn.active-purple { background: var(--purple); color: #fff; border-color: var(--purple); }
-  .filter-btn.active-dark   { background: var(--navy);   color: #fff; border-color: var(--navy); }
+  .filter-btn { padding: 5px 11px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-muted); transition: all .12s; }
+  .filter-btn.active-blue   { background: var(--color-primary);   color: #fff; border-color: var(--color-primary); }
+  .filter-btn.active-teal   { background: var(--status-progress-text);   color: #fff; border-color: var(--status-progress-text); }
+  .filter-btn.active-purple { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+  .filter-btn.active-dark   { background: var(--text-primary);   color: #fff; border-color: var(--text-primary); }
 
   /* Search input */
-  .search-input { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; width: 200px; }
+  .search-input { padding: 5px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 12px; font-family: inherit; outline: none; width: 200px; }
+  .search-input:focus { border-color: var(--border-strong); }
 
   /* Progress bar */
-  .prog-wrap { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .prog-wrap { height: 6px; border-radius: 3px; background: var(--bg-surface-subtle); overflow: hidden; }
   .prog-bar  { height: 100%; border-radius: 3px; transition: width .4s ease; }
 
   /* Cards list items */
-  .item-card { border-radius: 12px; border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 12px; background: var(--white); box-shadow: 0 1px 3px rgba(0,0,0,.03); border-left-width: 4px; }
-  .item-card.high-pri { background: rgba(146,43,33,.03); }
+  .item-card { border-radius: var(--radius-md); border: 1px solid var(--border-default); padding: 16px 20px; margin-bottom: 12px; background: var(--bg-surface); box-shadow: var(--shadow-card); border-left-width: 3px; transition: box-shadow .15s; }
+  .item-card:hover { box-shadow: var(--shadow-card-hover); }
+  .item-card.high-pri { background: rgba(190,18,60,.03); }
   .item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .item-meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 12px; }
-  .item-notes { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; border-left: 3px solid var(--border); padding-left: 8px; }
+  .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .item-notes { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-style: italic; border-left: 3px solid var(--border-default); padding-left: 8px; }
   .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .item-name { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .item-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
   .item-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
-  .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
 
   /* Milestones */
   .milestone { display: flex; gap: 10px; margin-bottom: 10px; cursor: pointer; align-items: flex-start; }
-  .ms-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all .15s; }
-  .ms-dot.done-green  { background: var(--green);  border-color: var(--green); }
-  .ms-dot.done-purple { background: var(--purple); border-color: var(--purple); }
+  .ms-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-default); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all .15s; }
+  .ms-dot.done-green  { background: var(--status-success-text);  border-color: var(--status-success-text); }
+  .ms-dot.done-purple { background: var(--color-primary); border-color: var(--color-primary); }
   .ms-dot .check { color: #fff; font-size: 10px; font-weight: 800; display: none; }
   .ms-dot.done-green .check, .ms-dot.done-purple .check { display: block; }
-  .ms-week { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .ms-week { font-size: 10px; color: var(--text-muted); font-weight: 600; }
   .ms-label { font-size: 12px; }
 
   /* Form inputs */
   .form-group { margin-bottom: 14px; }
-  .form-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: .5px; }
-  .form-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: inherit; outline: none; }
-  .form-input:focus { border-color: var(--blue); }
-  .form-textarea { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: inherit; outline: none; resize: vertical; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: .5px; }
+  .form-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-default); font-size: 13px; font-family: inherit; outline: none; }
+  .form-input:focus { border-color: var(--color-primary-hover); }
+  .form-textarea { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-default); font-size: 13px; font-family: inherit; outline: none; resize: vertical; }
   .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   /* Modal */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: flex; align-items: center; justify-content: center; }
-  .modal { background: var(--white); border-radius: 16px; padding: 28px 32px; width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+  .modal { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 28px 32px; width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-modal); }
   .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
   .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
   /* KPI counter buttons */
   .kpi-btns { display: flex; gap: 4px; margin-top: 6px; }
-  .kpi-btn { flex: 1; padding: 3px 0; border-radius: 4px; border: 1px solid var(--border); background: var(--off); cursor: pointer; font-size: 10px; color: var(--muted); }
+  .kpi-btn { flex: 1; padding: 3px 0; border-radius: var(--radius-xs); border: 1px solid var(--border-default); background: var(--bg-surface-subtle); cursor: pointer; font-size: 10px; color: var(--text-muted); }
 
   /* Recommended course row */
-  .rec-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; background: var(--off); margin-bottom: 6px; border: 1px solid var(--border); }
+  .rec-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px; background: var(--bg-surface-subtle); margin-bottom: 6px; border: 1px solid var(--border-default); }
   .rec-title { font-size: 13px; font-weight: 600; }
-  .rec-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .rec-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
   /* Strategy items */
   .strategy-item { display: flex; gap: 10px; margin-bottom: 8px; }
@@ -166,7 +183,7 @@
 
   /* Daily routine */
   .routine-row { display: flex; gap: 12px; margin-bottom: 6px; }
-  .routine-day { font-size: 12px; font-weight: 700; color: var(--purple); width: 85px; flex-shrink: 0; }
+  .routine-day { font-size: 12px; font-weight: 700; color: var(--color-primary); width: 85px; flex-shrink: 0; }
 
   /* Header flex */
   .hdr-row  { display: flex; align-items: baseline; justify-content: space-between; }
@@ -178,9 +195,9 @@
   .pip-name { display: flex; align-items: center; gap: 8px; font-size: 13px; }
   .pip-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .pip-right { display: flex; align-items: center; gap: 10px; }
-  .pip-bar-wrap { width: 70px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .pip-bar-wrap { width: 70px; height: 6px; border-radius: 3px; background: var(--border-default); overflow: hidden; }
 
-  a { color: var(--blue); }
+  a { color: var(--color-primary-hover); }
   @media (max-width: 700px) {
     .grid4 { grid-template-columns: repeat(2,1fr); }
     .grid2 { grid-template-columns: 1fr; }
@@ -198,50 +215,51 @@
   }
 
   /* Login screen */
-  .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #3B0030 0%, #6B1052 100%); z-index: 999; display: flex; align-items: center; justify-content: center; }
-  .login-box { background: #fff; border-radius: 20px; padding: 40px 40px 36px; width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
-  .login-logo { font-size: 22px; font-weight: 800; color: #3B0030; margin-bottom: 4px; letter-spacing: -.4px; }
-  .login-sub  { font-size: 12px; color: #7C6470; margin-bottom: 28px; }
-  .login-label { font-size: 12px; font-weight: 600; color: #7C6470; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
-  .login-input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid #E9DEE5; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 14px; box-sizing: border-box; transition: border-color .15s; }
-  .login-input:focus { border-color: #8A2F55; }
-  .login-btn { width: 100%; padding: 12px; border-radius: 999px; background: linear-gradient(135deg, #3B0030, #6B1052); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
+  .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); z-index: 999; display: flex; align-items: center; justify-content: center; }
+  .login-box { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 40px 40px 36px; width: 360px; box-shadow: var(--shadow-modal); }
+  .login-logo { font-size: 22px; font-weight: 800; color: var(--color-primary); margin-bottom: 4px; letter-spacing: -.4px; }
+  .login-sub  { font-size: 12px; color: var(--text-muted); margin-bottom: 28px; }
+  .login-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
+  .login-input { width: 100%; padding: 11px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-default); font-size: 14px; font-family: inherit; outline: none; margin-bottom: 14px; box-sizing: border-box; transition: border-color .15s; }
+  .login-input:focus { border-color: var(--color-primary); }
+  .login-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
   .login-btn:hover { opacity: .92; }
-  .login-error { color: #A8293A; font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
+  .login-error { color: var(--status-urgent-text); font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
   .login-error.show { display: block; }
-  .logout-btn { font-size: 12px; background: rgba(255,255,255,.15); border: none; color: #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; font-weight: 600; }
-  .logout-btn:hover { background: rgba(255,255,255,.25); }
+  .logout-btn { font-size: 12px; background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-secondary); border-radius: var(--radius-sm); padding: 5px 12px; cursor: pointer; font-weight: 600; transition: background .15s; }
+  .logout-btn:hover { background: var(--bg-surface-hover); }
+  .logout-btn-danger { color: var(--status-urgent-text); }
 
   /* Network sections */
   .net-section-hdr { font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 8px; margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
-  .net-section-hdr.reach  { background: var(--amber); color: #7B5800; }
-  .net-section-hdr.contacted { background: var(--mint); color: #15694A; }
+  .net-section-hdr.reach  { background: var(--status-warning-bg); color: var(--status-warning-text); }
+  .net-section-hdr.contacted { background: var(--status-success-bg); color: var(--status-success-text); }
   .net-section-count { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
   .net-section-hdr.reach .net-section-count { background: rgba(0,0,0,.1); }
   .net-section-hdr.contacted .net-section-count { background: rgba(0,0,0,.1); }
 
   /* Jira-style history log */
-  .history-log { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  .history-add { display: flex; gap: 8px; padding: 10px 12px; background: var(--off); border-bottom: 1px solid var(--border); }
-  .history-add textarea { flex: 1; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; outline: none; resize: none; }
-  .history-add textarea:focus { border-color: var(--blue); }
-  .history-add button { align-self: flex-end; padding: 6px 14px; border-radius: 8px; background: var(--navy); color: #fff; font-size: 12px; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
+  .history-log { border: 1px solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
+  .history-add { display: flex; gap: 8px; padding: 10px 12px; background: var(--bg-surface-subtle); border-bottom: 1px solid var(--border-default); }
+  .history-add textarea { flex: 1; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border-default); font-size: 12px; font-family: inherit; outline: none; resize: none; }
+  .history-add textarea:focus { border-color: var(--color-primary-hover); }
+  .history-add button { align-self: flex-end; padding: 6px 14px; border-radius: 8px; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
   .history-add button:hover { opacity: .88; }
   .history-entries { max-height: 220px; overflow-y: auto; }
-  .history-entry { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .history-entry { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border-default); }
   .history-entry:last-child { border-bottom: none; }
-  .history-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--blue)); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .history-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
   .history-body { flex: 1; min-width: 0; }
-  .history-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .history-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
   .history-text { font-size: 12px; line-height: 1.5; word-break: break-word; }
   .history-text.editing { display: none; }
-  .history-edit-area { display: none; width: 100%; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; resize: none; outline: none; }
-  .history-edit-area:focus { border-color: var(--blue); }
+  .history-edit-area { display: none; width: 100%; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-default); font-size: 12px; font-family: inherit; resize: none; outline: none; }
+  .history-edit-area:focus { border-color: var(--color-primary-hover); }
   .history-edit-area.editing { display: block; }
   .history-actions { display: flex; gap: 6px; margin-top: 4px; }
-  .history-link { font-size: 11px; color: var(--blue); cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
+  .history-link { font-size: 11px; color: var(--color-primary-hover); cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
   .history-link:hover { text-decoration: underline; }
-  .history-empty { padding: 16px 12px; font-size: 12px; color: var(--muted); text-align: center; }
+  .history-empty { padding: 16px 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -271,9 +289,9 @@
     <input class="login-input" id="li-pass" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuthAction()">
     <div class="login-error" id="loginError">Incorrect email or password.</div>
     <button class="login-btn" id="loginBtn" onclick="doAuthAction()">Sign in</button>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:#7C6470">
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted)">
       <span id="authToggleLabel">Don't have an account?</span>
-      <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:#8A2F55;font-weight:600">Create one</a>
+      <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:var(--color-primary);font-weight:600">Create one</a>
     </div>
   </div>
 </div>
@@ -309,7 +327,16 @@
       <h1>Job Search, Network &amp; Training Tracker</h1>
       <p>June – November 2026 · Target: New role before notice period ends</p>
     </div>
-    <div class="header-actions" style="display:flex;align-items:center;gap:10px"><span id="headerUserName" style="font-size:12px;font-weight:600;color:#fff;opacity:.9"></span><span id="syncStatus" style="font-size:12px;font-weight:600;color:#fff;opacity:.85"></span><span class="save-flash" id="saveFlash">✓ Saved</span><button class="logout-btn" onclick="openPasswordModal()">🔑 Change Password</button><button class="logout-btn" onclick="exportCSV()">Export CSV</button><button class="logout-btn" onclick="doLogout()">Sign out</button></div>
+    <div class="header-actions" style="display:flex;align-items:center;gap:10px">
+      <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-surface-subtle);border-radius:var(--radius-pill);padding:4px 10px 4px 8px">
+        <span id="headerUserName" style="font-size:12px;font-weight:600;color:var(--text-primary)"></span><span id="syncStatus" style="font-size:11px;font-weight:600;color:var(--status-success-text)"></span>
+      </span>
+      <span class="save-flash" id="saveFlash">✓ Saved</span>
+      <button class="logout-btn" onclick="openDesignAdmin()" title="Design System">⚙️</button>
+      <button class="logout-btn" onclick="openPasswordModal()">🔑 Change Password</button>
+      <button class="logout-btn" onclick="exportCSV()">Export CSV</button>
+      <button class="logout-btn logout-btn-danger" onclick="doLogout()">Sign out</button>
+    </div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
@@ -343,19 +370,19 @@
 
   <div class="grid2">
     <div class="card">
-      <div class="card-hdr"><span class="card-ttl" style="color:var(--navy)">Application Pipeline</span></div>
+      <div class="card-hdr"><span class="card-ttl" style="color:var(--color-primary)">Application Pipeline</span></div>
       <div id="dash-app-pipeline"></div>
     </div>
     <div class="card">
-      <div class="card-hdr"><span class="card-ttl" style="color:var(--teal)">Network Pipeline</span></div>
+      <div class="card-hdr"><span class="card-ttl" style="color:var(--status-progress-text)">Network Pipeline</span></div>
       <div id="dash-net-pipeline"></div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-hdr">
-      <span class="card-ttl" style="color:var(--navy)">🎯 Job Match Fit</span>
-      <span style="font-size:11px;color:var(--muted)">Phase 2 · Markus Job Search Instructions</span>
+      <span class="card-ttl" style="color:var(--color-primary)">🎯 Job Match Fit</span>
+      <span style="font-size:11px;color:var(--text-muted)">Phase 2 · Markus Job Search Instructions</span>
     </div>
     <div class="grid4" id="dash-fit-stats"></div>
     <div class="grid2" style="margin-top:4px">
@@ -365,18 +392,18 @@
       </div>
       <div>
         <div class="sec-label" style="margin-bottom:6px">Refresh</div>
-        <div id="dash-refresh" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
+        <div id="dash-refresh" style="font-size:12px;color:var(--text-muted);line-height:1.7"></div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-ttl" style="color:var(--orange);margin-bottom:12px">🔔 Follow-ups & To-Dos</div>
+    <div class="card-ttl" style="color:var(--status-warning-text);margin-bottom:12px">🔔 Follow-ups & To-Dos</div>
     <div id="dash-followups"></div>
   </div>
 
   <div class="card">
-    <div class="card-ttl" style="color:var(--navy);margin-bottom:14px">Weekly Activity KPIs</div>
+    <div class="card-ttl" style="color:var(--color-primary);margin-bottom:14px">Weekly Activity KPIs</div>
     <div class="grid4" id="dash-kpis"></div>
     <div class="form-group" style="margin-top:12px;margin-bottom:0">
       <label class="form-label">Weekly reflection</label>
@@ -386,11 +413,11 @@
 
   <div class="grid2">
     <div class="card">
-      <div class="card-ttl" style="color:var(--navy);margin-bottom:12px">Job Search Milestones</div>
+      <div class="card-ttl" style="color:var(--color-primary);margin-bottom:12px">Job Search Milestones</div>
       <div id="dash-ms"></div>
     </div>
     <div class="card">
-      <div class="card-ttl" style="color:var(--purple);margin-bottom:12px">Training Milestones</div>
+      <div class="card-ttl" style="color:var(--color-primary);margin-bottom:12px">Training Milestones</div>
       <div id="dash-tms"></div>
     </div>
   </div>
@@ -399,13 +426,13 @@
 <!-- ════════════════════════════ WATCHLIST ════════════════════════════════ -->
 <div id="tab-jobsites" class="section">
   <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple)">🧭 Job Sites &amp; Companies</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Where you search, on the left. Companies you're watching before there's an open role, on the right.</div>
+    <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🧭 Job Sites &amp; Companies</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Where you search, on the left. Companies you're watching before there's an open role, on the right.</div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
     <div class="sec-label" style="margin-bottom:4px">📌 Role Titles</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Pinned from your Career Database — the roles your experience matches best, several already applied to for real. Click one to drop it into Search Criteria below, or add your own.</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Pinned from your Career Database — the roles your experience matches best, several already applied to for real. Click one to drop it into Search Criteria below, or add your own.</div>
     <div id="jsc-roletitles" style="display:flex;flex-wrap:wrap;gap:8px"></div>
     <div style="display:flex;gap:6px;margin-top:10px">
       <input class="form-input" id="jsc-newroletitle" placeholder="Add another role title…" style="max-width:260px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPinnedRoleTitle();}">
@@ -418,7 +445,7 @@
     <div class="form-group" style="margin-bottom:8px">
       <textarea class="form-textarea" id="jsc-freetext" rows="2" placeholder="e.g. Senior Project Manager, extra keywords not already pinned above" oninput="debounce(saveCriteria,600)()"></textarea>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Extra role-title keywords are free text — type them straight into the field above. Location and Office policy below are live filters: type a value and click "+ Add" to apply it immediately, click a chip's ✕ to remove it.</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Extra role-title keywords are free text — type them straight into the field above. Location and Office policy below are live filters: type a value and click "+ Add" to apply it immediately, click a chip's ✕ to remove it.</div>
     <div id="jsc-qualifiers" style="display:flex;flex-direction:column;gap:10px"></div>
   </div>
 
@@ -433,7 +460,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-sites-runbtn" onclick="runJobSitesSearch()">▶ Run Search</button>
-        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--muted)">Searches every Active source with a Search URL for real and files matches into Job Watchlist. LinkedIn can't be automated (ToS) — use its Open link instead.</span>
+        <span id="jsc-sites-status" style="font-size:11.5px;color:var(--text-muted)">Searches every Active source with a Search URL for real and files matches into Job Watchlist. LinkedIn can't be automated (ToS) — use its Open link instead.</span>
       </div>
       <div id="jc-list"></div>
     </div>
@@ -444,7 +471,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button class="btn btn-primary btn-sm" id="jsc-companies-runbtn" onclick="runCompanySearch()">▶ Run Search all</button>
-        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--muted)">Fetches real postings and files matches straight into Job Watchlist. Also matches close variants (e.g. "Senior Project Manager" catches "Senior IT Project Manager"). No Role Titles/Criteria set → returns every open role. Capped at 100 per company per click — use "Search" on a company to fetch just that one, or "+ Next 100" for more.</span>
+        <span id="jsc-companies-status" style="font-size:11.5px;color:var(--text-muted)">Fetches real postings and files matches straight into Job Watchlist. Also matches close variants (e.g. "Senior Project Manager" catches "Senior IT Project Manager"). No Role Titles/Criteria set → returns every open role. Capped at 100 per company per click — use "Search" on a company to fetch just that one, or "+ Next 100" for more.</span>
       </div>
       <div id="watch-list"></div>
       <div class="net-section-hdr contacted" style="margin-top:16px">👥 Shared by your network</div>
@@ -456,8 +483,8 @@
 <!-- ════════════════════════════ SUGGESTIONS ════════════════════════════════ -->
 <div id="tab-suggestions" class="section">
   <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple)">🎯 Job Match</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Compare a specific job description against one of your CVs and get an AI-generated match analysis — score, gaps, and tailoring suggestions.</div>
+    <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🎯 Job Match</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Compare a specific job description against one of your CVs and get an AI-generated match analysis — score, gaps, and tailoring suggestions.</div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
@@ -473,11 +500,11 @@
           <label class="form-label">Job posting link</label>
           <input class="form-input" id="jm-job-url" placeholder="https://…" oninput="jmClearJobFile()">
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">— or —</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">— or —</div>
         <div class="form-group">
           <label class="form-label">Upload a job description</label>
           <input class="form-input" type="file" id="jm-job-file" accept=".pdf,.docx,.txt" onchange="jmOnJobFileChange(event)">
-          <div id="jm-job-file-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+          <div id="jm-job-file-status" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
       <div>
@@ -490,69 +517,69 @@
           <div style="margin-top:6px">
             <button class="btn btn-sky btn-sm" onclick="jmConnectCvFolder()">📁 Connect CV folder</button>
           </div>
-          <div id="jm-cv-folder-status" style="font-size:11px;color:var(--muted);margin-top:4px">Chrome/Edge only — lets you pick a local folder and choose from the CVs in it. Not supported in this browser? Use upload instead.</div>
+          <div id="jm-cv-folder-status" style="font-size:11px;color:var(--text-muted);margin-top:4px">Chrome/Edge only — lets you pick a local folder and choose from the CVs in it. Not supported in this browser? Use upload instead.</div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">— or —</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">— or —</div>
         <div class="form-group">
           <label class="form-label">Upload a CV</label>
           <input class="form-input" type="file" id="jm-cv-file" accept=".pdf,.docx" onchange="jmOnCvFileChange(event)">
-          <div id="jm-cv-file-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+          <div id="jm-cv-file-status" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-      <span style="font-size:12px;color:var(--muted)" id="jm-status">Add a job description and a CV, then run the analysis.</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-default)">
+      <span style="font-size:12px;color:var(--text-muted)" id="jm-status">Add a job description and a CV, then run the analysis.</span>
       <button class="btn btn-purple" id="jm-analyze-btn" onclick="runJobMatchAnalysis()">✨ Analyze Match</button>
     </div>
   </div>
 
   <style>
-    #jm-dashboard .hero{display:grid;grid-template-columns:150px 1fr;gap:28px;align-items:center;background:var(--navy);border-radius:16px;padding:28px 32px;margin-bottom:28px;color:#fff}
+    #jm-dashboard .hero{display:grid;grid-template-columns:150px 1fr;gap:28px;align-items:center;background:var(--color-primary);border-radius:var(--radius-lg);padding:28px 32px;margin-bottom:28px;color:#fff}
     #jm-dashboard .ring-wrap{position:relative;width:130px;height:130px}
     #jm-dashboard .ring-wrap svg{transform:rotate(-90deg)}
     #jm-dashboard .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    #jm-dashboard .ring-num .n{font-family:'Century Gothic','Poppins','Inter',sans-serif;font-size:32px;font-weight:700}
-    #jm-dashboard .ring-num .l{font-size:10.5px;letter-spacing:.08em;color:#D8C7D2;text-transform:uppercase}
+    #jm-dashboard .ring-num .n{font-family:var(--font-sans);font-size:32px;font-weight:700}
+    #jm-dashboard .ring-num .l{font-size:10.5px;letter-spacing:.08em;color:rgba(255,255,255,.7);text-transform:uppercase}
     #jm-dashboard .hero h2{font-size:19px;font-weight:600;margin:0 0 8px}
-    #jm-dashboard .hero p{color:#E6D9E1;font-size:13.5px;line-height:1.6;margin:0}
+    #jm-dashboard .hero p{color:rgba(255,255,255,.85);font-size:13.5px;line-height:1.6;margin:0}
     #jm-dashboard section{margin-bottom:28px}
-    #jm-dashboard .stitle{font-size:16px;font-weight:700;color:var(--navy);margin:0 0 4px}
-    #jm-dashboard .sdesc{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+    #jm-dashboard .stitle{font-size:16px;font-weight:700;color:var(--color-primary);margin:0 0 4px}
+    #jm-dashboard .sdesc{color:var(--text-muted);font-size:12.5px;margin:0 0 14px}
     #jm-dashboard .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-    #jm-dashboard .score-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
-    #jm-dashboard .score-card:hover{border-color:var(--purple)}
-    #jm-dashboard .score-card.active{border-color:var(--purple);box-shadow:0 0 0 2px var(--purpll)}
-    #jm-dashboard .score-card b{display:block;font-size:13px;color:var(--navy)}
-    #jm-dashboard .score-card small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
-    #jm-dashboard .score-card .n{font-size:20px;font-weight:800;color:var(--green);float:right}
-    #jm-dashboard .bar{height:5px;background:var(--border);border-radius:4px;margin-top:10px;overflow:hidden;clear:both}
-    #jm-dashboard .bar i{display:block;height:100%;background:var(--green);border-radius:4px}
-    #jm-dashboard .detail{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-top:14px}
+    #jm-dashboard .score-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:14px 16px;cursor:pointer;transition:border-color .15s}
+    #jm-dashboard .score-card:hover{border-color:var(--color-primary)}
+    #jm-dashboard .score-card.active{border-color:var(--color-primary);box-shadow:0 0 0 2px var(--color-primary-light)}
+    #jm-dashboard .score-card b{display:block;font-size:13px;color:var(--color-primary)}
+    #jm-dashboard .score-card small{display:block;font-size:10.5px;color:var(--text-muted);margin-top:1px}
+    #jm-dashboard .score-card .n{font-size:20px;font-weight:800;color:var(--status-success-text);float:right}
+    #jm-dashboard .bar{height:5px;background:var(--border-default);border-radius:4px;margin-top:10px;overflow:hidden;clear:both}
+    #jm-dashboard .bar i{display:block;height:100%;background:var(--status-success-text);border-radius:4px}
+    #jm-dashboard .detail{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:20px 22px;margin-top:14px}
     #jm-dashboard .detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    #jm-dashboard .gap,#jm-dashboard .fix{padding:14px 16px;border-radius:10px}
-    #jm-dashboard .gap{background:var(--redl,#FFE9EE)}
-    #jm-dashboard .fix{background:var(--mint)}
-    #jm-dashboard .gap b{color:var(--crimson);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-    #jm-dashboard .fix b{color:var(--green);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+    #jm-dashboard .gap,#jm-dashboard .fix{padding:14px 16px;border-radius:var(--radius-md)}
+    #jm-dashboard .gap{background:var(--status-urgent-bg)}
+    #jm-dashboard .fix{background:var(--status-success-bg)}
+    #jm-dashboard .gap b{color:var(--status-urgent-text);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+    #jm-dashboard .fix b{color:var(--status-success-text);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
     #jm-dashboard ul{padding-left:16px;margin:0;font-size:12.5px;line-height:1.6}
     #jm-dashboard li{margin:4px 0}
     #jm-dashboard .chips{display:flex;flex-wrap:wrap;gap:6px}
-    #jm-dashboard .chip{font-size:11.5px;padding:4px 10px;border-radius:20px}
-    #jm-dashboard .chip.matched{background:var(--mint);color:var(--green)}
-    #jm-dashboard .chip.missing{background:#FFE9EE;color:var(--crimson)}
+    #jm-dashboard .chip{font-size:11.5px;padding:4px 10px;border-radius:var(--radius-pill)}
+    #jm-dashboard .chip.matched{background:var(--status-success-bg);color:var(--status-success-text)}
+    #jm-dashboard .chip.missing{background:var(--status-urgent-bg);color:var(--status-urgent-text)}
     #jm-dashboard .rw-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-    #jm-dashboard .rw-block{padding:14px 16px;border-radius:10px;font-size:12.5px;line-height:1.6;white-space:pre-wrap}
-    #jm-dashboard .rw-before{background:#FFE9EE;color:#7C1C29}
-    #jm-dashboard .rw-after{background:var(--mint);color:#15694A}
+    #jm-dashboard .rw-block{padding:14px 16px;border-radius:var(--radius-md);font-size:12.5px;line-height:1.6;white-space:pre-wrap}
+    #jm-dashboard .rw-before{background:var(--status-urgent-bg);color:var(--status-urgent-text)}
+    #jm-dashboard .rw-after{background:var(--status-success-bg);color:var(--status-success-text)}
     #jm-dashboard .rw-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;font-weight:700}
-    #jm-dashboard .checklist{background:#fff;border:1px solid var(--border);border-radius:12px;padding:4px 20px}
-    #jm-dashboard .chk{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+    #jm-dashboard .checklist{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:4px 20px}
+    #jm-dashboard .chk{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border-default)}
     #jm-dashboard .chk:last-child{border-bottom:none}
     #jm-dashboard .chk label{flex:1;font-size:13px}
-    #jm-dashboard .impact-pill{font-size:10px;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:10px;flex-shrink:0}
-    #jm-dashboard .impact-pill.high{background:#FFE9EE;color:var(--crimson)}
-    #jm-dashboard .impact-pill.medium{background:var(--amber);color:#8A5A00}
-    #jm-dashboard .impact-pill.low{background:var(--mint);color:var(--green)}
+    #jm-dashboard .impact-pill{font-size:10px;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:var(--radius-md);flex-shrink:0}
+    #jm-dashboard .impact-pill.high{background:var(--status-urgent-bg);color:var(--status-urgent-text)}
+    #jm-dashboard .impact-pill.medium{background:var(--status-warning-bg);color:var(--status-warning-text)}
+    #jm-dashboard .impact-pill.low{background:var(--status-success-bg);color:var(--status-success-text)}
     @media(max-width:680px){
       #jm-dashboard .hero{grid-template-columns:1fr;text-align:center}
       #jm-dashboard .ring-wrap{margin:0 auto}
@@ -567,21 +594,21 @@
       #jm-dashboard .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
     #jm-history-wrap .jm-history-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid transparent}
-    #jm-history-wrap .jm-history-row:hover{background:var(--off)}
-    #jm-history-wrap .jm-history-row.active{background:var(--sky);border-color:var(--purple);font-weight:600}
+    #jm-history-wrap .jm-history-row:hover{background:var(--bg-surface-subtle)}
+    #jm-history-wrap .jm-history-row.active{background:var(--color-primary-light);border-color:var(--color-primary);font-weight:600}
     #jm-history-wrap .jm-history-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    #jm-history-wrap .jm-history-delete{color:var(--crimson);font-weight:800;padding:2px 6px;flex-shrink:0;border-radius:6px}
-    #jm-history-wrap .jm-history-delete:hover{background:var(--red)}
-    #jm-history-trigger{width:100%;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff}
+    #jm-history-wrap .jm-history-delete{color:var(--status-urgent-text);font-weight:800;padding:2px 6px;flex-shrink:0;border-radius:6px}
+    #jm-history-wrap .jm-history-delete:hover{background:var(--status-urgent-bg)}
+    #jm-history-trigger{width:100%;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--bg-surface)}
     #jm-history-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    #jm-history-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:30;max-height:260px;overflow-y:auto;padding:6px}
+    #jm-history-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--radius-md);box-shadow:var(--shadow-card-hover);z-index:30;max-height:260px;overflow-y:auto;padding:6px}
   </style>
   <div id="jm-history-wrap" class="card" style="margin-bottom:16px;display:none">
     <div class="form-label" style="margin-bottom:8px">📁 Previous matches</div>
     <div style="position:relative">
       <button type="button" id="jm-history-trigger" class="form-input" onclick="jmToggleHistoryDropdown(event)">
         <span id="jm-history-trigger-label">Select a match…</span>
-        <span style="color:var(--muted);flex-shrink:0">▾</span>
+        <span style="color:var(--text-muted);flex-shrink:0">▾</span>
       </button>
       <div id="jm-history-panel" hidden></div>
     </div>
@@ -602,8 +629,8 @@
 <!-- ══════════════════════════════ JOB WATCHLIST ══════════════════════════════ -->
 <div id="tab-jobwatchlist" class="section">
   <div class="card card-purple" style="margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:var(--purple)">🎯 Job Watchlist</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:2px">Opportunities you're considering, before you apply — with the field set from Markus Job Search Instructions (Phase 2). Mark one Applied to move it to the Applications tab; nothing here counts as an application yet.</div>
+    <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🎯 Job Watchlist</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Opportunities you're considering, before you apply — with the field set from Markus Job Search Instructions (Phase 2). Mark one Applied to move it to the Applications tab; nothing here counts as an application yet.</div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
     <div class="filters" id="jw-status-filters"></div>
@@ -618,15 +645,15 @@
   <div class="card card-teal" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:14px;font-weight:700;color:var(--teal)">🤝 Network Outreach Tracker</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Target: 10 contacts/week · 2 messages/day · warm beats cold</div>
+        <div style="font-size:14px;font-weight:700;color:var(--status-progress-text)">🤝 Network Outreach Tracker</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Target: 10 contacts/week · 2 messages/day · warm beats cold</div>
       </div>
       <button class="btn btn-teal" onclick="openNetModal()">+ Add Contact</button>
     </div>
   </div>
 
   <div class="card card-dashed" style="margin-bottom:16px">
-    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px">💡 Outreach rules that work at senior level</div>
+    <div style="font-size:12px;font-weight:700;color:var(--color-primary);margin-bottom:8px">💡 Outreach rules that work at senior level</div>
     <div class="tips-grid" id="net-tips"></div>
   </div>
 
@@ -646,8 +673,8 @@
   <div class="card card-purple" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:14px;font-weight:700;color:var(--purple)">🎓 Training Plan · June–November 2026</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">30–45 min daily · AI, Leadership, Certifications</div>
+        <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🎓 Training Plan · June–November 2026</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">30–45 min daily · AI, Leadership, Certifications</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost btn-sm" onclick="toggleRecommended()" id="recBtn">📋 Recommended Courses</button>
@@ -663,7 +690,7 @@
   <div id="train-list"></div>
 
   <div class="card card-dashed" style="margin-top:8px">
-    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">📅 Daily Training Routine (30–45 min)</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-primary);margin-bottom:8px">📅 Daily Training Routine (30–45 min)</div>
     <div id="train-routine"></div>
   </div>
 </div>
@@ -673,8 +700,8 @@
   <div class="card card-purple" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:14px;font-weight:700;color:var(--purple)">📌 Notes, Tasks &amp; Reminders</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Notes, tasks and reminders to follow up on</div>
+        <div style="font-size:14px;font-weight:700;color:var(--color-primary)">📌 Notes, Tasks &amp; Reminders</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Notes, tasks and reminders to follow up on</div>
       </div>
       <button class="btn btn-purple" onclick="openCheckoutModal()">+ Add Item</button>
     </div>
@@ -699,7 +726,7 @@
 <div id="tab-brokers" class="section">
   <div class="card" style="margin-bottom:16px">
     <div class="card-ttl" style="font-size:15px;margin-bottom:8px">Konsultmäklare i Sverige</div>
-    <p style="font-size:13px;line-height:1.6;color:var(--dark)">
+    <p style="font-size:13px;line-height:1.6;color:var(--text-primary)">
       Här finns alla olika aktörer som skyltar öppet eller förmedlar frilansuppdrag/konsultuppdrag indirekt i Sverige.
       Ett tips är att spana in dessa aktörers uppdragsportaler, följa deras LinkedIn-sidor, gå med i deras mailgrupper
       samt registrera ditt konsult-CV hos dem för att få information om nypublicerade konsultuppdrag.
@@ -710,19 +737,19 @@
   <!-- TABLE STYLES (scoped) -->
   <style>
     .broker-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:24px; display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .broker-table thead tr { background:var(--navy); color:#fff; }
+    .broker-table thead tr { background:var(--color-primary); color:#fff; }
     .broker-table thead th { padding:8px 10px; text-align:left; font-weight:700; white-space:nowrap; }
-    .broker-table tbody tr:nth-child(odd)  { background:#fff; }
-    .broker-table tbody tr:nth-child(even) { background:var(--sky); }
-    .broker-table tbody tr:hover { background:var(--mint); }
-    .broker-table td { padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
-    .broker-table a { color:var(--blue); }
-    .broker-section-hdr { font-size:14px; font-weight:700; color:var(--navy); margin:24px 0 10px; padding-bottom:4px; border-bottom:3px solid var(--tealB); }
-    .broker-intro { font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+    .broker-table tbody tr:nth-child(odd)  { background:var(--bg-surface); }
+    .broker-table tbody tr:nth-child(even) { background:var(--color-primary-light); }
+    .broker-table tbody tr:hover { background:var(--status-success-bg); }
+    .broker-table td { padding:7px 10px; border-bottom:1px solid var(--border-default); vertical-align:top; }
+    .broker-table a { color:var(--color-primary-hover); }
+    .broker-section-hdr { font-size:14px; font-weight:700; color:var(--color-primary); margin:24px 0 10px; padding-bottom:4px; border-bottom:3px solid var(--status-progress-accent); }
+    .broker-intro { font-size:12px; color:var(--text-muted); margin-bottom:10px; line-height:1.5; }
     .broker-wrap { overflow-x:auto; }
-    .btn-add-watch { padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; cursor:pointer; border:none; background:var(--sky); color:var(--navy); white-space:nowrap; transition:opacity .15s; }
+    .btn-add-watch { padding:3px 10px; border-radius:var(--radius-pill); font-size:11px; font-weight:600; cursor:pointer; border:none; background:var(--color-primary-light); color:var(--color-primary); white-space:nowrap; transition:opacity .15s; }
     .btn-add-watch:hover { opacity:.8; }
-    .btn-add-watch.added { background:var(--mint); color:var(--green); cursor:default; }
+    .btn-add-watch.added { background:var(--status-success-bg); color:var(--status-success-text); cursor:default; }
   </style>
 
   <!-- ── 1. KONSULTMÄKLARE ─────────────────────────────────────────────────── -->
@@ -934,13 +961,13 @@
   </script>
   <div class="broker-section-hdr">Nätverk där konsultuppdrag publiceras</div>
   <div class="card card-dashed" style="margin-bottom:12px">
-    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">Slack-grupper</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-primary);margin-bottom:8px">Slack-grupper</div>
     <ul style="font-size:13px;line-height:1.8;padding-left:20px">
       <li>Frilansare Sverige (ca 3 000 frilansare) — kontakta anna@annaleijon.com för inbjudan</li>
     </ul>
   </div>
   <div class="card card-dashed" style="margin-bottom:12px">
-    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">Facebook-grupper</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-primary);margin-bottom:8px">Facebook-grupper</div>
     <ul style="font-size:13px;line-height:1.8;padding-left:20px">
       <li><a href="https://www.facebook.com/groups/175629836332955" target="_blank" rel="noopener">Kodapor Karriär – konsult</a> (ca 1 500 medlemmar)</li>
       <li><a href="https://www.facebook.com/groups/979222295566539" target="_blank" rel="noopener">Konsult &amp; frilans – Sverige</a> (ca 3 400 medlemmar)</li>
@@ -948,7 +975,7 @@
     </ul>
   </div>
   <div class="card card-dashed" style="margin-bottom:24px">
-    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">LinkedIn-grupper</div>
+    <div style="font-size:13px;font-weight:700;color:var(--color-primary);margin-bottom:8px">LinkedIn-grupper</div>
     <ul style="font-size:13px;line-height:1.8;padding-left:20px">
       <li><a href="https://www.linkedin.com/groups/1379087/" target="_blank" rel="noopener">Konsultnätverket</a> (ca 11 000 medlemmar)</li>
       <li><a href="https://www.linkedin.com/groups/4055780/" target="_blank" rel="noopener">Konsultuppdrag</a> (ca 11 000 medlemmar)</li>
@@ -961,53 +988,53 @@
 <!-- ════════════════════════════ INTERVIEW PREP ═════════════════════════════ -->
 <div id="tab-interview" class="section">
 <style>
-  .iq-section-hdr { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px; }
-  .iq-card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.04); }
-  .iq-card-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border); }
-  .iq-card-header:hover { background:var(--off); }
-  .iq-card-number { width:26px; height:26px; border-radius:50%; background:var(--navy); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .iq-card-title { font-size:13px; font-weight:700; color:var(--dark); flex:1; margin:0 10px; }
+  .iq-section-hdr { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px; }
+  .iq-card { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:var(--radius-md); margin-bottom:12px; overflow:hidden; box-shadow:var(--shadow-card); }
+  .iq-card-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border-default); }
+  .iq-card-header:hover { background:var(--bg-surface-subtle); }
+  .iq-card-number { width:26px; height:26px; border-radius:50%; background:var(--color-primary); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .iq-card-title { font-size:13px; font-weight:700; color:var(--text-primary); flex:1; margin:0 10px; }
   .iq-card-actions { display:flex; gap:6px; align-items:center; }
   .iq-card-body { display:none; }
   .iq-card-body.open { display:block; }
-  .iq-lang-block { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .iq-lang-block { padding:14px 16px; border-bottom:1px solid var(--border-default); }
   .iq-lang-block:last-child { border-bottom:none; }
-  .iq-lang-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .iq-lang-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
   .iq-lang-flag { font-size:14px; }
-  .iq-q { font-size:13px; font-weight:600; color:var(--dark); margin-bottom:6px; line-height:1.5; }
-  .iq-a { font-size:13px; color:var(--dark); line-height:1.6; white-space:pre-wrap; }
-  .iq-a-empty { font-size:12px; color:var(--muted); font-style:italic; }
-  .iq-edit-area { width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; line-height:1.6; resize:vertical; outline:none; min-height:80px; }
-  .iq-edit-area:focus { border-color:var(--blue); }
+  .iq-q { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:6px; line-height:1.5; }
+  .iq-a { font-size:13px; color:var(--text-primary); line-height:1.6; white-space:pre-wrap; }
+  .iq-a-empty { font-size:12px; color:var(--text-muted); font-style:italic; }
+  .iq-edit-area { width:100%; border:1px solid var(--border-default); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; line-height:1.6; resize:vertical; outline:none; min-height:80px; }
+  .iq-edit-area:focus { border-color:var(--color-primary-hover); }
   .iq-edit-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:center; }
-  .iq-drag-handle { cursor:grab; color:var(--muted); font-size:16px; flex-shrink:0; padding:2px 4px; }
+  .iq-drag-handle { cursor:grab; color:var(--text-muted); font-size:16px; flex-shrink:0; padding:2px 4px; }
   .iq-drag-handle:active { cursor:grabbing; }
-  .iq-card.drag-over { border:2px dashed var(--tealB); background:var(--teall); }
+  .iq-card.drag-over { border:2px dashed var(--status-progress-accent); background:var(--status-progress-bg); }
   .iq-card.dragging { opacity:.4; }
-  .iq-add-form { background:var(--white); border:1px dashed var(--border); border-radius:12px; padding:18px 20px; margin-bottom:12px; }
+  .iq-add-form { background:var(--bg-surface); border:1px dashed var(--border-default); border-radius:var(--radius-md); padding:18px 20px; margin-bottom:12px; }
   .iq-add-form .form-label { margin-top:10px; }
-  .iq-translate-btn { background:var(--sky); color:var(--navy); border:none; border-radius:999px; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .iq-translate-btn { background:var(--color-primary-light); color:var(--color-primary); border:none; border-radius:var(--radius-pill); padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
   .iq-translate-btn:hover { opacity:.85; }
   .iq-translate-btn:disabled { opacity:.5; cursor:default; }
-  .iq-section-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; background:var(--sky); color:var(--navy); }
+  .iq-section-pill { display:inline-block; padding:2px 9px; border-radius:var(--radius-pill); font-size:11px; font-weight:600; background:var(--color-primary-light); color:var(--color-primary); }
   .iq-filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
-  .iq-count { font-size:12px; color:var(--muted); margin-left:auto; }
-  .iq-pin-btn { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--white); color:var(--muted); white-space:nowrap; transition:all .15s; }
-  .iq-pin-btn:hover { border-color:#FFCD00; color:var(--dark); }
-  .iq-pin-btn.pinned { background:#FFF6CF; border-color:#FFCD00; color:#8A6500; }
-  .iq-card.is-pinned { border-left:3px solid #FFCD00; }
-  .iq-chevron { font-size:12px; color:var(--muted); transition:transform .2s; flex-shrink:0; }
+  .iq-count { font-size:12px; color:var(--text-muted); margin-left:auto; }
+  .iq-pin-btn { padding:3px 9px; border-radius:var(--radius-pill); font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border-default); background:var(--bg-surface); color:var(--text-muted); white-space:nowrap; transition:all .15s; }
+  .iq-pin-btn:hover { border-color:var(--status-warning-accent); color:var(--text-primary); }
+  .iq-pin-btn.pinned { background:var(--status-warning-bg); border-color:var(--status-warning-accent); color:var(--status-warning-text); }
+  .iq-card.is-pinned { border-left:3px solid var(--status-warning-accent); }
+  .iq-chevron { font-size:12px; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
   .iq-chevron.open { transform:rotate(180deg); }
   /* Section group collapsible headers */
   .iq-section-group { margin-bottom:8px; }
-  .iq-section-hdr-btn { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:10px; background:var(--off); border:1px solid var(--border); cursor:pointer; user-select:none; margin-bottom:10px; }
-  .iq-section-hdr-btn:hover { background:var(--sky); }
-  .iq-sec-label { font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.8px; flex:1; }
-  .iq-sec-count { font-size:11px; color:var(--muted); font-weight:500; }
-  .iq-sec-chevron { font-size:13px; color:var(--muted); transition:transform .2s; }
+  .iq-section-hdr-btn { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:var(--radius-md); background:var(--bg-surface-subtle); border:1px solid var(--border-default); cursor:pointer; user-select:none; margin-bottom:10px; }
+  .iq-section-hdr-btn:hover { background:var(--color-primary-light); }
+  .iq-sec-label { font-size:12px; font-weight:700; color:var(--color-primary); text-transform:uppercase; letter-spacing:.8px; flex:1; }
+  .iq-sec-count { font-size:11px; color:var(--text-muted); font-weight:500; }
+  .iq-sec-chevron { font-size:13px; color:var(--text-muted); transition:transform .2s; }
   .iq-sec-chevron.open { transform:rotate(180deg); }
   /* Company pills for Typical section */
-  .iq-company-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; border:1px solid; white-space:nowrap; }
+  .iq-company-pill { display:inline-block; padding:2px 9px; border-radius:var(--radius-pill); font-size:11px; font-weight:700; border:1px solid; white-space:nowrap; }
 </style>
 
 <!-- Top bar -->
@@ -1015,7 +1042,7 @@
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
     <div>
       <div class="card-ttl" style="font-size:15px;margin-bottom:4px">Interview Preparation Library</div>
-      <div style="font-size:12px;color:var(--muted)">Cards are stored in your browser. Add your answers, translate, re-order, and extract before each interview.</div>
+      <div style="font-size:12px;color:var(--text-muted)">Cards are stored in your browser. Add your answers, translate, re-order, and extract before each interview.</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="iqOpenAddForm()">+ Add Question</button>
@@ -1031,13 +1058,13 @@
   <button class="filter-btn" id="iq-filter-common" onclick="iqFilter('common')">Common Questions</button>
   <button class="filter-btn" id="iq-filter-ask" onclick="iqFilter('ask')">Ask the Employer</button>
   <button class="filter-btn" id="iq-filter-typical" onclick="iqFilter('typical')">Typical Questions</button>
-  <button class="filter-btn" id="iq-filter-pinned" onclick="iqFilter('pinned')" style="border-color:#FFCD00">📌 Pinned</button>
+  <button class="filter-btn" id="iq-filter-pinned" onclick="iqFilter('pinned')" style="border-color:var(--status-warning-accent)">📌 Pinned</button>
   <span class="iq-count" id="iq-count"></span>
 </div>
 
 <!-- Add form (hidden by default) -->
 <div class="iq-add-form" id="iq-add-form" style="display:none">
-  <div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:14px" id="iq-form-title">Add New Question</div>
+  <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:14px" id="iq-form-title">Add New Question</div>
   <div class="form-group">
     <label class="form-label">Section</label>
     <select class="form-input" id="iq-form-section" style="width:auto">
@@ -1323,7 +1350,7 @@ function renderCard(c, globalN, companyN) {
   const aSwHtml = c.aSv ? `<div class="iq-a">${escHtml(c.aSv)}</div>` : `<div class="iq-a-empty">Inget svar ännu — klicka Edit för att lägga till.</div>`;
   let badge = '';
   if(c.section==='typical' && c.company) {
-    const cc = COMPANY_COLORS[c.company]||{bg:'var(--sky)',color:'var(--navy)',border:'var(--border)'};
+    const cc = COMPANY_COLORS[c.company]||{bg:'var(--color-primary-light)',color:'var(--color-primary)',border:'var(--border-default)'};
     const num = String(companyN||globalN).padStart(2,'0');
     badge = `<span class="iq-company-pill" style="background:${cc.bg};color:${cc.color};border-color:${cc.border}">${escHtml(c.company)} ${num}</span>`;
   } else {
@@ -1467,8 +1494,8 @@ window.iqFilter = function(f){
     if(!el) return;
     if(k==='pinned'){
       el.className = 'filter-btn' + (k===f?' active-dark':'');
-      if(k===f) el.style.background='#FFC000', el.style.color='var(--navy)', el.style.borderColor='#FFC000';
-      else el.style.background='', el.style.color='', el.style.borderColor='#FFCD00';
+      if(k===f) el.style.background='var(--status-warning-accent)', el.style.color='#fff', el.style.borderColor='var(--status-warning-accent)';
+      else el.style.background='', el.style.color='', el.style.borderColor='var(--status-progress-accent)';
     } else {
       el.className = 'filter-btn' + (k===f?' active-blue':'');
     }
@@ -1601,12 +1628,12 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       <label class="form-label">LinkedIn profile URL</label>
       <input class="form-input" id="li-url" placeholder="https://www.linkedin.com/in/…" oninput="debounce(saveLinkedInUrl,600)()">
     </div>
-    <div style="font-size:12px;color:var(--muted)">Role titles pinned on the <a href="#" onclick="showTab('jobsites');return false;">Job Sites &amp; Companies tab</a> are suggested when picking a target role in Job Match.</div>
+    <div style="font-size:12px;color:var(--text-muted)">Role titles pinned on the <a href="#" onclick="showTab('jobsites');return false;">Job Sites &amp; Companies tab</a> are suggested when picking a target role in Job Match.</div>
   </div>
   <div class="card" id="li-readiness-card" style="margin-bottom:16px">
     <h2 class="card-ttl" style="font-size:14px;margin:0 0 10px">Check recruiter-search readiness</h2>
-    <p style="font-size:12px;color:var(--muted);margin:0 0 14px">Choose the target roles for the LinkedIn profile above. Pin your own titles or remove roles you don't want to assess.</p>
-    <div style="font-size:11px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">📌 TARGET ROLES</div>
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 14px">Choose the target roles for the LinkedIn profile above. Pin your own titles or remove roles you don't want to assess.</p>
+    <div style="font-size:11px;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px">📌 TARGET ROLES</div>
     <div id="li-readiness-roles" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" aria-label="Pinned target roles"></div>
     <form onsubmit="event.preventDefault();addLinkedInReadinessRole()" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
       <input class="form-input" id="li-readiness-role-input" aria-label="New target role" maxlength="100" placeholder="Add another role title…" style="width:260px;max-width:100%">
@@ -1616,14 +1643,14 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       <button type="button" class="btn" onclick="openLinkedInForReview()">Open LinkedIn</button>
       <button type="button" class="btn" onclick="startChatGPTProfileReview()">Copy review request &amp; open ChatGPT</button>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin:10px 0">Sign in on LinkedIn, then paste and send the copied request in ChatGPT. Browser-assisted review requires browser-control tools in that conversation; otherwise, paste your profile text there. Your LinkedIn sign-in may need to be repeated in that browser.</p>
+    <p style="font-size:12px;color:var(--text-muted);margin:10px 0">Sign in on LinkedIn, then paste and send the copied request in ChatGPT. Browser-assisted review requires browser-control tools in that conversation; otherwise, paste your profile text there. Your LinkedIn sign-in may need to be repeated in that browser.</p>
     <div id="li-review-copy-fallback" hidden style="margin-top:12px">
       <label for="li-review-prompt" class="form-label">Review request — copy this into ChatGPT</label>
       <textarea id="li-review-prompt" class="form-textarea" rows="9" readonly></textarea>
     </div>
-    <p id="li-readiness-status" role="status" style="font-size:12px;color:var(--muted);margin:12px 0 0">Target roles are saved with your account. ChatGPT will prepare the review; results are not imported automatically.</p>
+    <p id="li-readiness-status" role="status" style="font-size:12px;color:var(--text-muted);margin:12px 0 0">Target roles are saved with your account. ChatGPT will prepare the review; results are not imported automatically.</p>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin:0 0 10px">Saved review — Markus Mosleitner · 7 September 2026. This report does not change when you enter another profile link.</div>
+  <div style="font-size:12px;color:var(--text-muted);margin:0 0 10px">Saved review — Markus Mosleitner · 7 September 2026. This report does not change when you enter another profile link.</div>
   <iframe id="li-profile-review" src="linkedin-profile-review.html"
     title="LinkedIn profile review and improvement checklist"
     style="display:block;width:100%;height:900px;border:0;border-radius:14px"
@@ -1646,12 +1673,29 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 </div>
 
 
+<!-- ═══════════════════════════ DESIGN SYSTEM ADMIN ═══════════════════════════ -->
+<div id="tab-designadmin" class="section">
+  <div class="card card-purple" style="margin-bottom:16px">
+    <div class="hdr-row">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🎨 Design System</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Two versions, side by side — click "Use this" to switch which one the app renders with, edit either version's tokens independently. Changes apply instantly and sync like everything else — no code, no redeploy.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="resetAllDesignTokens()">↺ Reset active version</button>
+        <button class="btn btn-sky btn-sm" onclick="showTab('dashboard')">✕ Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="design-admin-groups"></div>
+</div>
+
 </div><!-- /body -->
 
 <!-- ═══════════════════════════════ MODALS ═══════════════════════════════════ -->
 <div class="overlay" id="appModal" style="display:none" onclick="if(event.target===this)closeAppModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--navy)" id="appModalTitle">Log New Application</div>
+    <div class="modal-title" style="color:var(--color-primary)" id="appModalTitle">Log New Application</div>
     <div class="form-group"><label class="form-label">Company *</label><input class="form-input" id="af-company" placeholder="e.g. Volvo Cars"></div>
     <div class="form-group"><label class="form-label">Role / Title *</label><input class="form-input" id="af-role" placeholder="e.g. Head of Delivery"></div>
     <div class="form-group"><label class="form-label">Hiring Manager / Contact</label><input class="form-input" id="af-contact" placeholder="Name or LinkedIn"></div>
@@ -1665,7 +1709,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
     </div>
 
-    <div class="sec-label" style="margin-top:4px">Opportunity Details <span style="text-transform:none;font-weight:500;color:var(--muted)">— optional, feeds the Job Watchlist tab</span></div>
+    <div class="sec-label" style="margin-top:4px">Opportunity Details <span style="text-transform:none;font-weight:500;color:var(--text-muted)">— optional, feeds the Job Watchlist tab</span></div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Source</label><select class="form-input" id="af-source"></select></div>
       <div><label class="form-label">Location</label><input class="form-input" id="af-location" placeholder="e.g. Gothenburg"></div>
@@ -1675,7 +1719,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       <div><label class="form-label">CV Version</label><input class="form-input" id="af-cvversion" placeholder="e.g. CV_Senior_Project_Manager"></div>
     </div>
 
-    <div class="sec-label" style="margin-top:4px">Job Match Evaluation <span style="text-transform:none;font-weight:500;color:var(--muted)">— optional, per Markus Job Search Instructions</span></div>
+    <div class="sec-label" style="margin-top:4px">Job Match Evaluation <span style="text-transform:none;font-weight:500;color:var(--text-muted)">— optional, per Markus Job Search Instructions</span></div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Deadline</label><input class="form-input" id="af-deadline" type="date"></div>
       <div><label class="form-label">Role Family</label><input class="form-input" id="af-rolefamily" placeholder="e.g. Head of Delivery, CISO"></div>
@@ -1684,13 +1728,13 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     <div class="form-group">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <label class="form-label" style="margin-bottom:0">Fit scores (1–5)</label>
-        <span style="font-size:12px;color:var(--muted)">Overall Fit: <span id="af-fit-overall" style="font-weight:800;color:var(--navy)">—</span></span>
+        <span style="font-size:12px;color:var(--text-muted)">Overall Fit: <span id="af-fit-overall" style="font-weight:800;color:var(--color-primary)">—</span></span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Strategic</label><input class="form-input" id="af-fit-strategic" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Build &amp; Growth</label><input class="form-input" id="af-fit-growth" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Leadership</label><input class="form-input" id="af-fit-culture" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
-        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">Location</label><input class="form-input" id="af-fit-location" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
+        <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px">Strategic</label><input class="form-input" id="af-fit-strategic" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
+        <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px">Build &amp; Growth</label><input class="form-input" id="af-fit-growth" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
+        <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px">Leadership</label><input class="form-input" id="af-fit-culture" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
+        <div><label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px">Location</label><input class="form-input" id="af-fit-location" type="number" min="1" max="5" step="1" oninput="updateFitPreview()"></div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Concerns</label><textarea class="form-textarea" id="af-concerns" rows="2" placeholder="Gaps, trade-offs, unknowns…"></textarea></div>
@@ -1704,7 +1748,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
           <button type="button" title="Attach screenshot" onclick="document.getElementById('af-note-image').click()">📷</button>
           <button onclick="addAppHistoryEntry()">Add</button>
         </div>
-        <div id="af-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
+        <div id="af-note-image-preview" style="display:none;padding:8px 12px;background:var(--bg-surface-subtle);border-bottom:1px solid var(--border-default)"></div>
         <div class="history-entries" id="af-history-entries"></div>
       </div>
     </div>
@@ -1724,7 +1768,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="trainModal" style="display:none" onclick="if(event.target===this)closeTrainModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--purple)" id="trainModalTitle">Add Course</div>
+    <div class="modal-title" style="color:var(--color-primary)" id="trainModalTitle">Add Course</div>
     <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="tf-title" placeholder="e.g. AI for Everyone"></div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Category</label><select class="form-input" id="tf-category"></select></div>
@@ -1753,7 +1797,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="netModal" style="display:none" onclick="if(event.target===this)closeNetModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--teal)" id="netModalTitle">Add Network Contact</div>
+    <div class="modal-title" style="color:var(--status-progress-text)" id="netModalTitle">Add Network Contact</div>
     <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="nf-name" placeholder="Full name"></div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Current Company</label><input class="form-input" id="nf-company" placeholder="Where they work now"></div>
@@ -1778,14 +1822,14 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
         <div class="history-add" style="flex-wrap:wrap;gap:6px">
           <textarea id="nf-note-input" rows="2" placeholder="Add a note — what you discussed, next steps, follow-up… (you can paste a screenshot here, Ctrl+V)" style="flex:1;min-width:0"></textarea>
           <div style="display:flex;align-items:center;gap:6px;width:100%;padding:0 0 2px">
-            <label style="font-size:11px;color:var(--muted);white-space:nowrap">Date:</label>
+            <label style="font-size:11px;color:var(--text-muted);white-space:nowrap">Date:</label>
             <input type="date" id="nf-note-date" class="form-input" style="flex:1;font-size:11px;padding:5px 8px">
             <input type="file" accept="image/*" id="nf-note-image" style="display:none" onchange="handleNoteImageSelect('nf', this.files[0])">
             <button type="button" title="Attach screenshot" onclick="document.getElementById('nf-note-image').click()">📷</button>
             <button onclick="addHistoryEntry()">Add</button>
           </div>
         </div>
-        <div id="nf-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
+        <div id="nf-note-image-preview" style="display:none;padding:8px 12px;background:var(--bg-surface-subtle);border-bottom:1px solid var(--border-default)"></div>
         <div class="history-entries" id="nf-history-entries"></div>
       </div>
     </div>
@@ -1802,7 +1846,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="checkoutModal" style="display:none" onclick="if(event.target===this)closeCheckoutModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--purple)" id="checkoutModalTitle">Add Item</div>
+    <div class="modal-title" style="color:var(--color-primary)" id="checkoutModalTitle">Add Item</div>
     <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="cf-title" placeholder="e.g. Follow up with recruiter"></div>
     <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="cf-description" rows="2" placeholder="What needs to be done / context…"></textarea></div>
     <div class="form-grid2" style="margin-bottom:14px">
@@ -1821,7 +1865,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
           <button type="button" title="Attach screenshot" onclick="document.getElementById('cf-note-image').click()">📷</button>
           <button onclick="addCoHistoryEntry()">Add</button>
         </div>
-        <div id="cf-note-image-preview" style="display:none;padding:8px 12px;background:var(--off);border-bottom:1px solid var(--border)"></div>
+        <div id="cf-note-image-preview" style="display:none;padding:8px 12px;background:var(--bg-surface-subtle);border-bottom:1px solid var(--border-default)"></div>
         <div class="history-entries" id="cf-history-entries"></div>
       </div>
     </div>
@@ -1838,12 +1882,12 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="passwordModal" style="display:none" onclick="if(event.target===this)closePasswordModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--navy)">Change Password</div>
+    <div class="modal-title" style="color:var(--color-primary)">Change Password</div>
     <div class="form-group"><label class="form-label">Current password *</label><input class="form-input" id="pw-current" type="password" placeholder="Your current password"></div>
     <div class="form-group"><label class="form-label">New password *</label><input class="form-input" id="pw-new" type="password" placeholder="At least 6 characters"></div>
     <div class="form-group"><label class="form-label">Confirm new password *</label><input class="form-input" id="pw-confirm" type="password" placeholder="Repeat new password"></div>
     <div class="login-error" id="pw-error" style="display:none;margin-top:-8px;margin-bottom:14px"></div>
-    <div class="login-error" id="pw-success" style="display:none;margin-top:-8px;margin-bottom:14px;color:var(--green)"></div>
+    <div class="login-error" id="pw-success" style="display:none;margin-top:-8px;margin-bottom:14px;color:var(--status-success-text)"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closePasswordModal()">Cancel</button>
       <button class="btn btn-primary" id="pw-submit-btn" onclick="submitPasswordChange()">Update Password</button>
@@ -1853,14 +1897,14 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="watchModal" style="display:none" onclick="if(event.target===this)closeWatchModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--purple)" id="watchModalTitle">Add Company</div>
+    <div class="modal-title" style="color:var(--color-primary)" id="watchModalTitle">Add Company</div>
     <div class="form-group"><label class="form-label">Company Name *</label><input class="form-input" id="wf-company" placeholder="e.g. Volvo Cars"></div>
     <div class="form-group"><label class="form-label">Industry</label><input class="form-input" id="wf-industry" placeholder="e.g. Automotive, Fintech, Healthcare"></div>
     <div class="form-group"><label class="form-label">Link to Career Site</label><input class="form-input" id="wf-careersite" placeholder="https://…"></div>
     <div class="form-group">
       <label class="form-label">Search URL (optional)</label>
       <input class="form-input" id="wf-searchurl" placeholder="https://…?q={q}&l={location} — do one search on the site, copy the resulting URL, replace your search words with {q}">
-      <div style="font-size:11.5px;color:var(--muted);margin-top:4px">Companies with a known job-board platform (Workday, Greenhouse, Lever, SmartRecruiters) or a built-in integration already get a real search automatically — this is for everyone else. When set, pinned Role Titles are substituted into {q} (and {location}/{q-slug}/{location-slug} where supported) and sent as an actual query to the site's own search, instead of just scanning whatever the plain Career Site link happens to show.</div>
+      <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Companies with a known job-board platform (Workday, Greenhouse, Lever, SmartRecruiters) or a built-in integration already get a real search automatically — this is for everyone else. When set, pinned Role Titles are substituted into {q} (and {location}/{q-slug}/{location-slug} where supported) and sent as an actual query to the site's own search, instead of just scanning whatever the plain Career Site link happens to show.</div>
     </div>
     <div class="form-group"><label class="form-label">Company Description</label><textarea class="form-textarea" id="wf-description" rows="3" placeholder="What they do, why they're interesting…"></textarea></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -1876,7 +1920,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 
 <div class="overlay" id="searchSetupModal" style="display:none" onclick="if(event.target===this)closeSearchSetupModal()">
   <div class="modal">
-    <div class="modal-title" style="color:var(--purple)" id="searchSetupModalTitle">Add Source</div>
+    <div class="modal-title" style="color:var(--color-primary)" id="searchSetupModalTitle">Add Source</div>
     <div class="form-group"><label class="form-label">Source *</label><input class="form-input" id="ss-source" placeholder="e.g. LinkedIn Jobs, Maquire, AstraZeneca careers"></div>
     <div class="form-group"><label class="form-label">Category</label><input class="form-input" id="ss-category" placeholder="e.g. Swedish general job boards, Gothenburg-specific…" list="ss-category-options"></div>
     <datalist id="ss-category-options"></datalist>
@@ -1884,7 +1928,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     <div class="form-group">
       <label class="form-label">Search URL</label>
       <input class="form-input" id="ss-url" placeholder="https://…?q={q}&l={location} — or just the site's URL if you haven't confirmed its search pattern yet">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Use <code style="background:var(--off);padding:1px 4px;border-radius:3px">{q}</code> (and <code style="background:var(--off);padding:1px 4px;border-radius:3px">{location}</code> if the site supports it) where your search terms should go — Open/Search will substitute them in. No placeholder means a generic <code style="background:var(--off);padding:1px 4px;border-radius:3px">?q=</code> gets appended instead, which only works on some sites.</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Use <code style="background:var(--bg-surface-subtle);padding:1px 4px;border-radius:3px">{q}</code> (and <code style="background:var(--bg-surface-subtle);padding:1px 4px;border-radius:3px">{location}</code> if the site supports it) where your search terms should go — Open/Search will substitute them in. No placeholder means a generic <code style="background:var(--bg-surface-subtle);padding:1px 4px;border-radius:3px">?q=</code> gets appended instead, which only works on some sites.</div>
     </div>
     <div class="form-grid2" style="margin-bottom:14px">
       <div><label class="form-label">Geography</label><input class="form-input" id="ss-geography" placeholder="e.g. Sweden + remote EU"></div>
@@ -1911,21 +1955,21 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 // ═══════════════════════════ CONFIG ═══════════════════════════════════════════
 const WATCH_STATUS = "Watching";
 const APP_STATUS = {
-  "Watching":      { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
-  "Applied":       { color:"#2F7A86", bg:"#E3F7F3", dot:"#4F9EB0" },
-  "Interviewing":  { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
-  "Offer":         { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
-  "Rejected":      { color:"#A8293A", bg:"#FFE9EE", dot:"#A8293A" },
-  "Withdrawn":     { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
-  "Interim Lead":  { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
+  "Watching":      { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)", dot:"var(--status-warning-accent)" },
+  "Applied":       { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Interviewing":  { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Offer":         { color:"var(--status-success-text)", bg:"var(--status-success-bg)", dot:"var(--status-success-accent)" },
+  "Rejected":      { color:"var(--status-urgent-text)", bg:"var(--status-urgent-bg)", dot:"var(--status-urgent-text)" },
+  "Withdrawn":     { color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)", dot:"var(--status-neutral-text)" },
+  "Interim Lead":  { color:"var(--color-primary)", bg:"var(--color-primary-light)", dot:"var(--color-primary)" },
 };
 const SOURCE_OPTIONS = ["LinkedIn","National job board","Search firm","Company site","Network","Recruiter","Other"];
 const WORKMODEL_OPTIONS = ["Unknown","Remote","Hybrid","On-site","Travel"];
 const SS_FREQUENCY_OPTIONS = ["Weekly","Daily","Fortnightly","Manual"];
 const SS_STATUS = {
-  "Active": { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
-  "Paused": { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
-  "Manual": { color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
+  "Active": { color:"var(--status-success-text)", bg:"var(--status-success-bg)", dot:"var(--status-success-accent)" },
+  "Paused": { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Manual": { color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)", dot:"var(--status-neutral-text)" },
 };
 // Seeded from the Career Database (Profile Statements "Best Fit For Roles" + Target Roles Log)
 // — the roles Markus's experience most directly matches, several already applied to for real.
@@ -1983,50 +2027,50 @@ const STARTER_JOB_SITES = [
   { category:"Life Science / MedTech", source:"GoCo Health Innovation City", url:"https://goco.se/", geography:"Gothenburg", frequency:"Fortnightly", notes:"Listings mostly appear via Indeed/LinkedIn rather than their own site — this URL is just the parent site, no search function." },
 ];
 const APP_TRACK = {
-  "Permanent": { color:"#3B0030", bg:"#F3E6EF" },
-  "Interim":   { color:"#9A4A06", bg:"#FDE7D2" },
-  "Network":   { color:"#2F7A86", bg:"#E3F7F3" },
+  "Permanent": { color:"var(--color-primary)", bg:"var(--color-primary-light)" },
+  "Interim":   { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)" },
+  "Network":   { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
 };
 const TRAIN_CAT = {
-  "AI & Technology":        { color:"#8A2F55", bg:"#FDEAF0", icon:"🤖" },
-  "Leadership & Management":{ color:"#3B0030", bg:"#F3E6EF", icon:"🎯" },
-  "Certification":          { color:"#15694A", bg:"#E1FAF0", icon:"📜" },
-  "Other":                  { color:"#7C6470", bg:"#F1ECEF", icon:"📚" },
+  "AI & Technology":        { color:"var(--color-primary)", bg:"var(--color-primary-light)", icon:"🤖" },
+  "Leadership & Management":{ color:"var(--color-primary)", bg:"var(--color-primary-light)", icon:"🎯" },
+  "Certification":          { color:"var(--status-success-text)", bg:"var(--status-success-bg)", icon:"📜" },
+  "Other":                  { color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)", icon:"📚" },
 };
 const TRAIN_STATUS = {
-  "Not started": { color:"#7C6470", bg:"#F1ECEF" },
-  "In progress": { color:"#8A6500", bg:"#FFF6CF" },
-  "Completed":   { color:"#15694A", bg:"#E1FAF0" },
-  "Paused":      { color:"#A8293A", bg:"#FFE9EE" },
+  "Not started": { color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)" },
+  "In progress": { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
+  "Completed":   { color:"var(--status-success-text)", bg:"var(--status-success-bg)" },
+  "Paused":      { color:"var(--status-urgent-text)", bg:"var(--status-urgent-bg)" },
 };
 const NET_RELATION = {
-  "Former colleague":  { color:"#3B0030", bg:"#F3E6EF", icon:"👔" },
-  "AZ / Evinova":      { color:"#15694A", bg:"#E1FAF0", icon:"🏢" },
-  "Recruiter/Agency":  { color:"#8A2F55", bg:"#FDEAF0", icon:"🔍" },
-  "Industry contact":  { color:"#9A4A06", bg:"#FDE7D2", icon:"🌐" },
-  "Friend / Personal": { color:"#2F7A86", bg:"#E3F7F3", icon:"🤝" },
+  "Former colleague":  { color:"var(--color-primary)", bg:"var(--color-primary-light)", icon:"👔" },
+  "AZ / Evinova":      { color:"var(--status-success-text)", bg:"var(--status-success-bg)", icon:"🏢" },
+  "Recruiter/Agency":  { color:"var(--color-primary)", bg:"var(--color-primary-light)", icon:"🔍" },
+  "Industry contact":  { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)", icon:"🌐" },
+  "Friend / Personal": { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", icon:"🤝" },
   "LinkedIn":          { color:"#0A66C2", bg:"#E8F0FE", icon:"💼" },
 };
 const NET_STATUS = {
-  "To contact":    { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
-  "Contacted":     { color:"#2F7A86", bg:"#E3F7F3", dot:"#4F9EB0" },
-  "Replied":       { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
-  "Meeting set":   { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
-  "Met":           { color:"#8A2F55", bg:"#FDEAF0", dot:"#8A2F55" },
-  "Not responsive":{ color:"#7C6470", bg:"#F1ECEF", dot:"#7C6470" },
+  "To contact":    { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)", dot:"var(--status-warning-accent)" },
+  "Contacted":     { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Replied":       { color:"var(--status-success-text)", bg:"var(--status-success-bg)", dot:"var(--status-success-accent)" },
+  "Meeting set":   { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Met":           { color:"var(--color-primary)", bg:"var(--color-primary-light)", dot:"var(--color-primary)" },
+  "Not responsive":{ color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)", dot:"var(--status-neutral-text)" },
 };
 const CO_STATUS = {
-  "To Do":       { color:"#9A4A06", bg:"#FDE7D2", dot:"#F16D07" },
-  "In Progress": { color:"#8A6500", bg:"#FFF6CF", dot:"#FFCD00" },
-  "Done":        { color:"#15694A", bg:"#E1FAF0", dot:"#36E09E" },
+  "To Do":       { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)", dot:"var(--status-warning-accent)" },
+  "In Progress": { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)", dot:"var(--status-progress-accent)" },
+  "Done":        { color:"var(--status-success-text)", bg:"var(--status-success-bg)", dot:"var(--status-success-accent)" },
 };
 const NET_PURPOSE = {
-  "Coffee chat / advice": { color:"#3B0030", bg:"#F3E6EF" },
-  "Job referral":         { color:"#15694A", bg:"#E1FAF0" },
-  "Market intel":         { color:"#8A2F55", bg:"#FDEAF0" },
-  "Recruiter briefing":   { color:"#2F7A86", bg:"#E3F7F3" },
-  "Introduction ask":     { color:"#8A6500", bg:"#FFF6CF" },
-  "General reconnect":    { color:"#7C6470", bg:"#F1ECEF" },
+  "Coffee chat / advice": { color:"var(--color-primary)", bg:"var(--color-primary-light)" },
+  "Job referral":         { color:"var(--status-success-text)", bg:"var(--status-success-bg)" },
+  "Market intel":         { color:"var(--color-primary)", bg:"var(--color-primary-light)" },
+  "Recruiter briefing":   { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
+  "Introduction ask":     { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
+  "General reconnect":    { color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)" },
 };
 const RECOMMENDED = [
   { category:"AI & Technology",         title:"Prompt Engineering for Leaders",     provider:"LinkedIn Learning", duration:"3h",  url:"https://www.linkedin.com/learning/", milestone:"Week 1" },
@@ -2154,6 +2198,7 @@ let state = {
   jobMatchHistory: [], // [{ id, timestamp, role, cvName, jobUrl, results }], newest first, capped at 20
   goals: null,
   linkedIn: { url: "" },
+  designSystem: null, // { active: "v1"|"v2", overrides: {v1:{key:value}, v2:{key:value}} } — see DESIGN_TOKENS/DESIGN_VERSIONS; lazily created by ensureDesignSystem()
 };
 let editAppId = null, editTrainId = null, editNetId = null, editWatchId = null, editCheckoutId = null, editSearchSetupId = null;
 let appStatusFilter = "All", appTrackFilter = "All";
@@ -2201,10 +2246,10 @@ async function initFirebase() {
 function setSyncStatus(mode) {
   const el = document.getElementById("syncStatus");
   if (!el) return;
-  if (mode === "cloud")  { el.textContent = "☁️ Synced";      el.style.color = "#fff"; }
-  if (mode === "local")  { el.textContent = "💾 Local only";  el.style.color = "#FFD700"; }
-  if (mode === "saving") { el.textContent = "⏳ Saving…";     el.style.color = "#fff"; }
-  if (mode === "error")  { el.textContent = "⚠️ Save error";  el.style.color = "#FFD700"; }
+  if (mode === "cloud")  { el.textContent = "☁️ Synced";      el.style.color = "var(--status-success-text)"; }
+  if (mode === "local")  { el.textContent = "💾 Local only";  el.style.color = "var(--status-warning-text)"; }
+  if (mode === "saving") { el.textContent = "⏳ Saving…";     el.style.color = "var(--text-muted)"; }
+  if (mode === "error")  { el.textContent = "⚠️ Save error";  el.style.color = "var(--status-urgent-text)"; }
 }
 
 async function loadState() {
@@ -2230,6 +2275,8 @@ async function loadState() {
         migrateLegacyJobMatch(d.jobMatch);
         state.goals           = d.goals           || null;
         state.linkedIn         = { url: "", ...(d.linkedIn||{}) };
+        state.designTokens     = d.designTokens    || {}; // legacy pre-versioning field, read only for ensureDesignSystem()'s migration
+        state.designSystem     = d.designSystem    || null;
         setSyncStatus("cloud");
         return;
       }
@@ -2260,6 +2307,8 @@ async function loadState() {
   migrateLegacyJobMatch(lsJobMatch);
   state.goals            = lsGet("goals") || null;
   state.linkedIn         = { url: "", ...(lsGet("linkedIn")||{}) };
+  state.designTokens     = lsGet("designTokens") || {}; // legacy pre-versioning field, read only for ensureDesignSystem()'s migration
+  state.designSystem     = lsGet("designSystem") || null;
 }
 
 async function saveState() {
@@ -2272,6 +2321,7 @@ async function saveState() {
   lsSet("criteria", state.searchCriteria); lsSet("jobMatch", state.jobMatch);
   lsSet("jobMatchHistory", state.jobMatchHistory);
   lsSet("goals", state.goals); lsSet("linkedIn", state.linkedIn);
+  lsSet("designSystem", state.designSystem);
   const f = document.getElementById("saveFlash");
   if (f) { f.classList.add("show"); setTimeout(() => f.classList.remove("show"), 1800); }
   // Then save to Firestore
@@ -2285,7 +2335,7 @@ async function saveState() {
         trainMilestones: state.trainMilestones, weeklyNote: state.weeklyNote,
         searchCriteria: state.searchCriteria, jobMatch: state.jobMatch,
         jobMatchHistory: state.jobMatchHistory,
-        goals: state.goals, linkedIn: state.linkedIn,
+        goals: state.goals, linkedIn: state.linkedIn, designSystem: state.designSystem,
         lastSaved: firebase.firestore.FieldValue.serverTimestamp(),
       });
       setSyncStatus("cloud");
@@ -2307,13 +2357,204 @@ function progRow(label, val, total, color) {
   const pct = total > 0 ? Math.min((val/total)*100, 100) : 0;
   return `<div class="pip-row"><div class="pip-name"><div class="pip-dot" style="background:${color}"></div>${label}</div>
   <div class="pip-right"><div class="pip-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${color}"></div></div>
-  <span style="font-size:13px;font-weight:700;color:var(--muted);width:18px;text-align:right">${val}</span></div></div>`;
+  <span style="font-size:13px;font-weight:700;color:var(--text-muted);width:18px;text-align:right">${val}</span></div></div>`;
 }
 function today() { return new Date().toISOString().slice(0,10); }
 let debounceTimer;
 function debounce(fn, ms) { return function(...args){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>fn(...args),ms); }; }
 
 // ═══════════════════════════ TAB ══════════════════════════════════════════════
+// ═══════════════════════════ DESIGN SYSTEM ADMIN ═══════════════════════════════
+// Single source of truth for every CSS custom property the app's stylesheet
+// reads from :root (see the top of <head>). Two named versions ship: v1 is a
+// best-effort reconstruction of the original Evinova-purple palette this app
+// used before the Stitch reskin, v2 is the shipped "Cool Ice Slate & Pearl"
+// system — same token keys, different values, so switching versions is just
+// re-pointing every CSS var at a different value set. Note this only swaps
+// *values* (colors/shadows/radii/fonts) — it can't reproduce structural
+// differences the old design had (a gradient header, fully-pill-shaped form
+// inputs) since the stylesheet's shapes are shared across both versions;
+// --radius-sm going to 999px under v1 does restore pill-shaped *buttons*
+// though, since that rule already reads from this token.
+const DESIGN_VERSIONS = [
+  { id:"v1", name:"Version 1", subtitle:"Original (Evinova Purple)" },
+  { id:"v2", name:"Version 2", subtitle:"Cool Ice Slate & Pearl" },
+];
+const DESIGN_TOKENS = [
+  { key:"--bg-canvas",          label:"Page canvas",              group:"Canvas & Surfaces", type:"color", defaults:{v1:"#F9F8F6", v2:"#EBF1F6"} },
+  { key:"--bg-surface",         label:"Card / panel surface",     group:"Canvas & Surfaces", type:"color", defaults:{v1:"#FFFFFF", v2:"#FFFFFF"} },
+  { key:"--bg-surface-subtle",  label:"Subtle nested surface",    group:"Canvas & Surfaces", type:"color", defaults:{v1:"#F9F8F6", v2:"#F8FAFC"} },
+  { key:"--bg-surface-hover",   label:"Hover surface",            group:"Canvas & Surfaces", type:"color", defaults:{v1:"#F5E7EF", v2:"#F1F5F9"} },
+  { key:"--bg-nav-track",       label:"Nav pill track",           group:"Canvas & Surfaces", type:"color", defaults:{v1:"#F5E7EF", v2:"#EEF2F6"} },
+
+  { key:"--border-subtle",      label:"Subtle divider",           group:"Borders", type:"color", defaults:{v1:"#E9DEE5", v2:"#E2E8F0"} },
+  { key:"--border-default",     label:"Default border",           group:"Borders", type:"color", defaults:{v1:"#E9DEE5", v2:"#D9E2EC"} },
+  { key:"--border-strong",      label:"Strong / focus border",    group:"Borders", type:"color", defaults:{v1:"#D8C7D2", v2:"#94A3B8"} },
+
+  { key:"--color-primary",       label:"Primary brand",           group:"Primary & Brand", type:"color", defaults:{v1:"#3B0030", v2:"#2563EB"} },
+  { key:"--color-primary-hover", label:"Primary hover",           group:"Primary & Brand", type:"color", defaults:{v1:"#6B1052", v2:"#1D4ED8"} },
+  { key:"--color-primary-active",label:"Primary active/pressed",  group:"Primary & Brand", type:"color", defaults:{v1:"#2B0A23", v2:"#1E40AF"} },
+  { key:"--color-primary-light", label:"Primary light tint",      group:"Primary & Brand", type:"color", defaults:{v1:"#F5E7EF", v2:"#EFF6FF"} },
+  { key:"--color-primary-text",  label:"Text on primary fill",    group:"Primary & Brand", type:"color", defaults:{v1:"#FFFFFF", v2:"#FFFFFF"} },
+  { key:"--color-secondary",     label:"Secondary accent",        group:"Primary & Brand", type:"color", defaults:{v1:"#8A2F55", v2:"#4F46E5"} },
+
+  { key:"--text-primary",   label:"Primary text (titles)",    group:"Text", type:"color", defaults:{v1:"#2B0A23", v2:"#0F172A"} },
+  { key:"--text-secondary", label:"Secondary text (body)",    group:"Text", type:"color", defaults:{v1:"#2B0A23", v2:"#334155"} },
+  { key:"--text-muted",     label:"Muted text (meta)",        group:"Text", type:"color", defaults:{v1:"#7C6470", v2:"#64748B"} },
+  { key:"--text-subtle",    label:"Subtle text (micro)",      group:"Text", type:"color", defaults:{v1:"#7C6470", v2:"#94A3B8"} },
+
+  { key:"--status-success-bg",      label:"Success — background",  group:"Status · Success",  type:"color", defaults:{v1:"#E1FAF0", v2:"#ECFDF5"} },
+  { key:"--status-success-text",    label:"Success — text",        group:"Status · Success",  type:"color", defaults:{v1:"#1F9C6E", v2:"#059669"} },
+  { key:"--status-success-border",  label:"Success — border",      group:"Status · Success",  type:"color", defaults:{v1:"#A7D9C4", v2:"#A7F3D0"} },
+  { key:"--status-success-accent",  label:"Success — solid accent",group:"Status · Success",  type:"color", defaults:{v1:"#36E09E", v2:"#10B981"} },
+
+  { key:"--status-progress-bg",     label:"Progress — background",  group:"Status · Progress", type:"color", defaults:{v1:"#E3F7F3", v2:"#F0F9FF"} },
+  { key:"--status-progress-text",   label:"Progress — text",        group:"Status · Progress", type:"color", defaults:{v1:"#2F7A86", v2:"#0284C7"} },
+  { key:"--status-progress-border", label:"Progress — border",      group:"Status · Progress", type:"color", defaults:{v1:"#A9D3D8", v2:"#BAE6FD"} },
+  { key:"--status-progress-accent", label:"Progress — solid accent",group:"Status · Progress", type:"color", defaults:{v1:"#4F9EB0", v2:"#0EA5E9"} },
+
+  { key:"--status-urgent-bg",      label:"Urgent — background",  group:"Status · Urgent",   type:"color", defaults:{v1:"#FFE9EE", v2:"#FFF1F2"} },
+  { key:"--status-urgent-text",    label:"Urgent — text",        group:"Status · Urgent",   type:"color", defaults:{v1:"#A8293A", v2:"#E11D48"} },
+  { key:"--status-urgent-border",  label:"Urgent — border",      group:"Status · Urgent",   type:"color", defaults:{v1:"#F5B8C4", v2:"#FECDD3"} },
+  { key:"--status-urgent-accent",  label:"Urgent — solid accent",group:"Status · Urgent",   type:"color", defaults:{v1:"#A8293A", v2:"#E11D48"} },
+
+  { key:"--status-warning-bg",      label:"Warning — background",  group:"Status · Warning",  type:"color", defaults:{v1:"#FFF6CF", v2:"#FEF3C7"} },
+  { key:"--status-warning-text",    label:"Warning — text",        group:"Status · Warning",  type:"color", defaults:{v1:"#D9600A", v2:"#D97706"} },
+  { key:"--status-warning-border",  label:"Warning — border",      group:"Status · Warning",  type:"color", defaults:{v1:"#FFE199", v2:"#FDE68A"} },
+  { key:"--status-warning-accent",  label:"Warning — solid accent",group:"Status · Warning",  type:"color", defaults:{v1:"#FFCD00", v2:"#F59E0B"} },
+
+  { key:"--status-neutral-bg",      label:"Neutral — background",  group:"Status · Neutral",  type:"color", defaults:{v1:"#F1ECEF", v2:"#F1F5F9"} },
+  { key:"--status-neutral-text",    label:"Neutral — text",        group:"Status · Neutral",  type:"color", defaults:{v1:"#7C6470", v2:"#64748B"} },
+  { key:"--status-neutral-border",  label:"Neutral — border",      group:"Status · Neutral",  type:"color", defaults:{v1:"#E9DEE5", v2:"#CBD5E1"} },
+  { key:"--status-neutral-accent",  label:"Neutral — solid accent",group:"Status · Neutral",  type:"color", defaults:{v1:"#7C6470", v2:"#94A3B8"} },
+
+  { key:"--shadow-xs",          label:"Shadow — extra small", group:"Shadows & Shape", type:"text", defaults:{v1:"0 1px 4px rgba(0, 0, 0, 0.04)", v2:"0 1px 2px 0 rgba(15, 23, 42, 0.04)"} },
+  { key:"--shadow-card",        label:"Shadow — card",        group:"Shadows & Shape", type:"text", defaults:{v1:"0 1px 4px rgba(0, 0, 0, 0.04)", v2:"0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03)"} },
+  { key:"--shadow-card-hover",  label:"Shadow — card hover",  group:"Shadows & Shape", type:"text", defaults:{v1:"0 2px 8px rgba(0, 0, 0, 0.08)", v2:"0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05)"} },
+  { key:"--shadow-active-tab",  label:"Shadow — active tab",  group:"Shadows & Shape", type:"text", defaults:{v1:"none", v2:"0 1px 2px rgba(37, 99, 235, 0.2)"} },
+  { key:"--shadow-modal",       label:"Shadow — modal",       group:"Shadows & Shape", type:"text", defaults:{v1:"0 8px 40px rgba(0, 0, 0, 0.18)", v2:"0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04)"} },
+  { key:"--radius-xs",          label:"Radius — extra small", group:"Shadows & Shape", type:"text", defaults:{v1:"4px", v2:"4px"} },
+  { key:"--radius-sm",          label:"Radius — buttons/inputs", group:"Shadows & Shape", type:"text", defaults:{v1:"999px", v2:"8px"} },
+  { key:"--radius-md",          label:"Radius — cards",       group:"Shadows & Shape", type:"text", defaults:{v1:"12px", v2:"12px"} },
+  { key:"--radius-lg",          label:"Radius — modals",      group:"Shadows & Shape", type:"text", defaults:{v1:"16px", v2:"16px"} },
+  { key:"--radius-pill",        label:"Radius — pills/badges/tabs", group:"Shadows & Shape", type:"text", defaults:{v1:"9999px", v2:"9999px"} },
+
+  { key:"--font-sans", label:"Sans-serif font stack", group:"Typography", type:"text", defaults:{v1:"'Inter', 'Segoe UI', sans-serif", v2:"'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"} },
+  { key:"--font-mono", label:"Monospace font stack",  group:"Typography", type:"text", defaults:{v1:"'Courier New', monospace", v2:"'JetBrains Mono', 'Fira Code', monospace"} },
+];
+function ensureDesignSystem() {
+  if (state.designSystem) return;
+  // Migrate a pre-versioning single-palette state.designTokens (if present)
+  // into v2's overrides, since v2 was the only version that ever existed.
+  state.designSystem = { active: "v2", overrides: { v1:{}, v2:{ ...(state.designTokens||{}) } } };
+}
+function activeDesignVersion() { ensureDesignSystem(); return state.designSystem.active; }
+function designTokenValue(key, versionId) {
+  ensureDesignSystem();
+  const t = DESIGN_TOKENS.find(t=>t.key===key);
+  const vId = versionId || state.designSystem.active;
+  const ov = state.designSystem.overrides[vId] || {};
+  return ov[key] || (t ? t.defaults[vId] : "");
+}
+// Runs once per load (after loadState()), before anything renders, so the
+// active version — defaults plus any saved customizations — is in effect
+// from the very first paint.
+function applyDesignTokenOverrides() {
+  ensureDesignSystem();
+  DESIGN_TOKENS.forEach(t => document.documentElement.style.setProperty(t.key, designTokenValue(t.key)));
+}
+function openDesignAdmin() {
+  showTab("designadmin");
+  renderDesignAdmin();
+}
+function setActiveDesignVersion(versionId) {
+  ensureDesignSystem();
+  state.designSystem.active = versionId;
+  applyDesignTokenOverrides();
+  saveState();
+  renderDesignAdmin();
+}
+function renderDesignAdmin() {
+  ensureDesignSystem();
+  const el = document.getElementById("design-admin-groups");
+  if (!el) return;
+  const active = state.designSystem.active;
+  const groups = [];
+  DESIGN_TOKENS.forEach(t => {
+    let g = groups.find(g=>g.name===t.group);
+    if (!g) { g = { name:t.group, tokens:[] }; groups.push(g); }
+    g.tokens.push(t);
+  });
+  const versionHeaderCell = (v) => `
+    <div style="width:220px;flex-shrink:0;display:flex;align-items:center;gap:8px">
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:var(--text-primary)">${escHtml(v.name)}${v.id===active?` <span style="font-weight:600;color:var(--status-success-text)">· active</span>`:""}</div>
+        <div style="font-size:10.5px;color:var(--text-muted)">${escHtml(v.subtitle)}</div>
+      </div>
+      ${v.id!==active ? `<button class="btn btn-sky btn-xs" onclick="setActiveDesignVersion('${v.id}')">Use this</button>` : ""}
+    </div>`;
+  const versionCell = (t, v) => {
+    const value = designTokenValue(t.key, v.id);
+    const isCustom = !!(state.designSystem.overrides[v.id] && state.designSystem.overrides[v.id][t.key]);
+    const control = t.type === "color"
+      ? `<input type="color" value="${escHtml(value)}" style="width:32px;height:30px;padding:0;border:1px solid var(--border-default);border-radius:var(--radius-xs);cursor:pointer" oninput="saveDesignToken('${t.key}','${v.id}', this.value)">
+         <input class="form-input" style="width:92px;font-family:var(--font-mono);font-size:11.5px;padding:6px 8px" value="${escHtml(value)}" onchange="saveDesignToken('${t.key}','${v.id}', this.value); renderDesignAdmin()">`
+      : `<input class="form-input" style="width:180px;font-family:var(--font-mono);font-size:11.5px;padding:6px 8px" value="${escHtml(value)}" onchange="saveDesignToken('${t.key}','${v.id}', this.value); renderDesignAdmin()">`;
+    return `
+      <div style="width:220px;flex-shrink:0;display:flex;align-items:center;gap:6px">
+        ${control}
+        ${isCustom ? `<button class="btn btn-ghost btn-xs" title="Reset this version's value to shipped default" onclick="resetDesignToken('${t.key}','${v.id}')">↺</button>` : `<span style="width:26px"></span>`}
+      </div>`;
+  };
+  el.innerHTML = groups.map(g => `
+    <div class="card" style="margin-bottom:16px;overflow-x:auto">
+      <div class="sec-label" style="margin-bottom:12px">${escHtml(g.name)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:700px">
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)">
+          <div style="flex:1;min-width:180px"></div>
+          ${DESIGN_VERSIONS.map(versionHeaderCell).join("")}
+        </div>
+        ${g.tokens.map(t => `
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text-primary)">${escHtml(t.label)}</div>
+              <div style="font-size:10.5px;color:var(--text-subtle);font-family:var(--font-mono)">${escHtml(t.key)}</div>
+            </div>
+            ${DESIGN_VERSIONS.map(v=>versionCell(t, v)).join("")}
+          </div>`).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+function saveDesignToken(key, versionId, value) {
+  if (!value) return;
+  ensureDesignSystem();
+  if (!state.designSystem.overrides[versionId]) state.designSystem.overrides[versionId] = {};
+  state.designSystem.overrides[versionId][key] = value;
+  if (versionId === state.designSystem.active) document.documentElement.style.setProperty(key, value);
+  saveState();
+}
+function resetDesignToken(key, versionId) {
+  ensureDesignSystem();
+  const ov = state.designSystem.overrides[versionId];
+  if (ov) delete ov[key];
+  if (versionId === state.designSystem.active) {
+    const t = DESIGN_TOKENS.find(t=>t.key===key);
+    if (t) document.documentElement.style.setProperty(key, t.defaults[versionId]);
+  }
+  saveState();
+  renderDesignAdmin();
+}
+function resetAllDesignTokens() {
+  ensureDesignSystem();
+  const v = DESIGN_VERSIONS.find(v=>v.id===state.designSystem.active);
+  if (!confirm(`Reset every token in ${v.name} back to its shipped default? Custom colors/shapes you've set for this version will be lost. The other version is untouched.`)) return;
+  state.designSystem.overrides[state.designSystem.active] = {};
+  applyDesignTokenOverrides();
+  saveState();
+  renderDesignAdmin();
+}
+
 function showTab(id) {
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
@@ -2355,13 +2596,13 @@ function renderDashboard() {
   const offers = realApps.filter(a=>a.status==="Offer").length;
   const convRate = total>0?Math.round((interviews/total)*100):0;
   const interimLeads = realApps.filter(a=>a.status==="Interim Lead").length;
-  const rateColor = convRate>=20?"var(--green)":"var(--orange)";
+  const rateColor = convRate>=20?"var(--status-success-text)":"var(--status-warning-text)";
 
   document.getElementById("dash-job-stats").innerHTML =
-    stat(total, "Applications", "var(--navy)") +
+    stat(total, "Applications", "var(--color-primary)") +
     stat(convRate+"%", "Interview Rate", rateColor) +
-    stat(offers, "Offers", "var(--green)") +
-    stat(interimLeads, "Interim Leads", "var(--purple)");
+    stat(offers, "Offers", "var(--status-success-text)") +
+    stat(interimLeads, "Interim Leads", "var(--color-primary)");
 
   // Job Match Fit — Phase 2 "Dashboard summary" from Markus Job Search Instructions.
   // Spans the whole pipeline (Watching + real applications) since fit is scored before applying too.
@@ -2373,23 +2614,23 @@ function renderDashboard() {
     return days>=0 && days<=14;
   }).length;
   document.getElementById("dash-fit-stats").innerHTML =
-    stat(highFit, "High Overall Fit (≥75)", "var(--green)") +
-    stat(deadlines14, "Deadlines ≤14 days", deadlines14>0?"var(--rose)":"var(--muted)") +
-    stat(withFit.length, "Scored so far", "var(--teal)") +
-    stat(apps.length-withFit.length, "Not yet scored", "var(--muted)");
+    stat(highFit, "High Overall Fit (≥75)", "var(--status-success-text)") +
+    stat(deadlines14, "Deadlines ≤14 days", deadlines14>0?"var(--color-primary)":"var(--text-muted)") +
+    stat(withFit.length, "Scored so far", "var(--status-progress-text)") +
+    stat(apps.length-withFit.length, "Not yet scored", "var(--text-muted)");
 
   const topFit = withFit.slice().sort((a,b)=>b.overallFit-a.overallFit).slice(0,4);
   document.getElementById("dash-top-fit").innerHTML = topFit.length===0
-    ? `<div style="font-size:12px;color:var(--muted)">No applications scored yet — add fit scores in an application's Job Match Evaluation.</div>`
+    ? `<div style="font-size:12px;color:var(--text-muted)">No applications scored yet — add fit scores in an application's Job Match Evaluation.</div>`
     : topFit.map(a=>`
-      <div class="item-row" style="padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openAppModal('${a.id}')">
-        <div style="font-size:12px"><b>${a.role}</b><br><span style="color:var(--muted)">${a.company}</span></div>
-        <div style="font-size:15px;font-weight:800;color:var(--navy)">${a.overallFit}</div>
+      <div class="item-row" style="padding:6px 0;border-bottom:1px solid var(--border-default);cursor:pointer" onclick="openAppModal('${a.id}')">
+        <div style="font-size:12px"><b>${a.role}</b><br><span style="color:var(--text-muted)">${a.company}</span></div>
+        <div style="font-size:15px;font-weight:800;color:var(--color-primary)">${a.overallFit}</div>
       </div>`).join("");
 
   document.getElementById("dash-refresh").innerHTML =
-    `Last refresh: <b style="color:var(--dark)">not yet automated</b><br>` +
-    `Next scheduled refresh: <b style="color:var(--dark)">—</b><br>` +
+    `Last refresh: <b style="color:var(--text-primary)">not yet automated</b><br>` +
+    `Next scheduled refresh: <b style="color:var(--text-primary)">—</b><br>` +
     `<span style="font-size:11px">Weekly review-only automation isn't scheduled yet — see the Phase-completion checklist.</span>`;
 
   const totalC = contacts.length;
@@ -2397,19 +2638,19 @@ function renderDashboard() {
   const activeC = contacts.filter(c=>["Contacted","Replied","Meeting set"].includes(c.status)).length;
   const metC    = contacts.filter(c=>c.status==="Met").length;
   document.getElementById("dash-net-stats").innerHTML =
-    stat(totalC, "Contacts Tracked", "var(--teal)") +
-    stat(highPri, "High Priority", "var(--rose)") +
-    stat(activeC, "In Progress", "var(--orange)") +
-    stat(metC, "Met / Done", "var(--green)");
+    stat(totalC, "Contacts Tracked", "var(--status-progress-text)") +
+    stat(highPri, "High Priority", "var(--color-primary)") +
+    stat(activeC, "In Progress", "var(--status-warning-text)") +
+    stat(metC, "Met / Done", "var(--status-success-text)");
 
   const completed = trainings.filter(t=>t.status==="Completed").length;
   const inProg    = trainings.filter(t=>t.status==="In progress").length;
   const trainHrs  = ((kpis.trainingMins||0)/60).toFixed(1);
   document.getElementById("dash-train-stats").innerHTML =
-    stat(trainings.length, "Courses Tracked", "var(--purple)") +
-    stat(inProg, "In Progress", "var(--orange)") +
-    stat(completed, "Completed", "var(--green)") +
-    stat(trainHrs+"h", "This Week", "var(--teal)");
+    stat(trainings.length, "Courses Tracked", "var(--color-primary)") +
+    stat(inProg, "In Progress", "var(--status-warning-text)") +
+    stat(completed, "Completed", "var(--status-success-text)") +
+    stat(trainHrs+"h", "This Week", "var(--status-progress-text)");
 
   // App pipeline — real applications only; Watching lives in Job Sites & Companies / Job Watchlist
   let appPip = "";
@@ -2431,11 +2672,11 @@ function renderDashboard() {
   // Follow-ups & to-dos (chronological)
   const followUps = [
     ...apps.filter(a=>a.followUp&&a.followUpDate).map(a=>({
-      date:a.followUpDate, label:`${a.company} — ${a.role}`, type:"Application", color:"var(--navy)",
+      date:a.followUpDate, label:`${a.company} — ${a.role}`, type:"Application", color:"var(--color-primary)",
       action:`openAppModal('${a.id}')`
     })),
     ...contacts.filter(c=>c.followUpDate).map(c=>({
-      date:c.followUpDate, label:[c.name,c.company].filter(Boolean).join(" @ "), type:"Network", color:"var(--teal)",
+      date:c.followUpDate, label:[c.name,c.company].filter(Boolean).join(" @ "), type:"Network", color:"var(--status-progress-text)",
       action:`openNetModal('${c.id}')`
     })),
   ].sort((a,b)=>a.date.localeCompare(b.date));
@@ -2444,32 +2685,32 @@ function renderDashboard() {
     ? `<div class="empty-state">No follow-ups scheduled.</div>`
     : followUps.map(f=>{
         const overdue = f.date < today();
-        return `<div class="item-row" style="cursor:pointer;padding:8px 0;border-bottom:1px solid var(--border)" onclick="${f.action}">
+        return `<div class="item-row" style="cursor:pointer;padding:8px 0;border-bottom:1px solid var(--border-default)" onclick="${f.action}">
           <div style="flex:1">
             <div class="item-badges">
               ${badge(f.type, f.color, "#F1F5F9")}
               <span class="item-name" style="font-size:13px">${f.label}</span>
             </div>
           </div>
-          <div style="font-size:12px;font-weight:700;color:${overdue?"var(--rose)":"var(--orange)"}">${overdue?"⚠ ":""}${f.date}</div>
+          <div style="font-size:12px;font-weight:700;color:${overdue?"var(--color-primary)":"var(--status-warning-text)"}">${overdue?"⚠ ":""}${f.date}</div>
         </div>`;
       }).join("");
 
   // KPIs
   const kpiDefs = [
-    { key:"weeklyContacts",      label:"Network contacts",  target:10,  color:"var(--teal)",   steps:["-1","+1"] },
-    { key:"recruitersContacted", label:"Recruiters briefed",target:10,  color:"var(--blue)",   steps:["-1","+1"] },
-    { key:"coffeChats",          label:"Coffee chats",      target:3,   color:"var(--orange)", steps:["-1","+1"] },
-    { key:"trainingMins",        label:"Training mins",     target:175, color:"var(--purple)", steps:["-15","+15","+30","+45"] },
+    { key:"weeklyContacts",      label:"Network contacts",  target:10,  color:"var(--status-progress-text)",   steps:["-1","+1"] },
+    { key:"recruitersContacted", label:"Recruiters briefed",target:10,  color:"var(--color-primary-hover)",   steps:["-1","+1"] },
+    { key:"coffeChats",          label:"Coffee chats",      target:3,   color:"var(--status-warning-text)", steps:["-1","+1"] },
+    { key:"trainingMins",        label:"Training mins",     target:175, color:"var(--color-primary)", steps:["-15","+15","+30","+45"] },
   ];
   let kpiHtml = "";
   kpiDefs.forEach(({key,label,target,color,steps})=>{
     const val = kpis[key]||0;
     const pct = Math.min((val/target)*100,100);
-    const valColor = val>=target?"var(--green)":color;
+    const valColor = val>=target?"var(--status-success-text)":color;
     kpiHtml += `<div>
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:11px;color:var(--muted)">${label}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${label}</span>
         <span style="font-size:11px;font-weight:700;color:${valColor}">${val}/${target}</span>
       </div>
       <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${color}"></div></div>
@@ -2488,7 +2729,7 @@ function renderDashboard() {
     msHtml += `<div class="milestone" onclick="toggleMs(${i})">
       <div class="ms-dot${done?" done-green":""}"><span class="check">✓</span></div>
       <div><div class="ms-week">Wk ${m.week} · ${m.date}</div>
-      <div class="ms-label" style="color:${done?"var(--green)":"var(--dark)"};font-weight:${done?600:400}">${m.label}</div></div>
+      <div class="ms-label" style="color:${done?"var(--status-success-text)":"var(--text-primary)"};font-weight:${done?600:400}">${m.label}</div></div>
     </div>`;
   });
   document.getElementById("dash-ms").innerHTML = msHtml;
@@ -2500,7 +2741,7 @@ function renderDashboard() {
     tmsHtml += `<div class="milestone" onclick="toggleTms(${i})">
       <div class="ms-dot${done?" done-purple":""}"><span class="check">✓</span></div>
       <div><div class="ms-week">Wk ${m.week}</div>
-      <div class="ms-label" style="color:${done?"var(--purple)":"var(--dark)"};font-weight:${done?600:400}">${m.label}</div></div>
+      <div class="ms-label" style="color:${done?"var(--color-primary)":"var(--text-primary)"};font-weight:${done?600:400}">${m.label}</div></div>
     </div>`;
   });
   document.getElementById("dash-tms").innerHTML = tmsHtml;
@@ -2534,7 +2775,7 @@ function renderApplications() {
             <span class="item-name">${app.company}</span>
             ${badge(app.status, sc.color, sc.bg)}
             ${badge(app.track, tc.color, tc.bg)}
-            ${app.followUp?badge("Follow up","#7B5800","#FFF8E1"):""}
+            ${app.followUp?badge("Follow up","var(--status-warning-text)","var(--status-warning-bg)"):""}
           </div>
           <div style="font-size:13px;margin-bottom:4px">${app.role}</div>
           <div class="item-meta">
@@ -2568,14 +2809,14 @@ function daysLeft(deadline) {
   return Math.round((new Date(deadline) - new Date(today())) / 86400000);
 }
 function fitBadgeColor(overallFit) {
-  if (overallFit===null || overallFit===undefined) return { color:"var(--muted)", bg:"#F1ECEF" };
-  if (overallFit>=75) return { color:"#15694A", bg:"#E1FAF0" };
-  if (overallFit>=50) return { color:"#8A6500", bg:"#FFF6CF" };
-  return { color:"#A8293A", bg:"#FFE9EE" };
+  if (overallFit===null || overallFit===undefined) return { color:"var(--text-muted)", bg:"var(--status-neutral-bg)" };
+  if (overallFit>=75) return { color:"var(--status-success-text)", bg:"var(--status-success-bg)" };
+  if (overallFit>=50) return { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" };
+  return { color:"var(--status-urgent-text)", bg:"var(--status-urgent-bg)" };
 }
 function renderJobWatchlist() {
   document.getElementById("jw-status-filters").innerHTML =
-    `<span style="font-size:12px;color:var(--muted)">Not yet applied — mark one Applied to move it to the Applications tab.</span>`;
+    `<span style="font-size:12px;color:var(--text-muted)">Not yet applied — mark one Applied to move it to the Applications tab.</span>`;
 
   const sorts = [["fit","Overall Fit"],["deadline","Deadline"],["recent","Recently added"]];
   document.getElementById("jw-sort-controls").innerHTML = "Sort: " + sorts.map(([k,label])=>`
@@ -2610,13 +2851,13 @@ function renderJwCard(app) {
         <div class="item-badges">
           <span class="item-name">${app.role}</span>
           ${badge("Fit " + (app.overallFit??"—"), fc.color, fc.bg)}
-          ${app.roleFamily?badge(app.roleFamily,"#3B0030","#F3E6EF"):""}
-          ${app.source?badge(app.source,"#2F7A86","#E3F7F3"):""}
+          ${app.roleFamily?badge(app.roleFamily,"var(--color-primary)","var(--color-primary-light)"):""}
+          ${app.source?badge(app.source,"var(--status-progress-text)","var(--status-progress-bg)"):""}
         </div>
-        <div style="font-size:13px;margin-bottom:4px">${app.company}${app.stageMandate?` — <span style="color:var(--muted)">${app.stageMandate}</span>`:""}</div>
+        <div style="font-size:13px;margin-bottom:4px">${app.company}${app.stageMandate?` — <span style="color:var(--text-muted)">${app.stageMandate}</span>`:""}</div>
         <div class="item-meta">
           ${app.location||app.workModel!=="Unknown"?`<span>${[app.location,app.workModel!=="Unknown"?app.workModel:""].filter(Boolean).join(" · ")}</span>`:""}
-          ${app.deadline?`<span style="${urgent?"color:var(--rose);font-weight:700":""}">${urgent?"⚠ ":""}Deadline: ${app.deadline}${dl!==null?` (${dl>=0?dl+"d left":"past"})`:""}</span>`:""}
+          ${app.deadline?`<span style="${urgent?"color:var(--color-primary);font-weight:700":""}">${urgent?"⚠ ":""}Deadline: ${app.deadline}${dl!==null?` (${dl>=0?dl+"d left":"past"})`:""}</span>`:""}
           ${app.cvVersion?`<span>CV: ${app.cvVersion}</span>`:""}
           ${app.careerSite?`<span><a href="${app.careerSite}" target="_blank" rel="noopener">🔗 Posting</a></span>`:""}
         </div>
@@ -2646,8 +2887,8 @@ function renderNetwork() {
     <div class="item-card">
       <div class="item-row">
         <div style="flex:1">
-          <div class="item-badges"><span class="item-name">${escHtml(c.name)}</span>${c.relation?badge(c.relation,"#3B0030","#F3E6EF"):""}</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${escHtml([c.role,c.company].filter(Boolean).join(" @ "))}</div>
+          <div class="item-badges"><span class="item-name">${escHtml(c.name)}</span>${c.relation?badge(c.relation,"var(--color-primary)","var(--color-primary-light)"):""}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${escHtml([c.role,c.company].filter(Boolean).join(" @ "))}</div>
           <div class="item-meta"><span>Added by ${escHtml(c.ownerName||"Someone")}</span></div>
         </div>
       </div>
@@ -2662,7 +2903,7 @@ function renderNetwork() {
     "If they give you a name or introduction — follow up and report back. People refer again when they see results.",
   ];
   document.getElementById("net-tips").innerHTML = tips.map((t,i)=>
-    `<div class="tip-row"><span style="color:var(--teal);font-weight:700;font-size:12px;flex-shrink:0">${i+1}.</span><span style="font-size:12px;line-height:1.5">${t}</span></div>`
+    `<div class="tip-row"><span style="color:var(--status-progress-text);font-weight:700;font-size:12px;flex-shrink:0">${i+1}.</span><span style="font-size:12px;line-height:1.5">${t}</span></div>`
   ).join("");
 
   // Status filters
@@ -2702,10 +2943,10 @@ function renderNetwork() {
             ${badge(c.status+" →", sc.color, sc.bg, true, `cycleNetStatus('${c.id}')`)}
             ${badge(rc.icon+" "+c.relation, rc.color, rc.bg)}
             ${badge(c.purpose, pc.color, pc.bg)}
-            ${hi?badge("High priority","#922B21","#FADBD8"):""}
-            ${c.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
+            ${hi?badge("High priority","var(--status-urgent-text)","var(--status-urgent-bg)"):""}
+            ${c.shared?badge("📤 Shared","var(--status-success-text)","var(--status-success-bg)"):""}
           </div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${[c.role,c.company].filter(Boolean).join(" @ ")}</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${[c.role,c.company].filter(Boolean).join(" @ ")}</div>
           <div class="item-meta">
             ${c.contactDate?`<span>📅 Last contact: ${c.contactDate}</span>`:""}
             ${c.followUpDate?`<span>🔔 Follow up: ${c.followUpDate}</span>`:""}
@@ -2760,8 +3001,8 @@ function renderNoteImagePreview(prefix) {
   el.style.display = "block";
   el.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
     <img src="${url}" style="height:50px;border-radius:6px">
-    <span style="font-size:11px;color:var(--muted)">${escHtml(file.name)}</span>
-    <button type="button" onclick="clearNoteImage('${prefix}')" style="margin-left:auto;background:none;border:none;color:var(--crimson);cursor:pointer;font-size:12px">✕ remove</button>
+    <span style="font-size:11px;color:var(--text-muted)">${escHtml(file.name)}</span>
+    <button type="button" onclick="clearNoteImage('${prefix}')" style="margin-left:auto;background:none;border:none;color:var(--status-urgent-text);cursor:pointer;font-size:12px">✕ remove</button>
   </div>`;
 }
 function setupNotePasteListener(textareaId, prefix) {
@@ -2842,7 +3083,7 @@ function renderCheckout() {
           <div class="item-badges">
             <span class="item-name">${escHtml(c.title)}</span>
             ${c.status?badge(c.status,(CO_STATUS[c.status]||CO_STATUS["To Do"]).color,(CO_STATUS[c.status]||CO_STATUS["To Do"]).bg):""}
-            ${c.priority==="High"?badge("High priority","#922B21","#FADBD8"):""}
+            ${c.priority==="High"?badge("High priority","var(--status-urgent-text)","var(--status-urgent-bg)"):""}
           </div>
           <div class="item-meta"><span>Added by ${escHtml(c.ownerName||"Someone")}</span></div>
         </div>
@@ -2879,10 +3120,10 @@ function renderCheckout() {
             ${hi?`<span style="font-size:14px">⭐</span>`:""}
             <span class="item-name">${escHtml(c.title)}</span>
             ${badge(c.status+" →", sc.color, sc.bg, true, `cycleCoStatus('${c.id}')`)}
-            ${hi?badge("High priority","#922B21","#FADBD8"):""}
-            ${c.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
+            ${hi?badge("High priority","var(--status-urgent-text)","var(--status-urgent-bg)"):""}
+            ${c.shared?badge("📤 Shared","var(--status-success-text)","var(--status-success-bg)"):""}
           </div>
-          ${c.description?`<div style="font-size:13px;color:var(--muted);margin-bottom:4px">${escHtml(c.description)}</div>`:""}
+          ${c.description?`<div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${escHtml(c.description)}</div>`:""}
           <div class="item-meta">
             ${c.link?`<a href="${escHtml(c.link)}" target="_blank" rel="noopener">🔗 Link</a>`:""}
           </div>
@@ -2915,15 +3156,15 @@ function renderTraining() {
 
   // Recommended panel
   if (showRec) {
-    let recHtml = `<div class="card" style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:12px">Recommended Courses for Your Profile</div>`;
+    let recHtml = `<div class="card" style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:var(--color-primary);margin-bottom:12px">Recommended Courses for Your Profile</div>`;
     Object.keys(TRAIN_CAT).filter(c=>c!=="Other").forEach(cat=>{
       const cfg = TRAIN_CAT[cat];
-      recHtml += `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${cfg.icon} ${cat}</div>`;
+      recHtml += `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${cfg.icon} ${cat}</div>`;
       RECOMMENDED.filter(r=>r.category===cat).forEach(rec=>{
         const added = state.trainings.some(t=>t.title===rec.title);
         recHtml += `<div class="rec-row">
           <div><div class="rec-title">${rec.title}</div><div class="rec-sub">${rec.provider} · ${rec.duration} · ${rec.milestone}</div></div>
-          <button class="btn btn-sm${added?" btn-ghost":""}" style="${added?"color:var(--green)":"background:var(--purple);color:#fff"}" onclick="addRecommended('${rec.title}')" ${added?"disabled":""}>
+          <button class="btn btn-sm${added?" btn-ghost":""}" style="${added?"color:var(--status-success-text)":"background:var(--color-primary);color:#fff"}" onclick="addRecommended('${rec.title}')" ${added?"disabled":""}>
             ${added?"✓ Added":"Add"}
           </button>
         </div>`;
@@ -3004,12 +3245,12 @@ function renderStrategy() {
   const totalWeeks = goalWeeks();
 
   const sections = [
-    { title:"Your Parallel Job Search Tracks", color:"var(--navy)", items:[
+    { title:"Your Parallel Job Search Tracks", color:"var(--color-primary)", items:[
       `Track A — Direct applications: ${weeklyTarget}+ tailored applications/week for ${role}${location?` in ${location}`:""}. Mirror exact job ad keywords. Contact the hiring manager directly alongside every application.`,
       "Track B — Agencies & interim: brief 3–5 relevant staffing agencies for your industry and role type early on. Keep a 1-page profile ready.",
       "Track C — Network: 2 warm outreach contacts per day. Request coffee chats, not job asks. Reconnect with everyone from the last 10 years.",
     ]},
-    { title:"Daily Routine", color:"var(--blue)", items:[
+    { title:"Daily Routine", color:"var(--color-primary-hover)", items:[
       "Morning: scan new postings on your key job boards and the Job Watchlist/Job Match tab",
       `Mid-morning: tailor CV + cover letter to one specific ${role} role, mirror exact ad keywords`,
       "Send the application and log it in the tracker immediately",
@@ -3017,18 +3258,18 @@ function renderStrategy() {
       "Afternoon: follow up on 7–10 day old applications, research target companies",
       "End of day: 30–45 min training time on your goals below",
     ]},
-    { title:"Network Outreach Strategy", color:"var(--teal)", items:[
+    { title:"Network Outreach Strategy", color:"var(--status-progress-text)", items:[
       "Goal: 10 new contacts per week, 2 per day minimum",
       "Prioritise: 1) former direct managers, 2) close ex-colleagues, 3) your professional alumni network, 4) industry contacts, 5) LinkedIn cold outreach",
       "Message formula: personalised opener + 1 specific thing about their work + ask for a coffee chat + no job ask",
       "Always follow up once at 10–14 days if no reply, then move on",
       "Track every contact in the Network tab — status, last contact date, next follow-up",
     ]},
-    { title:"Training Strategy", color:"var(--purple)", items:
+    { title:"Training Strategy", color:"var(--color-primary)", items:
       topics.map((t,i)=>`${t}: start by week ${Math.max(1,Math.round(totalWeeks*(0.1+i*0.15)))}, log progress in the Training tab`)
         .concat(["Add completed courses to LinkedIn immediately — recruiters notice recent learning"])
     },
-    { title:"Application Quality Rules", color:"var(--orange)", items:[
+    { title:"Application Quality Rules", color:"var(--status-warning-text)", items:[
       "Mirror job ad language exactly — many ATS systems won't match near-synonyms",
       "Use the right CV version per role type",
       "One specific sentence about WHY this company in every cover letter",
@@ -3119,9 +3360,9 @@ function renderAppHistoryEntries() {
         <textarea class="history-edit-area" id="ahea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="ahedit-${i}" onclick="startEditAppHistory(${i})">Edit</button>
-          <button class="history-link" id="ahsave-${i}" style="display:none;color:var(--green)" onclick="saveEditAppHistory(${i})">Save</button>
+          <button class="history-link" id="ahsave-${i}" style="display:none;color:var(--status-success-text)" onclick="saveEditAppHistory(${i})">Save</button>
           <button class="history-link" id="ahcancel-${i}" style="display:none" onclick="renderAppHistoryEntries()">Cancel</button>
-          <button class="history-link" style="color:var(--crimson)" onclick="deleteAppHistoryEntry(${i})">Delete</button>
+          <button class="history-link" style="color:var(--status-urgent-text)" onclick="deleteAppHistoryEntry(${i})">Delete</button>
         </div>
       </div>
     </div>`;
@@ -3238,9 +3479,9 @@ function renderTrainHistoryEntries() {
         <textarea class="history-edit-area" id="thea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="thedit-${i}" onclick="startEditTrainHistory(${i})">Edit</button>
-          <button class="history-link" id="thsave-${i}" style="display:none;color:var(--green)" onclick="saveEditTrainHistory(${i})">Save</button>
+          <button class="history-link" id="thsave-${i}" style="display:none;color:var(--status-success-text)" onclick="saveEditTrainHistory(${i})">Save</button>
           <button class="history-link" id="thcancel-${i}" style="display:none" onclick="renderTrainHistoryEntries()">Cancel</button>
-          <button class="history-link" style="color:var(--crimson)" onclick="deleteTrainHistoryEntry(${i})">Delete</button>
+          <button class="history-link" style="color:var(--status-urgent-text)" onclick="deleteTrainHistoryEntry(${i})">Delete</button>
         </div>
       </div>
     </div>`;
@@ -3359,9 +3600,9 @@ function renderHistoryEntries() {
         <textarea class="history-edit-area" id="hea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="hedit-${i}" onclick="startEditHistory(${i})">Edit</button>
-          <button class="history-link" id="hsave-${i}" style="display:none;color:var(--green)" onclick="saveEditHistory(${i})">Save</button>
+          <button class="history-link" id="hsave-${i}" style="display:none;color:var(--status-success-text)" onclick="saveEditHistory(${i})">Save</button>
           <button class="history-link" id="hcancel-${i}" style="display:none" onclick="cancelEditHistory(${i})">Cancel</button>
-          <button class="history-link" style="color:var(--crimson)" onclick="deleteHistoryEntry(${i})">Delete</button>
+          <button class="history-link" style="color:var(--status-urgent-text)" onclick="deleteHistoryEntry(${i})">Delete</button>
         </div>
       </div>
     </div>`;
@@ -3485,9 +3726,9 @@ function renderCoHistoryEntries() {
         <textarea class="history-edit-area" id="cohea-${i}" rows="2">${escHtml(h.text)}</textarea>
         <div class="history-actions">
           <button class="history-link" id="coedit-${i}" onclick="startEditCoHistory(${i})">Edit</button>
-          <button class="history-link" id="cosave-${i}" style="display:none;color:var(--green)" onclick="saveEditCoHistory(${i})">Save</button>
+          <button class="history-link" id="cosave-${i}" style="display:none;color:var(--status-success-text)" onclick="saveEditCoHistory(${i})">Save</button>
           <button class="history-link" id="cocancel-${i}" style="display:none" onclick="renderCoHistoryEntries()">Cancel</button>
-          <button class="history-link" style="color:var(--crimson)" onclick="deleteCoHistoryEntry(${i})">Delete</button>
+          <button class="history-link" style="color:var(--status-urgent-text)" onclick="deleteCoHistoryEntry(${i})">Delete</button>
         </div>
       </div>
     </div>`;
@@ -3572,7 +3813,7 @@ function renderWatchlist() {
         <div style="flex:1">
           <div class="item-badges">
             <span class="item-name">${escHtml(w.company)}</span>
-            ${w.industry?badge(w.industry,"#3B0030","#F3E6EF"):""}
+            ${w.industry?badge(w.industry,"var(--color-primary)","var(--color-primary-light)"):""}
           </div>
           <div class="item-meta">
             ${w.careerSite?`<span><a href="${escHtml(w.careerSite)}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
@@ -3593,15 +3834,15 @@ function renderWatchlist() {
         <div style="flex:1">
           <div class="item-badges">
             <span class="item-name">${w.company}</span>
-            ${w.industry?badge(w.industry,"#3B0030","#F3E6EF"):""}
-            ${w.shared?badge("📤 Shared","#15694A","#E1FAF0"):""}
-            ${w.searchUrl?badge("🔎 Real search","#2F7A86","#E3F7F3"):""}
+            ${w.industry?badge(w.industry,"var(--color-primary)","var(--color-primary-light)"):""}
+            ${w.shared?badge("📤 Shared","var(--status-success-text)","var(--status-success-bg)"):""}
+            ${w.searchUrl?badge("🔎 Real search","var(--status-progress-text)","var(--status-progress-bg)"):""}
           </div>
           <div class="item-meta">
             ${w.careerSite?`<span><a href="${w.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
           </div>
           ${w.description?`<div class="item-notes">${escHtml(w.description)}</div>`:""}
-          ${cs.message?`<div class="item-notes" style="color:var(--muted)">${escHtml(cs.message)}</div>`:""}
+          ${cs.message?`<div class="item-notes" style="color:var(--text-muted)">${escHtml(cs.message)}</div>`:""}
         </div>
         <div class="item-actions">
           ${w.careerSite?`<button class="btn btn-purple btn-sm" ${cs.busy?"disabled":""} onclick="runSingleCompanySearch('${w.id}')">${cs.busy?"Searching…":"🔎 Search"}</button>`:""}
@@ -3719,8 +3960,8 @@ function renderSearchSetupCard(s) {
         <div class="item-badges">
           <span class="item-name">${escHtml(s.source)}</span>
           ${badge(s.status, sc.color, sc.bg)}
-          ${badge(s.frequency, "#2F7A86", "#E3F7F3")}
-          ${manualOnly?badge("Manual only","#9A4A06","#FDE7D2"):""}
+          ${badge(s.frequency, "var(--status-progress-text)", "var(--status-progress-bg)")}
+          ${manualOnly?badge("Manual only","var(--status-warning-text)","var(--status-warning-bg)"):""}
         </div>
         ${s.channel?`<div style="font-size:13px;margin-bottom:4px">${escHtml(s.channel)}</div>`:""}
         <div class="item-meta">
@@ -3734,7 +3975,7 @@ function renderSearchSetupCard(s) {
       <div class="item-actions">
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
           <button class="btn ${manualOnly?"btn-teal":"btn-primary"} btn-sm" id="jsc-site-btn-${s.id}" onclick="runSingleJobSite('${s.id}')">${manualOnly?"🔗 Open":"▶ Search"}</button>
-          ${manualOnly?`<span style="font-size:10px;color:var(--muted)">(manual search only)</span>`:""}
+          ${manualOnly?`<span style="font-size:10px;color:var(--text-muted)">(manual search only)</span>`:""}
         </div>
         <button class="btn btn-sky btn-sm" onclick="openSearchSetupModal('${s.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSearchSetup('${s.id}')">✕</button>
@@ -3961,15 +4202,15 @@ function renderQualifierCriteria() {
   el.innerHTML = QUALIFIER_CATEGORIES.map(c => {
     const opts = state.searchCriteria.qualifierOptions[c.key]||[];
     const chips = opts.map(v => `
-      <span style="padding:4px 5px 4px 10px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--border);background:var(--white);color:var(--dark);display:inline-flex;align-items:center;gap:5px">
+      <span style="padding:4px 5px 4px 10px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);display:inline-flex;align-items:center;gap:5px">
         ${escHtml(v)}
-        <span style="cursor:pointer;color:var(--crimson);font-weight:800;padding:0 2px" onclick="removeQualifierOption('${c.key}','${v.replace(/'/g,"\\'")}')" title="Remove — stops filtering on this">✕</span>
+        <span style="cursor:pointer;color:var(--status-urgent-text);font-weight:800;padding:0 2px" onclick="removeQualifierOption('${c.key}','${v.replace(/'/g,"\\'")}')" title="Remove — stops filtering on this">✕</span>
       </span>`).join("");
     const warn = c.key==="location" && !opts.length
-      ? `<span style="font-size:11px;color:var(--crimson)">⚠ No location filter — searches return jobs from any location</span>` : "";
+      ? `<span style="font-size:11px;color:var(--status-urgent-text)">⚠ No location filter — searches return jobs from any location</span>` : "";
     return `
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
-        <span style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">${escHtml(c.label)}</span>
+        <span style="font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;width:110px;flex-shrink:0">${escHtml(c.label)}</span>
         ${chips}
         <input class="form-input" id="jsc-qual-new-${c.key}" placeholder="Add…" style="width:110px;font-size:12px;padding:4px 8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addQualifierOption('${c.key}');}">
         <button class="btn btn-sky btn-sm" style="padding:4px 10px;font-size:11px" onclick="addQualifierOption('${c.key}')">+ Add</button>
@@ -4004,11 +4245,11 @@ function addCriteriaTag(value) {
 function renderRoleTitles() {
   const titles = state.searchCriteria.roleTitles||[];
   document.getElementById("jsc-roletitles").innerHTML = titles.length===0
-    ? `<span style="font-size:12px;color:var(--muted)">No pinned role titles — add one below.</span>`
+    ? `<span style="font-size:12px;color:var(--text-muted)">No pinned role titles — add one below.</span>`
     : titles.map(t=>`
-      <span style="padding:5px 6px 5px 11px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--white);color:var(--muted);display:inline-flex;align-items:center;gap:6px">
+      <span style="padding:5px 6px 5px 11px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-muted);display:inline-flex;align-items:center;gap:6px">
         <span style="cursor:pointer" onclick="addCriteriaTag('${t.replace(/'/g,"\\'")}')" title="Add to search field">${escHtml(t)}</span>
-        <span style="cursor:pointer;color:var(--crimson);font-weight:800;padding:0 2px" onclick="removePinnedRoleTitle('${t.replace(/'/g,"\\'")}')" title="Remove from pinned list">✕</span>
+        <span style="cursor:pointer;color:var(--status-urgent-text);font-weight:800;padding:0 2px" onclick="removePinnedRoleTitle('${t.replace(/'/g,"\\'")}')" title="Remove from pinned list">✕</span>
       </span>`).join("");
 }
 function removePinnedRoleTitle(title) {
@@ -4041,14 +4282,14 @@ function renderLinkedInReadinessRoles() {
   if (!roles.length) container.textContent = 'Add at least one target role.';
   roles.forEach((title, index) => {
     const chip = document.createElement('span');
-    chip.style.cssText = 'padding:5px 8px 5px 11px;border-radius:999px;font-size:11px;border:1px solid var(--border);color:var(--muted);display:inline-flex;align-items:center;gap:6px';
+    chip.style.cssText = 'padding:5px 8px 5px 11px;border-radius:999px;font-size:11px;border:1px solid var(--border-default);color:var(--text-muted);display:inline-flex;align-items:center;gap:6px';
     const label = document.createElement('span');
     label.textContent = title;
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.textContent = '×';
     remove.setAttribute('aria-label', 'Remove ' + title);
-    remove.style.cssText = 'border:0;background:transparent;color:var(--crimson);cursor:pointer;font-size:16px;padding:0 2px';
+    remove.style.cssText = 'border:0;background:transparent;color:var(--status-urgent-text);cursor:pointer;font-size:16px;padding:0 2px';
     remove.onclick = () => {
       state.linkedIn.readinessRoles = linkedInReadinessRoles().filter((_, i) => i !== index);
       saveState();
@@ -4734,8 +4975,8 @@ let jmActiveSection = null;
 function renderJobMatchResults(data, entry) {
   jmCurrentEntry = entry || null;
   const el = document.getElementById("jm-results");
-  const impactColor = { high:"var(--green)", medium:"var(--amber-d,#8A5A00)", low:"var(--muted)" };
-  const scoreColor = (s) => s>=7 ? "var(--green)" : s>=4 ? "#C97D3C" : "var(--crimson)";
+  const impactColor = { high:"var(--status-success-text)", medium:"var(--status-warning-text)", low:"var(--text-muted)" };
+  const scoreColor = (s) => s>=7 ? "var(--status-success-text)" : s>=4 ? "var(--status-warning-text)" : "var(--status-urgent-text)";
   jmActiveSection = data.sections?.[0]?.id || null;
 
   const role = entry?.role || state.jobMatch?.role || "this role";
@@ -4751,13 +4992,13 @@ function renderJobMatchResults(data, entry) {
         <div class="ring-wrap">
           <svg width="130" height="130" viewBox="0 0 130 130">
             <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12"/>
-            <circle id="jm-heroRing" cx="65" cy="65" r="55" fill="none" stroke="#C97D3C" stroke-width="12" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"/>
+            <circle id="jm-heroRing" cx="65" cy="65" r="55" fill="none" stroke="var(--status-warning-text)" stroke-width="12" stroke-linecap="round" stroke-dasharray="345.6" stroke-dashoffset="345.6"/>
           </svg>
           <div class="ring-num"><span class="n">${data.overallScore}</span><span class="l">/ 100</span></div>
         </div>
         <div>
           <h2>Match for ${escHtml(role)}</h2>
-          <p style="font-size:11.5px;color:#D8C7D2;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px">${escHtml(metaLine)}</p>
+          <p style="font-size:11.5px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px">${escHtml(metaLine)}</p>
           <p>${escHtml(data.readinessSummary||"")}</p>
         </div>
       </div>
@@ -4773,7 +5014,7 @@ function renderJobMatchResults(data, entry) {
         <p class="stitle">Keyword coverage</p>
         <p class="sdesc">Important terms from the job description, and whether your CV covers them.</p>
         <div class="detail">
-          <div class="chips" style="margin-bottom:10px">${(data.matchedKeywords||[]).map(k=>`<span class="chip matched">${escHtml(k)}</span>`).join("")||`<span style="font-size:12px;color:var(--muted)">None found</span>`}</div>
+          <div class="chips" style="margin-bottom:10px">${(data.matchedKeywords||[]).map(k=>`<span class="chip matched">${escHtml(k)}</span>`).join("")||`<span style="font-size:12px;color:var(--text-muted)">None found</span>`}</div>
           <div class="chips">${(data.missingKeywords||[]).map(k=>`<span class="chip missing">${escHtml(k)}</span>`).join("")}</div>
         </div>
       </section>
@@ -4785,7 +5026,7 @@ function renderJobMatchResults(data, entry) {
           <div class="rw-pair">
             <div class="rw-block rw-before"><span class="rw-label">${escHtml(s.section)} — current</span>${escHtml(s.before)}</div>
             <div class="rw-block rw-after"><span class="rw-label">${escHtml(s.section)} — suggested</span>${escHtml(s.after)}</div>
-          </div>`).join("") || `<div class="detail" style="font-size:12.5px;color:var(--muted)">No suggestions.</div>`}
+          </div>`).join("") || `<div class="detail" style="font-size:12.5px;color:var(--text-muted)">No suggestions.</div>`}
       </section>
 
       <section>
@@ -5068,6 +5309,7 @@ async function init() {
   });
 }
 async function renderAll() {
+  applyDesignTokenOverrides();
   document.getElementById("headerUserName").textContent = "👤 " + currentDisplayName();
   if(typeof iqLoad === 'function') iqLoad();
   populateSelects();
