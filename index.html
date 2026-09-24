@@ -997,8 +997,17 @@
   .iq-pin-btn.pinned { background:#FFF6CF; border-color:#FFCD00; color:#8A6500; }
   .iq-card.is-pinned { border-left:3px solid #FFCD00; }
   .iq-chevron { font-size:12px; color:var(--muted); transition:transform .2s; flex-shrink:0; }
-  .iq-card-body.open ~ .iq-chevron-ref { transform:rotate(180deg); }
   .iq-chevron.open { transform:rotate(180deg); }
+  /* Section group collapsible headers */
+  .iq-section-group { margin-bottom:8px; }
+  .iq-section-hdr-btn { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:10px; background:var(--off); border:1px solid var(--border); cursor:pointer; user-select:none; margin-bottom:10px; }
+  .iq-section-hdr-btn:hover { background:var(--sky); }
+  .iq-sec-label { font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.8px; flex:1; }
+  .iq-sec-count { font-size:11px; color:var(--muted); font-weight:500; }
+  .iq-sec-chevron { font-size:13px; color:var(--muted); transition:transform .2s; }
+  .iq-sec-chevron.open { transform:rotate(180deg); }
+  /* Company pills for Typical section */
+  .iq-company-pill { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; border:1px solid; white-space:nowrap; }
 </style>
 
 <!-- Top bar -->
@@ -1021,6 +1030,7 @@
   <button class="filter-btn" id="iq-filter-pitch" onclick="iqFilter('pitch')">Pitch</button>
   <button class="filter-btn" id="iq-filter-common" onclick="iqFilter('common')">Common Questions</button>
   <button class="filter-btn" id="iq-filter-ask" onclick="iqFilter('ask')">Ask the Employer</button>
+  <button class="filter-btn" id="iq-filter-typical" onclick="iqFilter('typical')">Typical Questions</button>
   <button class="filter-btn" id="iq-filter-pinned" onclick="iqFilter('pinned')" style="border-color:#FFCD00">📌 Pinned</button>
   <span class="iq-count" id="iq-count"></span>
 </div>
@@ -1076,34 +1086,37 @@
 <script>
 (function(){
 // ── Data ──────────────────────────────────────────────────────────────────────
-const IQ_KEY = 'iq_cards_v2';
+const IQ_KEY = 'iq_cards_v2'; // keep v2 so existing answers/pins are preserved; typical cards are merged in
 let iqCards = [];
 let iqFilter_ = 'all';
 let iqEditId = null;
 let iqDragId = null;
 const iqOpenSet = new Set();
+const iqCollapsedSections = new Set();
 
 async function iqLoad() {
-  // Try Firestore first (db and currentUid come from the outer app scope)
   if(typeof db !== 'undefined' && db && typeof currentUid !== 'undefined' && currentUid) {
     try {
       const doc = await db.collection('users').doc(currentUid).collection('iq').doc('cards').get();
       if(doc.exists && Array.isArray(doc.data().cards) && doc.data().cards.length) {
         iqCards = doc.data().cards;
+        iqMergeTypical();
         iqRender(); return;
       }
-    } catch(e){ console.warn('IQ Firestore load failed, falling back to localStorage', e); }
+    } catch(e){ console.warn('IQ Firestore load failed', e); }
   }
-  // localStorage fallback
   try { iqCards = JSON.parse(localStorage.getItem(IQ_KEY)) || []; } catch(e){ iqCards=[]; }
-  if(!iqCards.length) iqCards = iqDefaultData();
+  if(!iqCards.length) iqCards = iqDefaultData().concat(iqTypicalData());
+  else iqMergeTypical();
   iqRender();
 }
 
+function iqMergeTypical() {
+  if(!iqCards.some(c=>c.section==='typical')) iqCards = iqCards.concat(iqTypicalData());
+}
+
 async function iqSave() {
-  // localStorage always
   try { localStorage.setItem(IQ_KEY, JSON.stringify(iqCards)); } catch(e){}
-  // Firestore when available
   if(typeof db !== 'undefined' && db && typeof currentUid !== 'undefined' && currentUid) {
     try {
       await db.collection('users').doc(currentUid).collection('iq').doc('cards').set({ cards: iqCards });
@@ -1244,64 +1257,160 @@ function iqDefaultData(){
   ];
 }
 
+// ── Typical interview questions data ──────────────────────────────────────────
+function iqTypicalData(){
+  const d = [
+    // Deloitte
+    {co:'Deloitte',qEn:'How do you handle ambiguity in a project?',aEn:'In one project, requirements were unclear because stakeholders had not finalized their expectations. I gathered available information, documented assumptions, and conducted workshops to clarify priorities. I maintained regular communication and updated requirements as new information emerged. This approach reduced misunderstandings and helped the project meet its deadlines successfully.'},
+    {co:'Deloitte',qEn:'Why Deloitte?',aEn:'Deloitte stands out because of its strong focus on innovation, digital transformation, learning, and global impact. The opportunity to work on complex business challenges while learning from industry experts aligns perfectly with my career goals and passion for problem-solving.'},
+    {co:'Deloitte',qEn:'Tell me about a time you worked under pressure.',aEn:'During a critical project phase, a major requirement change was introduced just before delivery. I quickly assessed the impact, prioritized critical tasks, coordinated with team members, and communicated realistic timelines to stakeholders. Despite the challenge, the project was delivered on time with no major quality issues.'},
+    {co:'Deloitte',qEn:'Describe a time you led a team without being the official leader.',aEn:'In a university project, I coordinated activities among team members from different disciplines. I organized meetings, tracked progress, and helped resolve disagreements. By encouraging collaboration and accountability, the team completed the project successfully and received positive feedback from faculty members.'},
+    {co:'Deloitte',qEn:'How would you improve a process affecting thousands of users?',aEn:'I would first analyze user feedback, performance metrics, and pain points. Next, I would prioritize improvements based on business impact and user value. After conducting pilot testing with a smaller user group, I would implement changes incrementally and monitor outcomes. This approach minimizes risk while maximizing adoption and benefits.'},
+    {co:'Deloitte',qEn:'Describe a situation where you influenced a decision without formal authority.',aEn:'While working on a process improvement initiative, I noticed manual reporting was consuming significant effort. Although I was not the project lead, I analyzed the data and demonstrated that automation could reduce reporting time by 40%. I presented my findings to the team and stakeholders. Based on the evidence, the team adopted the recommendation, resulting in faster reporting and fewer errors.'},
+    {co:'Deloitte',qEn:'Tell me about a complex problem you solved.',aEn:'A project was experiencing recurring delays due to inconsistent requirements from multiple departments. I analyzed the root causes, facilitated cross-functional meetings, and created a centralized requirements document. This improved alignment across teams and reduced project delays by approximately 30%.'},
+    {co:'Deloitte',qEn:'What does consulting mean to you?',aEn:'Consulting is about understanding business challenges, analyzing available information, and delivering practical solutions that create measurable value. It requires strong problem-solving, communication, adaptability, and a commitment to continuous learning.'},
+    {co:'Deloitte',qEn:'If resources are limited, how would you prioritize?',aEn:'I would evaluate tasks based on business impact, urgency, dependencies, and risk. High-value activities that directly support project objectives would receive priority. Regular stakeholder communication ensures expectations remain aligned throughout the process.'},
+    {co:'Deloitte',qEn:'Tell me about a time you managed conflicting stakeholder expectations.',aEn:'During a reporting automation project, two stakeholders had different priorities. One wanted detailed reports while the other preferred simplified dashboards. My task was to satisfy both without delaying the project. I organized a discussion to understand their objectives, identified common requirements, and proposed a layered dashboard with summary and detailed views. As a result, both stakeholders approved the solution, and the project was delivered on schedule with improved user satisfaction.'},
+    // PwC
+    {co:'PwC',qEn:'Describe a time you challenged an existing process.',aEn:'I noticed that a team spent several hours manually consolidating reports each week. I analyzed the workflow and suggested using automation tools. After implementation, reporting time decreased by nearly 50%, allowing the team to focus on higher-value activities.'},
+    {co:'PwC',qEn:'Why PwC?',aEn:"PwC's strong emphasis on integrity, innovation, professional development, and global collaboration makes it an ideal place to build my career. I am particularly attracted to its commitment to solving important business challenges while fostering continuous learning."},
+    {co:'PwC',qEn:'Tell me about receiving constructive criticism.',aEn:'A manager once suggested improving my presentation skills. I enrolled in communication workshops, practiced regularly, and sought feedback after presentations. As a result, my confidence improved, and I became more effective at presenting complex information.'},
+    {co:'PwC',qEn:'Describe a time you analyzed data to solve a problem.',aEn:'I analyzed customer feedback data to identify recurring complaints related to service delays. After categorizing and prioritizing the issues, I recommended process improvements that reduced response times and improved customer satisfaction scores.'},
+    {co:'PwC',qEn:'How do you manage multiple stakeholders?',aEn:'I identify stakeholder expectations early, establish communication channels, and provide regular updates. By focusing on project objectives and maintaining transparency, I ensure stakeholders remain aligned throughout the project lifecycle.'},
+    {co:'PwC',qEn:'Tell me about a time you worked under a tight deadline.',aEn:'A project deliverable had to be completed within a very short timeframe due to a client request. I prioritized critical tasks, coordinated closely with team members, and maintained regular progress checks. We successfully delivered the work on time while maintaining quality standards.'},
+    {co:'PwC',qEn:'What does integrity mean in the workplace?',aEn:'Integrity means being honest, accountable, and ethical even when faced with difficult situations. It involves taking responsibility for mistakes, respecting confidentiality, and making decisions that align with organisational values.'},
+    {co:'PwC',qEn:'How would you build trust with a difficult client?',aEn:'I would focus on transparency, active listening, and consistent delivery. In a previous project, a stakeholder was initially skeptical about project timelines. I provided regular updates, addressed concerns proactively, and consistently met commitments. Over time, trust improved significantly, leading to smoother collaboration.'},
+    {co:'PwC',qEn:'Tell me about a mistake you made.',aEn:'While preparing project documentation, I missed a minor requirement that affected a report format. Once identified, I immediately corrected the issue, informed stakeholders, and updated the review checklist to prevent recurrence. This improved document quality and strengthened my attention to detail.'},
+    {co:'PwC',qEn:'How do you stay updated with industry trends?',aEn:'I regularly read industry reports, attend webinars, follow thought leaders, and participate in professional communities. Staying informed helps me understand emerging technologies, market trends, and best practices.'},
+    // EY
+    {co:'EY',qEn:'How would you approach digital transformation?',aEn:'I would assess current processes, identify inefficiencies, define business objectives, develop a transformation roadmap, and engage stakeholders throughout implementation. Success depends on balancing technology, people, and processes.'},
+    {co:'EY',qEn:'Tell me about leading without authority.',aEn:'During a cross-functional initiative, I coordinated communication between teams, facilitated discussions, and helped resolve roadblocks. Although I was not the project manager, my efforts improved collaboration and contributed to successful delivery.'},
+    {co:'EY',qEn:'Why EY?',aEn:"EY's focus on innovation, emerging technologies, and professional growth strongly aligns with my career aspirations. I am excited by the opportunity to contribute to meaningful business transformations while continuously learning."},
+    {co:'EY',qEn:'Describe a difficult problem you solved.',aEn:'A project faced repeated delays due to unclear responsibilities among team members. I facilitated discussions, clarified ownership, and introduced progress tracking mechanisms. This improved accountability and significantly reduced delays.'},
+    {co:'EY',qEn:'Describe a time you improved customer experience.',aEn:'After reviewing customer feedback, I identified delays in response handling. I recommended process improvements and better tracking mechanisms, which reduced response times and improved customer satisfaction.'},
+    {co:'EY',qEn:'What does "Building a Better Working World" mean to you?',aEn:'It means creating sustainable value for businesses, employees, customers, and society through ethical decision-making, innovation, and responsible leadership. It aligns business success with positive societal impact.'},
+    {co:'EY',qEn:'How do you balance quality and speed?',aEn:'I focus on critical deliverables, automate repetitive tasks where possible, and conduct targeted reviews. This allows me to maintain high-quality outputs while meeting tight deadlines.'},
+    {co:'EY',qEn:'Give an example where technology improved a business process.',aEn:'I helped implement workflow automation for approval requests. The solution reduced approval times from several days to a few hours and improved process transparency for stakeholders.'},
+    {co:'EY',qEn:'How do you adapt to changing requirements?',aEn:'During a project, client requirements changed midway through development. I assessed the impact, updated documentation, communicated changes to stakeholders, and adjusted priorities accordingly. This ensured successful delivery despite evolving expectations.'},
+    {co:'EY',qEn:'Tell me about a time you drove innovation.',aEn:'I introduced a digital tracking system to replace manual project status updates. The solution improved visibility, reduced reporting effort by 35%, and enabled stakeholders to access real-time information.'},
+    // KPMG
+    {co:'KPMG',qEn:'Why KPMG?',aEn:'KPMG has a strong reputation in risk advisory, governance, and compliance. I see it as a good place to learn, grow, and contribute to projects that help organisations manage risks effectively.'},
+    {co:'KPMG',qEn:'How do you work with incomplete information?',aEn:'I gather the available information, speak with the right stakeholders, document my assumptions, and monitor risks. This helps me make informed decisions despite uncertainty.'},
+    {co:'KPMG',qEn:'What would you do if you found a major error before submission?',aEn:'I would assess the impact, correct the error, verify the work, and inform the relevant stakeholders. I believe it is important to address mistakes quickly and transparently.'},
+    {co:'KPMG',qEn:'Tell me about identifying a control weakness.',aEn:'I noticed that report approvals were not properly documented. I suggested a standard approval process with an audit trail, which improved accountability and strengthened controls.'},
+    {co:'KPMG',qEn:'How would you respond to a client request that violates policy?',aEn:'I would respectfully explain the policy requirements, discuss the associated risks, and work collaboratively with the client to identify a compliant alternative solution that still meets their business objectives.'},
+    {co:'KPMG',qEn:'Describe a process improvement initiative.',aEn:'I helped automate a manual reporting process that required significant effort each week. The solution reduced processing time by 60%, improved data accuracy, and increased productivity.'},
+    {co:'KPMG',qEn:'How do you ensure compliance while maintaining efficiency?',aEn:'I follow established controls, maintain documentation, conduct regular reviews, and identify opportunities to streamline activities without compromising compliance requirements.'},
+    {co:'KPMG',qEn:'How would you handle an ethical dilemma?',aEn:'I would gather all relevant facts, review company policies, consult appropriate stakeholders if necessary, and choose the option that aligns with ethical and professional standards. Maintaining trust and integrity would be my priority.'},
+    {co:'KPMG',qEn:'Tell me about a time you identified a business risk.',aEn:'While reviewing project reports, I discovered inconsistencies in data validation that could lead to inaccurate reporting. I proposed additional validation checks and review procedures, reducing the likelihood of errors and improving data reliability.'},
+    {co:'KPMG',qEn:'Describe a situation where attention to detail was critical.',aEn:'While reviewing project documentation before implementation, I identified inconsistencies between business requirements and technical specifications. Correcting these issues prevented potential delays and rework.'},
+  ];
+  return d.map(x=>({id:iqId(),section:'typical',company:x.co,qEn:x.qEn,qSv:'',aEn:x.aEn,aSv:'',pinned:false}));
+}
+
 // ── Render ────────────────────────────────────────────────────────────────────
-const SECTION_LABELS = { pitch:'Pitch', common:'Common Questions', ask:'Ask the Employer' };
+const SECTION_LABELS = { pitch:'Pitch', common:'Common Questions', ask:'Ask the Employer', typical:'Typical Interview Questions' };
+const COMPANY_COLORS = {
+  Deloitte: {bg:'#E8F5E9', color:'#2E7D32', border:'#A5D6A7'},
+  PwC:      {bg:'#FFF3E0', color:'#C84B00', border:'#FFCC80'},
+  EY:       {bg:'#FFFDE7', color:'#8A6000', border:'#FFE57F'},
+  KPMG:     {bg:'#E3F2FD', color:'#1565C0', border:'#90CAF9'},
+};
+
+function renderCard(c, globalN, companyN) {
+  const isOpen = iqOpenSet.has(c.id);
+  const aEnHtml = c.aEn ? `<div class="iq-a">${escHtml(c.aEn)}</div>` : `<div class="iq-a-empty">No answer yet — click Edit to add one.</div>`;
+  const aSwHtml = c.aSv ? `<div class="iq-a">${escHtml(c.aSv)}</div>` : `<div class="iq-a-empty">Inget svar ännu — klicka Edit för att lägga till.</div>`;
+  let badge = '';
+  if(c.section==='typical' && c.company) {
+    const cc = COMPANY_COLORS[c.company]||{bg:'var(--sky)',color:'var(--navy)',border:'var(--border)'};
+    const num = String(companyN||globalN).padStart(2,'0');
+    badge = `<span class="iq-company-pill" style="background:${cc.bg};color:${cc.color};border-color:${cc.border}">${escHtml(c.company)} ${num}</span>`;
+  } else {
+    badge = `<span class="iq-section-pill">${SECTION_LABELS[c.section]||c.section}</span>`;
+  }
+  return `
+  <div class="iq-card${c.pinned?' is-pinned':''}" id="iqcard-${c.id}" draggable="true"
+    ondragstart="iqDragStart('${c.id}')" ondragover="iqDragOver(event,'${c.id}')"
+    ondragleave="iqDragLeave('${c.id}')" ondrop="iqDrop(event,'${c.id}')">
+    <div class="iq-card-header" onclick="iqToggle('${c.id}')">
+      <span class="iq-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">⠿</span>
+      <span class="iq-card-number">${String(globalN).padStart(2,'0')}</span>
+      <span class="iq-card-title">${escHtml(c.qEn)}</span>
+      ${badge}
+      <div class="iq-card-actions" onclick="event.stopPropagation()">
+        <button class="iq-pin-btn${c.pinned?' pinned':''}" onclick="iqTogglePin('${c.id}')">${c.pinned?'📌 Pinned':'Pin Question'}</button>
+        <button class="btn btn-ghost btn-xs" onclick="iqOpenEdit('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="iqDelete('${c.id}')">✕</button>
+      </div>
+      <span class="iq-chevron" id="iqchev-${c.id}" style="${isOpen?'transform:rotate(180deg)':''}">▾</span>
+    </div>
+    <div class="iq-card-body${isOpen?' open':''}" id="iqbody-${c.id}">
+      <div class="iq-lang-block">
+        <div class="iq-lang-label"><span class="iq-lang-flag">🇬🇧</span> English</div>
+        <div class="iq-q">${escHtml(c.qEn)}</div>
+        ${aEnHtml}
+      </div>
+      <div class="iq-lang-block">
+        <div class="iq-lang-label"><span class="iq-lang-flag">🇸🇪</span> Svenska</div>
+        <div class="iq-q">${escHtml(c.qSv)}</div>
+        ${aSwHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
+function iqVisible() {
+  if(iqFilter_==='all') return iqCards;
+  if(iqFilter_==='pinned') return iqCards.filter(c=>c.pinned);
+  return iqCards.filter(c=>c.section===iqFilter_);
+}
 
 function iqRender() {
   const list = document.getElementById('iq-list');
   if(!list) return;
-  const visible = iqFilter_==='all' ? iqCards
-    : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned)
-    : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqVisible();
   document.getElementById('iq-count').textContent = visible.length + ' card' + (visible.length!==1?'s':'');
 
-  let lastSec = null;
-  let html = '';
+  // Group by section preserving order
+  const sections = [], sectionMap = {};
   for(const c of visible){
-    if(c.section !== lastSec){
-      html += `<div class="iq-section-hdr">${SECTION_LABELS[c.section]||c.section}</div>`;
-      lastSec = c.section;
+    if(!sectionMap[c.section]){ sectionMap[c.section]=[]; sections.push(c.section); }
+    sectionMap[c.section].push(c);
+  }
+
+  let html = '';
+  for(const sec of sections){
+    const cards = sectionMap[sec];
+    const collapsed = iqCollapsedSections.has(sec);
+    const label = SECTION_LABELS[sec]||sec;
+    const companyCount = {};
+    let cardsHtml = '';
+    for(const c of cards){
+      const globalN = iqCards.indexOf(c)+1;
+      let companyN = null;
+      if(sec==='typical' && c.company){
+        companyCount[c.company] = (companyCount[c.company]||0)+1;
+        companyN = companyCount[c.company];
+      }
+      cardsHtml += renderCard(c, globalN, companyN);
     }
-    const n = iqCards.indexOf(c)+1;
-    const isOpen = iqOpenSet.has(c.id);
-    const aEnHtml = c.aEn ? `<div class="iq-a">${escHtml(c.aEn)}</div>` : `<div class="iq-a-empty">No answer yet — click Edit to add one.</div>`;
-    const aSwHtml = c.aSv ? `<div class="iq-a">${escHtml(c.aSv)}</div>` : `<div class="iq-a-empty">Inget svar ännu — klicka Edit för att lägga till.</div>`;
     html += `
-    <div class="iq-card${c.pinned?' is-pinned':''}" id="iqcard-${c.id}" draggable="true"
-      ondragstart="iqDragStart('${c.id}')" ondragover="iqDragOver(event,'${c.id}')"
-      ondragleave="iqDragLeave('${c.id}')" ondrop="iqDrop(event,'${c.id}')">
-      <div class="iq-card-header" onclick="iqToggle('${c.id}')">
-        <span class="iq-drag-handle" title="Drag to reorder" onclick="event.stopPropagation()">⠿</span>
-        <span class="iq-card-number">${n}</span>
-        <span class="iq-card-title">${escHtml(c.qEn)}</span>
-        <span class="iq-section-pill">${SECTION_LABELS[c.section]||c.section}</span>
-        <div class="iq-card-actions" onclick="event.stopPropagation()">
-          <button class="iq-pin-btn${c.pinned?' pinned':''}" onclick="iqTogglePin('${c.id}')">${c.pinned?'📌 Pinned':'Pin Question'}</button>
-          <button class="btn btn-ghost btn-xs" onclick="iqOpenEdit('${c.id}')">Edit</button>
-          <button class="btn btn-danger btn-xs" onclick="iqDelete('${c.id}')">✕</button>
-        </div>
-        <span class="iq-chevron" id="iqchev-${c.id}" style="${isOpen?'transform:rotate(180deg)':''}">▾</span>
+    <div class="iq-section-group">
+      <div class="iq-section-hdr-btn" onclick="iqToggleSection('${sec}')">
+        <span class="iq-sec-label">${label}</span>
+        <span class="iq-sec-count">${cards.length} card${cards.length!==1?'s':''}</span>
+        <span class="iq-sec-chevron${collapsed?'':' open'}" id="iq-sec-chev-${sec}">▾</span>
       </div>
-      <div class="iq-card-body${isOpen?' open':''}" id="iqbody-${c.id}">
-        <div class="iq-lang-block">
-          <div class="iq-lang-label"><span class="iq-lang-flag">🇬🇧</span> English</div>
-          <div class="iq-q">${escHtml(c.qEn)}</div>
-          ${aEnHtml}
-        </div>
-        <div class="iq-lang-block">
-          <div class="iq-lang-label"><span class="iq-lang-flag">🇸🇪</span> Svenska</div>
-          <div class="iq-q">${escHtml(c.qSv)}</div>
-          ${aSwHtml}
-        </div>
+      <div class="iq-section-cards" id="iq-sec-${sec}" style="${collapsed?'display:none':''}">
+        ${cardsHtml}
       </div>
     </div>`;
   }
   if(!visible.length) html = '<div class="empty-state">No cards in this section yet.</div>';
   list.innerHTML = html;
 
-  // sync expand-all button label
-  const allVisible = visible.map(c=>c.id);
-  const allOpen = allVisible.length > 0 && allVisible.every(id => iqOpenSet.has(id));
+  const allOpen = visible.length>0 && visible.every(c=>iqOpenSet.has(c.id));
   const btn = document.getElementById('iq-expand-all-btn');
   if(btn) btn.textContent = allOpen ? 'Collapse All' : 'Expand All';
 }
@@ -1316,8 +1425,7 @@ window.iqToggle = function iqToggle(id){
   body.classList.toggle('open');
   if(chev) chev.style.transform = opening ? 'rotate(180deg)' : '';
   if(opening) iqOpenSet.add(id); else iqOpenSet.delete(id);
-  // update button label without full re-render
-  const visible = iqFilter_==='all' ? iqCards : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned) : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqVisible();
   const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
   const btn = document.getElementById('iq-expand-all-btn');
   if(btn) btn.textContent = allOpen ? 'Collapse All' : 'Expand All';
@@ -1325,11 +1433,21 @@ window.iqToggle = function iqToggle(id){
 
 // ── Expand / Collapse all ─────────────────────────────────────────────────────
 window.iqExpandAll = function(){
-  const visible = iqFilter_==='all' ? iqCards : iqFilter_==='pinned' ? iqCards.filter(c=>c.pinned) : iqCards.filter(c=>c.section===iqFilter_);
+  const visible = iqVisible();
   const allOpen = visible.length > 0 && visible.every(c => iqOpenSet.has(c.id));
   if(allOpen){ visible.forEach(c => iqOpenSet.delete(c.id)); }
   else { visible.forEach(c => iqOpenSet.add(c.id)); }
   iqRender();
+};
+
+// ── Section toggle ────────────────────────────────────────────────────────────
+window.iqToggleSection = function(sec){
+  const cards = document.getElementById('iq-sec-'+sec);
+  const chev = document.getElementById('iq-sec-chev-'+sec);
+  if(!cards) return;
+  const collapsed = cards.style.display==='none';
+  if(collapsed){ cards.style.display=''; iqCollapsedSections.delete(sec); if(chev) chev.classList.add('open'); }
+  else { cards.style.display='none'; iqCollapsedSections.add(sec); if(chev) chev.classList.remove('open'); }
 };
 
 // ── Pin toggle ────────────────────────────────────────────────────────────────
@@ -1344,7 +1462,7 @@ window.iqTogglePin = function(id){
 // ── Filter ────────────────────────────────────────────────────────────────────
 window.iqFilter = function(f){
   iqFilter_ = f;
-  ['all','pitch','common','ask','pinned'].forEach(k=>{
+  ['all','pitch','common','ask','typical','pinned'].forEach(k=>{
     const el = document.getElementById('iq-filter-'+k);
     if(!el) return;
     if(k==='pinned'){
