@@ -1896,6 +1896,21 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   </div>
 </div>
 
+<div class="overlay" id="jmSaveModal" style="display:none">
+  <div class="modal" style="width:440px">
+    <div class="modal-title">Save this analysis?</div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="jmSaveName" placeholder="e.g. Head of Delivery - Acme" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmJmSave();}">
+      <div id="jmSaveInfo" style="font-size:11px;color:var(--text-muted);margin-top:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeJmSaveModal()">Don't save</button>
+      <button class="btn btn-purple" onclick="confirmJmSave()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="watchModal" style="display:none" onclick="if(event.target===this)closeWatchModal()">
   <div class="modal">
     <div class="modal-title" style="color:var(--color-primary)" id="watchModalTitle">Add Company</div>
@@ -4778,7 +4793,7 @@ function initJobMatchTab() {
 
 function jmHistoryLabel(h) {
   const d = new Date(h.timestamp);
-  return `${h.role || "Untitled role"} — ${d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}${h.cvName?` (${h.cvName})`:""}`;
+  return `${h.name || h.role || "Untitled role"} — ${d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}${h.cvName?` (${h.cvName})`:""}`;
 }
 // Custom dropdown rather than a native <select> — a plain <option> can't
 // hold a delete button, so this is a button that toggles a small panel of
@@ -4807,6 +4822,28 @@ document.addEventListener("click", (e) => {
   const wrap = document.getElementById("jm-history-wrap");
   if (wrap && !wrap.contains(e.target)) document.getElementById("jm-history-panel").hidden = true;
 });
+// ── Name and save a finished analysis ───────────────────────────────────────
+function jmEntryIsSaved(entry) { return !!entry && (state.jobMatchHistory||[]).some(h=>h.id===entry.id); }
+function openJmSaveModal() {
+  if (!jmCurrentEntry || jmEntryIsSaved(jmCurrentEntry)) return;
+  document.getElementById("jmSaveName").value = jmCurrentEntry.name || jmCurrentEntry.role || "";
+  document.getElementById("jmSaveInfo").textContent =
+    `Saved as: name — ${new Date(jmCurrentEntry.timestamp).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}${jmCurrentEntry.cvName?` (${jmCurrentEntry.cvName})`:""}`;
+  document.getElementById("jmSaveModal").style.display = "flex";
+  document.getElementById("jmSaveName").focus();
+}
+function closeJmSaveModal() { document.getElementById("jmSaveModal").style.display = "none"; }
+function confirmJmSave() {
+  const entry = jmCurrentEntry;
+  if (!entry || jmEntryIsSaved(entry)) { closeJmSaveModal(); return; }
+  entry.name = document.getElementById("jmSaveName").value.trim() || entry.role || "";
+  state.jobMatchHistory = [entry, ...(state.jobMatchHistory||[])].slice(0, 20); // reasonable cap on saved history
+  saveState();
+  closeJmSaveModal();
+  renderJobMatchHistorySelect();
+  renderJobMatchResults(entry.results, entry); // re-render so the "Save analysis" button goes away
+  document.getElementById("jm-status").textContent = `Saved as "${jmHistoryLabel(entry)}".`;
+}
 function jmSelectHistoryEntry(id) {
   const entry = (state.jobMatchHistory||[]).find(h=>h.id===id);
   if (entry) {
@@ -4971,11 +5008,13 @@ async function runJobMatchAnalysis() {
       role, cvName: jmCvSourceName, jobUrl, results: data,
     };
     state.jobMatch = { role, jobUrl };
-    state.jobMatchHistory = [entry, ...(state.jobMatchHistory||[])].slice(0, 20); // reasonable cap on saved history
     saveState();
+    // Not added to the saved list yet — the result is shown first, then
+    // Candidate is asked whether to keep it and what to call it.
     renderJobMatchHistorySelect();
     renderJobMatchResults(data, entry);
     statusEl.textContent = `Analysis complete — ${data.overallScore}/100 match.`;
+    openJmSaveModal();
   } catch (e) {
     statusEl.textContent = `Analysis failed: ${e.message}`;
   } finally {
@@ -5000,7 +5039,8 @@ function renderJobMatchResults(data, entry) {
 
   el.innerHTML = `
     <div id="jm-dashboard">
-      <div class="jm-no-print" style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <div class="jm-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+        ${entry && !jmEntryIsSaved(entry) ? `<button class="btn btn-purple btn-sm" onclick="openJmSaveModal()">💾 Save analysis</button>` : ""}
         <button class="btn btn-sky btn-sm" onclick="jmDownloadPdf()">⬇️ Download PDF</button>
       </div>
       <div class="hero">
@@ -5096,7 +5136,7 @@ function renderJobMatchResults(data, entry) {
 function jmDownloadPdf() {
   if (!document.getElementById("jm-dashboard")) return;
   const prevTitle = document.title;
-  const roleSlug = (jmCurrentEntry?.role || "job-match").replace(/[\\/:*?"<>|]/g, "").trim() || "job-match";
+  const roleSlug = (jmCurrentEntry?.name || jmCurrentEntry?.role || "job-match").replace(/[\\/:*?"<>|]/g, "").trim() || "job-match";
   const dateSlug = jmCurrentEntry?.timestamp ? new Date(jmCurrentEntry.timestamp).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
   document.title = `Job Match - ${roleSlug} - ${dateSlug}`;
   const restore = () => { document.title = prevTitle; window.removeEventListener("afterprint", restore); };
