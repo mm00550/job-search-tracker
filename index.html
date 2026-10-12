@@ -95,6 +95,7 @@
 
   /* Badges */
   .badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+  .badge.date-pill { background: #FFF6CF; color: #DE7756; font-size: 12px; font-weight: 700; padding: 4px 14px; }
   .badge.clickable { cursor: pointer; }
   .badge.clickable:hover { opacity: .8; }
 
@@ -2778,9 +2779,9 @@ function renderApplications() {
             ${app.followUp?badge("Follow up","var(--status-warning-text)","var(--status-warning-bg)"):""}
           </div>
           <div class="item-meta">
-            ${app.dateApplied?`<span><b>Applied: ${app.dateApplied}</b></span>`:""}
-            ${app.dateResponded?`<span><b>Responded: ${app.dateResponded}</b></span>`:""}
-            ${app.followUpDate?`<span><b>🔔 Follow up: ${app.followUpDate}</b></span>`:""}
+            ${app.dateApplied?`<span class="badge date-pill">Applied: ${app.dateApplied}</span>`:""}
+            ${app.dateResponded?`<span class="badge date-pill">Responded: ${app.dateResponded}</span>`:""}
+            ${app.followUpDate?`<span class="badge date-pill">🔔 Follow up: ${app.followUpDate}</span>`:""}
             ${app.contact?`<span>Contact: ${app.contact}</span>`:""}
             ${app.careerSite?`<span><a href="${app.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
           </div>
