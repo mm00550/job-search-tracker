@@ -215,14 +215,14 @@
   }
 
   /* Login screen */
-  .login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); z-index: 999; display: flex; align-items: center; justify-content: center; }
+  .login-overlay { --login-bg: #F5E7EF; --login-accent: #3B002F; position: fixed; inset: 0; background: var(--login-bg); z-index: 999; display: flex; align-items: center; justify-content: center; }
   .login-box { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 40px 40px 36px; width: 360px; box-shadow: var(--shadow-modal); }
-  .login-logo { font-size: 22px; font-weight: 800; color: var(--color-primary); margin-bottom: 4px; letter-spacing: -.4px; }
-  .login-sub  { font-size: 12px; color: var(--text-muted); margin-bottom: 28px; }
-  .login-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
+  .login-logo { font-size: 22px; font-weight: 800; color: var(--login-accent); margin-bottom: 4px; letter-spacing: -.4px; }
+  .login-sub  { font-size: 12px; color: var(--login-accent); opacity: .7; margin-bottom: 28px; }
+  .login-label { font-size: 12px; font-weight: 600; color: var(--login-accent); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
   .login-input { width: 100%; padding: 11px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-default); font-size: 14px; font-family: inherit; outline: none; margin-bottom: 14px; box-sizing: border-box; transition: border-color .15s; }
-  .login-input:focus { border-color: var(--color-primary); }
-  .login-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
+  .login-input:focus { border-color: var(--login-accent); }
+  .login-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); background: var(--login-accent); color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 4px; letter-spacing: .2px; }
   .login-btn:hover { opacity: .92; }
   .login-error { color: var(--status-urgent-text); font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
   .login-error.show { display: block; }
@@ -289,9 +289,9 @@
     <input class="login-input" id="li-pass" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuthAction()">
     <div class="login-error" id="loginError">Incorrect email or password.</div>
     <button class="login-btn" id="loginBtn" onclick="doAuthAction()">Sign in</button>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted)">
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--login-accent)">
       <span id="authToggleLabel">Don't have an account?</span>
-      <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:var(--color-primary);font-weight:600">Create one</a>
+      <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:var(--login-accent);font-weight:600">Create one</a>
     </div>
   </div>
 </div>
