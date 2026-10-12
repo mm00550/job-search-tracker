@@ -2772,16 +2772,15 @@ function renderApplications() {
       <div class="item-row">
         <div style="flex:1">
           <div class="item-badges">
-            <span class="item-name">${app.company}</span>
+            <span class="item-name">${app.company}${app.role?` - ${app.role}`:""}</span>
             ${badge(app.status, sc.color, sc.bg)}
             ${badge(app.track, tc.color, tc.bg)}
             ${app.followUp?badge("Follow up","var(--status-warning-text)","var(--status-warning-bg)"):""}
           </div>
-          <div style="font-size:13px;margin-bottom:4px">${app.role}</div>
           <div class="item-meta">
-            ${app.dateApplied?`<span>Applied: ${app.dateApplied}</span>`:""}
-            ${app.dateResponded?`<span>Responded: ${app.dateResponded}</span>`:""}
-            ${app.followUpDate?`<span>🔔 Follow up: ${app.followUpDate}</span>`:""}
+            ${app.dateApplied?`<span><b>Applied: ${app.dateApplied}</b></span>`:""}
+            ${app.dateResponded?`<span><b>Responded: ${app.dateResponded}</b></span>`:""}
+            ${app.followUpDate?`<span><b>🔔 Follow up: ${app.followUpDate}</b></span>`:""}
             ${app.contact?`<span>Contact: ${app.contact}</span>`:""}
             ${app.careerSite?`<span><a href="${app.careerSite}" target="_blank" rel="noopener">🔗 Career site</a></span>`:""}
           </div>
@@ -2795,10 +2794,25 @@ function renderApplications() {
     </div>`;
   }
 
+  // Rejected applications collapse into their own expandable group below the
+  // rest; picking the Rejected filter opens it, since that's what was asked for.
+  const active = filtered.filter(a=>a.status!=="Rejected");
+  const rejected = filtered.filter(a=>a.status==="Rejected");
+  const rejectedOpen = appRejectedOpen || appStatusFilter==="Rejected";
+  const rejectedHtml = rejected.length ? `
+    <div class="iq-section-hdr-btn" style="margin-top:8px" onclick="toggleRejectedApps()">
+      <span class="iq-sec-label" style="color:var(--status-urgent-text)">Rejected</span>
+      <span class="iq-sec-count">${rejected.length} application${rejected.length===1?"":"s"}</span>
+      <span class="iq-sec-chevron${rejectedOpen?" open":""}">▾</span>
+    </div>
+    ${rejectedOpen ? rejected.map(renderAppCard).join("") : ""}` : "";
+
   document.getElementById("app-list").innerHTML = filtered.length === 0
     ? `<div class="card"><div class="empty-state">No applications match this filter. Hit "+ Add Application" to log your first one.</div></div>`
-    : filtered.map(renderAppCard).join("");
+    : active.map(renderAppCard).join("") + rejectedHtml;
 }
+let appRejectedOpen = false;
+function toggleRejectedApps() { appRejectedOpen = !appRejectedOpen; renderApplications(); }
 
 function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
 function setAppTrackFilter(t)  { appTrackFilter=t;  renderApplications(); }
