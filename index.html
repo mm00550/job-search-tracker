@@ -96,12 +96,6 @@
   /* Badges */
   .badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: .3px; }
   .badge.date-pill { background: #FFF6CF; color: #DE7756; font-size: 12px; font-weight: 700; padding: 4px 14px; }
-  .app-match { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
-  .match-ring { position: relative; width: 80px; height: 80px; background: #3B0030; border-radius: 12px; cursor: pointer; }
-  .match-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; }
-  .match-ring-num b { font-size: 24px; font-weight: 800; }
-  .match-ring-num span { font-size: 9px; color: rgba(255,255,255,.7); }
-  .match-change { font-size: 11px; color: var(--text-muted); }
   .badge.clickable { cursor: pointer; }
   .badge.clickable:hover { opacity: .8; }
 
@@ -493,8 +487,6 @@
     <div style="font-size:14px;font-weight:700;color:var(--color-primary)">🎯 Job Match</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Compare a specific job description against one of your CVs and get an AI-generated match analysis — score, gaps, and tailoring suggestions.</div>
   </div>
-
-  <div id="jm-link-banner" class="card" style="display:none;margin-bottom:16px;background:var(--status-warning-bg);border-color:var(--status-warning-border);display:none;align-items:center;justify-content:space-between;gap:12px;font-size:13px"></div>
 
   <div class="card" style="margin-bottom:16px">
     <div class="grid2" style="align-items:start">
@@ -1904,18 +1896,6 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   </div>
 </div>
 
-<div class="overlay" id="matchPickModal" style="display:none" onclick="if(event.target===this)closeMatchPicker()">
-  <div class="modal">
-    <div class="modal-title" id="matchPickTitle">Choose a match</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Matches you've already run in Job Match. Pick one to attach it to this application.</div>
-    <div id="matchPickList" style="max-height:50vh;overflow-y:auto"></div>
-    <div class="modal-footer" style="margin-top:14px">
-      <button class="btn btn-danger" id="matchPickUnlink" onclick="unlinkMatch()">Remove match</button>
-      <button class="btn btn-ghost" onclick="closeMatchPicker()">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <div class="overlay" id="watchModal" style="display:none" onclick="if(event.target===this)closeWatchModal()">
   <div class="modal">
     <div class="modal-title" style="color:var(--color-primary)" id="watchModalTitle">Add Company</div>
@@ -2807,7 +2787,6 @@ function renderApplications() {
           </div>
           ${latestNote?`<div class="item-notes">${escHtml(latestNote)}</div>`:""}
         </div>
-        ${renderAppMatch(app)}
         <div class="item-actions">
           <button class="btn btn-sky btn-sm" onclick="openAppModal('${app.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteApp('${app.id}')">✕</button>
@@ -2835,106 +2814,6 @@ function renderApplications() {
 }
 let appRejectedOpen = false;
 function toggleRejectedApps() { appRejectedOpen = !appRejectedOpen; renderApplications(); }
-
-// ── Job Match attached to an application ────────────────────────────────────
-// An application stores which Job Match history entry it's linked to
-// (jobMatchId) plus a copy of the score/label, so the card keeps showing the
-// score even after the original analysis is deleted or ages out of the
-// 20-entry history cap.
-let jmLinkAppId = null;      // application a running/next analysis will be attached to
-let jmLinkedDoneAppId = null; // application the last analysis was attached to (banner confirmation)
-let matchPickAppId = null;
-function matchRingHtml(score) {
-  const C = 2*Math.PI*30, s = Math.max(0, Math.min(100, Math.round(score)));
-  return `<svg width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
-      <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="7"/>
-      <circle cx="40" cy="40" r="30" fill="none" stroke="#D9600A" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-s/100)).toFixed(1)}"/>
-    </svg>
-    <div class="match-ring-num"><b>${s}</b><span>/ 100</span></div>`;
-}
-function renderAppMatch(app) {
-  const hist = state.jobMatchHistory||[];
-  const entry = app.jobMatchId ? hist.find(h=>h.id===app.jobMatchId) : null;
-  const score = entry ? entry.results?.overallScore : app.matchScore;
-  if (app.jobMatchId && score!=null) {
-    const title = escHtml(entry ? jmHistoryLabel(entry) : (app.matchLabel||"Job match"));
-    return `<div class="app-match">
-      <div class="match-ring" onclick="openMatchFromApp('${app.id}')" title="${title} — click to view">${matchRingHtml(score)}</div>
-      <a class="match-change" href="#" onclick="openMatchPicker('${app.id}');return false">Change</a>
-    </div>`;
-  }
-  return `<div class="app-match">
-    <button class="btn btn-purple btn-sm" onclick="startJobMatchForApp('${app.id}')">🎯 Create job match</button>
-    ${hist.length?`<button class="btn btn-ghost btn-sm" onclick="openMatchPicker('${app.id}')">Use existing match</button>`:""}
-  </div>`;
-}
-function startJobMatchForApp(appId) {
-  const app = state.apps.find(a=>a.id===appId);
-  if (!app) return;
-  jmLinkAppId = appId; jmLinkedDoneAppId = null;
-  document.getElementById("jm-role").value = app.role || "";
-  document.getElementById("jm-job-url").value = app.careerSite || "";
-  showTab("suggestions");
-  renderJobMatchLinkBanner();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-function renderJobMatchLinkBanner() {
-  const el = document.getElementById("jm-link-banner");
-  if (!el) return;
-  const appId = jmLinkAppId || jmLinkedDoneAppId;
-  const app = appId ? state.apps.find(a=>a.id===appId) : null;
-  if (!app) { el.style.display = "none"; return; }
-  const name = `<b>${escHtml(app.company)} - ${escHtml(app.role)}</b>`;
-  el.style.display = "flex";
-  el.innerHTML = jmLinkAppId
-    ? `<span>🔗 Creating a match for ${name}. Upload the CV and job description below and run the analysis — the score will be attached to that application.</span>
-       <button class="btn btn-ghost btn-sm" onclick="cancelJobMatchLink()">Cancel</button>`
-    : `<span>✓ Match attached to ${name}.</span>
-       <button class="btn btn-purple btn-sm" onclick="jmLinkedDoneAppId=null;renderJobMatchLinkBanner();showTab('applications')">Back to Applications</button>`;
-}
-function cancelJobMatchLink() { jmLinkAppId = null; jmLinkedDoneAppId = null; renderJobMatchLinkBanner(); }
-function linkMatchToApp(appId, entry) {
-  const app = state.apps.find(a=>a.id===appId);
-  if (!app || !entry) return;
-  app.jobMatchId = entry.id;
-  app.matchScore = Math.round(entry.results?.overallScore ?? 0);
-  app.matchLabel = jmHistoryLabel(entry);
-  saveState(); renderApplications();
-}
-function openMatchFromApp(appId) {
-  const app = state.apps.find(a=>a.id===appId);
-  const entry = app && (state.jobMatchHistory||[]).find(h=>h.id===app.jobMatchId);
-  if (!entry) { alert("The full analysis for this match was removed from the Job Match list, so only the score is kept."); return; }
-  showTab("suggestions");
-  jmSelectHistoryEntry(entry.id);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-function openMatchPicker(appId) {
-  matchPickAppId = appId;
-  const app = state.apps.find(a=>a.id===appId);
-  const hist = state.jobMatchHistory||[];
-  document.getElementById("matchPickTitle").textContent = app ? `Choose a match for ${app.company} - ${app.role}` : "Choose a match";
-  document.getElementById("matchPickList").innerHTML = hist.length
-    ? hist.map(h=>`
-      <div class="jm-history-row${app && app.jobMatchId===h.id?" active":""}" onclick="pickMatch('${h.id}')">
-        <span class="jm-history-label" title="${escHtml(jmHistoryLabel(h))}">${escHtml(jmHistoryLabel(h))}</span>
-        <b style="flex-shrink:0">${Math.round(h.results?.overallScore ?? 0)}/100</b>
-      </div>`).join("")
-    : `<div class="empty-state" style="padding:16px">No saved matches yet — use "Create job match" first.</div>`;
-  document.getElementById("matchPickUnlink").style.display = app && app.jobMatchId ? "" : "none";
-  document.getElementById("matchPickModal").style.display = "flex";
-}
-function closeMatchPicker() { document.getElementById("matchPickModal").style.display = "none"; matchPickAppId = null; }
-function pickMatch(id) {
-  const entry = (state.jobMatchHistory||[]).find(h=>h.id===id);
-  if (entry && matchPickAppId) linkMatchToApp(matchPickAppId, entry);
-  closeMatchPicker();
-}
-function unlinkMatch() {
-  const app = state.apps.find(a=>a.id===matchPickAppId);
-  if (app) { delete app.jobMatchId; delete app.matchScore; delete app.matchLabel; saveState(); renderApplications(); }
-  closeMatchPicker();
-}
 
 function setAppStatusFilter(s) { appStatusFilter=s; renderApplications(); }
 function setAppTrackFilter(t)  { appTrackFilter=t;  renderApplications(); }
@@ -3573,10 +3452,6 @@ async function submitApp() {
     followUp:   document.getElementById("af-followup").checked,
     followUpDate:document.getElementById("af-followupdate").value,
   };
-  // The edit form has no fields for the linked Job Match, so carry it over
-  // from the existing record instead of silently dropping it on save.
-  const existing = editAppId ? state.apps.find(a=>a.id===editAppId) : null;
-  if (existing && existing.jobMatchId) { entry.jobMatchId = existing.jobMatchId; entry.matchScore = existing.matchScore; entry.matchLabel = existing.matchLabel; }
   if (editAppId) state.apps = state.apps.map(a=>a.id===editAppId?entry:a);
   else state.apps.push(entry);
   saveState(); closeAppModal(); renderApplications(); renderJobWatchlist(); renderDashboard();
@@ -5101,11 +4976,6 @@ async function runJobMatchAnalysis() {
     renderJobMatchHistorySelect();
     renderJobMatchResults(data, entry);
     statusEl.textContent = `Analysis complete — ${data.overallScore}/100 match.`;
-    if (jmLinkAppId) {
-      linkMatchToApp(jmLinkAppId, entry);
-      jmLinkedDoneAppId = jmLinkAppId; jmLinkAppId = null;
-      renderJobMatchLinkBanner();
-    }
   } catch (e) {
     statusEl.textContent = `Analysis failed: ${e.message}`;
   } finally {
