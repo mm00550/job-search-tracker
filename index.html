@@ -1706,7 +1706,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       <div><label class="form-label">Date Responded</label><input class="form-input" id="af-dateresponded" type="date"></div>
     </div>
     <div class="form-grid2" style="margin-bottom:14px">
-      <div><label class="form-label">Track</label><select class="form-input" id="af-track"></select></div>
+      <div><label class="form-label">Job Type</label><select class="form-input" id="af-track"></select></div>
       <div><label class="form-label">Status</label><select class="form-input" id="af-status"></select></div>
     </div>
 
@@ -2030,7 +2030,7 @@ const STARTER_JOB_SITES = [
 const APP_TRACK = {
   "Permanent": { color:"var(--color-primary)", bg:"var(--color-primary-light)" },
   "Interim":   { color:"var(--status-warning-text)", bg:"var(--status-warning-bg)" },
-  "Network":   { color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
+  "Consultant":{ color:"var(--status-progress-text)", bg:"var(--status-progress-bg)" },
 };
 const TRAIN_CAT = {
   "AI & Technology":        { color:"var(--color-primary)", bg:"var(--color-primary-light)", icon:"🤖" },
@@ -2755,7 +2755,7 @@ function renderApplications() {
   document.getElementById("app-status-filters").innerHTML = statuses.map(s=>`
     <button class="filter-btn${s===appStatusFilter?" active-blue":""}" onclick="setAppStatusFilter('${s}')">${s}</button>`).join("");
 
-  const tracks = ["All","Permanent","Interim","Network"];
+  const tracks = ["All","Permanent","Interim","Consultant"];
   document.getElementById("app-track-filters").innerHTML = tracks.map(t=>`
     <button class="filter-btn${t===appTrackFilter?" active-blue":""}" onclick="setAppTrackFilter('${t}')">${t}</button>`).join("");
 
@@ -2767,7 +2767,7 @@ function renderApplications() {
 
   function renderAppCard(app) {
     const sc = APP_STATUS[app.status]||{};
-    const tc = APP_TRACK[app.track]||{};
+    const tc = APP_TRACK[app.track]||{ color:"var(--status-neutral-text)", bg:"var(--status-neutral-bg)" };
     const latestNote = (app.history||[]).length > 0 ? app.history[app.history.length-1].text : (app.notes||"");
     return `<div class="item-card" style="border-left-color:${sc.dot}">
       <div class="item-row">
